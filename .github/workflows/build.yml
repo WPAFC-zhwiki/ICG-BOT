@@ -1,0 +1,22 @@
+name: Build Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Create temp config
+      run: cp config/config.example.ts config/config.ts
+
+    - name: Lint
+      run: npm run lint
+
+    - name: Build
+      run: npm run build
