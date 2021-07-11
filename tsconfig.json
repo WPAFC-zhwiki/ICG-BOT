@@ -1,0 +1,22 @@
+{
+	"rules": {
+		"no-var-requires": 0
+	},
+	"compilerOptions": {
+		"allowJs": true,
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"importHelpers": true,
+		"module": "CommonJS",
+		"moduleResolution": "node",
+		"outDir": "./build",
+		"removeComments": true,
+		"resolveJsonModule": true,
+		"sourceMap": false,
+		"target": "es2017"
+	},
+	"exclude": [
+		"./*.js",
+		"./**/*.js"
+	]
+}
