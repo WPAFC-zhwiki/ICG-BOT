@@ -2,32 +2,25 @@
  * http://blog.vanamco.com/proxy-requests-in-node-js/
  * https://gist.github.com/matthias-christen/6beb3b4dda26bd6a221d
  */
+'use strict';
 
-// import * as Http from 'http';
-import * as Https from 'https';
-// import * as Tls from 'tls';
+const Http = require( 'http' );
+const Https = require( 'https' );
+const Tls = require( 'tls' );
 
 /**
  * HTTPS Agent for node.js HTTPS requests via a proxy.
  * blog.vanamco.com/connecting-via-proxy-node-js/
  */
-export class HttpsProxyAgent extends Https.Agent {
-	/*
-
-	proxyHost: string;
-	proxyPort: string | number;
-
-	constructor( options: Http.AgentOptions & { proxyHost: string; proxyPort: string | number; } ) {
+module.exports = class HttpsProxyAgent extends Https.Agent {
+	constructor( options ) {
 		super( options );
 
 		this.proxyHost = options.proxyHost;
 		this.proxyPort = options.proxyPort;
 	}
 
-	createConnection( opts: {
-		host: string;
-		port: number;
-	}, callback: ( error: false | Error, sockets: Tls.TLSSocket | null ) => void ): void {
+	createConnection( opts, callback ) {
 		// do a CONNECT request
 		const req = Http.request( {
 			host: this.proxyHost,
@@ -60,13 +53,7 @@ export class HttpsProxyAgent extends Https.Agent {
 
 	// Almost verbatim copy of http.Agent.addRequest
 	// HttpsProxyAgent.prototype.addRequest = function(req, host, port, localAddress) // node v0.10.x
-	addRequest( req: Http.OutgoingMessage & Http.IncomingMessage & {
-		onSocket: ( socket: Tls.TLSSocket ) => void;
-	}, options: {
-		host: string;
-		port: number;
-		path: string;
-	} ): void {
+	addRequest( req, options ) {
 		let name = options.host + ':' + options.port;
 		if ( options.path ) {
 			name += ':' + options.path;
@@ -79,7 +66,7 @@ export class HttpsProxyAgent extends Https.Agent {
 		if ( this.sockets[ name ].length < this.maxSockets ) {
 			// if we are under maxSockets create a new one.
 			this.createSocket( name, options.host,
-				options.port, options.path, req, function ( socket: Tls.TLSSocket ) { // node 0.12.x
+				options.port, options.path, req, function ( socket ) { // node 0.12.x
 					req.onSocket( socket );
 				}
 			);
@@ -93,15 +80,9 @@ export class HttpsProxyAgent extends Https.Agent {
 	}
 
 	// Almost verbatim copy of http.Agent.createSocket
-	createSocket( name: string | number, host: string, port: number,
-		localAddress: string, req: Http.OutgoingMessage, callback: ( socket: Tls.TLSSocket ) => void ): void {
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
+	createSocket( name, host, port, localAddress, req, callback ) {
 		const self = this;
-		const options: Https.AgentOptions & {
-			localAddress: string;
-			host: string;
-			port: number;
-		} = Object.assign( {}, self.options, {
+		const options = Object.assign( {}, self.options, {
 			host,
 			port,
 			localAddress
@@ -115,7 +96,7 @@ export class HttpsProxyAgent extends Https.Agent {
 			}
 		}
 
-		self.createConnection( options, function ( err: false | Error, socket: Tls.TLSSocket ) {
+		self.createConnection( options, function ( err, socket ) {
 			if ( err ) {
 				err.message += ' while connecting to HTTP(S) proxy server ' + self.proxyHost + ':' + self.proxyPort;
 
@@ -162,5 +143,4 @@ export class HttpsProxyAgent extends Https.Agent {
 			callback( socket );
 		} );
 	}
-	*/
-}
+};

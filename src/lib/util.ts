@@ -1,16 +1,6 @@
-import fs from 'fs';
 import winston from 'winston';
-import { ConfigTS } from '../../config/type';
-
-// 用于加载配置文件
-export function isFileExists( name: fs.PathLike ): boolean {
-	try {
-		fs.accessSync( name, fs.constants.R_OK );
-		return true;
-	} catch ( err ) {
-		return false;
-	}
-}
+import { ConfigTS } from 'config';
+import lodash from 'lodash';
 
 // 检查已弃用设置
 export function checkDeprecatedConfig( object: ConfigTS, source: string, otherWarning = '' ): void {
@@ -48,11 +38,4 @@ export function getFriendlyLocation( latitude: number, longitude: number ): stri
 	return `${ y }, ${ x }`;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export function copyObject( obj: object ): object {
-	const r = {};
-	for ( const a in obj ) {
-		r[ a ] = obj[ a ];
-	}
-	return r;
-}
+export const copyObject = lodash.cloneDeep;

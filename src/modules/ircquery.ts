@@ -3,16 +3,15 @@
  */
 
 import winston = require( 'winston' );
-import { Manager } from '../init.js';
-import * as moduleTransport from './transport';
-import { BridgeMsg } from './transport/BridgeMsg.js';
+import { Manager } from 'init.js';
+import * as moduleTransport from 'modules/transport';
 
 const ircHandler = Manager.handlers.get( 'IRC' );
 
-function getChans( context: BridgeMsg ) {
+function getChans( context: moduleTransport.BridgeMsg ) {
 	const r: string[] = [];
 	for ( const c of context.extra.mapto ) {
-		const client = BridgeMsg.parseUID( c );
+		const client = moduleTransport.BridgeMsg.parseUID( c );
 		if ( client.client === 'IRC' ) {
 			r.push( client.id );
 		}
@@ -20,7 +19,7 @@ function getChans( context: BridgeMsg ) {
 	return r;
 }
 
-async function processWhois( context: BridgeMsg ) {
+async function processWhois( context: moduleTransport.BridgeMsg ) {
 	if ( context.param ) {
 		ircHandler.whois( context.param ).then( ( info ) => {
 			let output: string[] = [ `${ info.nick }: Unknown nick` ];
@@ -45,7 +44,7 @@ async function processWhois( context: BridgeMsg ) {
 	}
 }
 
-async function processNames( context: BridgeMsg ) {
+async function processNames( context: moduleTransport.BridgeMsg ) {
 	const chans = getChans( context );
 
 	for ( const chan of chans ) {
@@ -79,7 +78,7 @@ async function processNames( context: BridgeMsg ) {
 	}
 }
 
-async function processTopic( context: BridgeMsg ) {
+async function processTopic( context: moduleTransport.BridgeMsg ) {
 	const chans = getChans( context );
 	for ( const chan of chans ) {
 		const topic: string = Object.assign( ircHandler.chans[ chan ] ).topic;

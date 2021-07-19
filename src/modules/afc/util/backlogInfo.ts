@@ -1,7 +1,7 @@
 import Discord = require( 'discord.js' );
-import { mwbot, $, IRCBold as iB } from './util.js';
+import { mwbot, $, IRCBold as iB } from 'modules/afc/util/index';
 
-export default async function (): Promise<{
+export async function getBacklogInfo(): Promise<{
     cnt: number;
     list: {
 		pageid: number;

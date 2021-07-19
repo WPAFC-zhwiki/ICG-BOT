@@ -1,4 +1,4 @@
-import { MessageHandler } from './MessageHandler';
+import { MessageHandler } from 'lib/handlers/MessageHandler';
 
 let msgId = 0;
 
@@ -141,10 +141,16 @@ export class Context {
 	get from(): string {
 		return this._from;
 	}
+	set from( f: string ) {
+		this._from = f;
+	}
 
 	protected _to: string = null;
 	get to(): string {
 		return this._to;
+	}
+	set to( t: string ) {
+		this._to = t;
 	}
 
 	public nick: string = null;
@@ -163,27 +169,27 @@ export class Context {
 
 	private readonly _msgId: number = getMsgId();
 
-	public constructor( options: optin = {}, overrides: optin = {} ) {
-		// TODO 雖然這樣很醜陋，不過暫時先這樣了
-		for ( const k of [ 'from', 'to' ] ) {
-			if ( overrides[ k ] !== undefined ) {
-				this[ `_${ k }` ] = overrides[ k ];
-			} else if ( options[ k ] !== undefined ) {
-				this[ `_${ k }` ] = options[ k ];
+	protected static getArgument<T>( ...args: T[] ): T | undefined {
+		for ( let i = 0; i < args.length; i++ ) {
+			if ( args[ i ] !== undefined ) {
+				return args[ i ];
 			}
 		}
+		return undefined;
+	}
+
+	public constructor( options: Context | optin = {}, overrides: optin = {} ) {
+		// TODO 雖然這樣很醜陋，不過暫時先這樣了
+		this._from = String( Context.getArgument( overrides.from, options.from, null ) );
+		this._to = String( Context.getArgument( overrides.to, options.to, null ) );
 
 		for ( const k of [ 'nick', 'text', 'isPrivate', 'isbot', 'extra', 'handler', '_rawdata', 'command', 'param' ] ) {
-			if ( overrides[ k ] !== undefined ) {
-				this[ k ] = overrides[ k ];
-			} else if ( options[ k ] !== undefined ) {
-				this[ k ] = options[ k ];
-			}
+			this[ k ] = Context.getArgument( overrides[ k ], options[ k ], this[ k ] );
 		}
 
 		if ( options.text !== undefined ) {
-			this.command = overrides.command || this.command || '';
-			this.param = overrides.param || this.param || '';
+			this.command = Context.getArgument( overrides.command, this.command, '' );
+			this.param = Context.getArgument( overrides.param, this.param, '' );
 		}
 	}
 

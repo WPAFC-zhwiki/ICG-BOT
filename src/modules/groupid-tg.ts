@@ -3,7 +3,7 @@
  */
 
 import winston = require( 'winston' );
-import { Manager } from '../init.js';
+import { Manager } from 'init';
 
 const tg = Manager.handlers.get( 'Telegram' );
 if ( tg ) {

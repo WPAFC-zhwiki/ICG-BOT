@@ -2,12 +2,11 @@
  * linky - 自動將聊天中的[[]]與{{}}換成 Wiki 系統的連結
  */
 
-import { Manager } from '../init';
-import { BridgeMsg } from './transport/BridgeMsg.js';
-import * as moduleTransport from './transport';
+import { Manager } from 'init';
+import * as moduleTransport from 'modules/transport';
 
 import winston = require( 'winston' );
-import { Context } from '../lib/handlers/Context';
+import { Context } from 'lib/handlers/Context';
 
 const options = Manager.config.wikilinky;
 
@@ -23,7 +22,7 @@ const map: Record<string, string | false> & {
 };
 
 for ( const group in groups ) {
-	const client = BridgeMsg.parseUID( group );
+	const client = moduleTransport.BridgeMsg.parseUID( group );
 	if ( client.uid ) {
 		map[ client.uid ] = groups[ group ];
 	}
@@ -58,7 +57,6 @@ const linky = function ( string: string, articlepath: string ) {
 			}
 			if ( $page.startsWith( '../' ) ) {
 				winston.warn( `Refused parse link like "../": "${ $page }${ $section }"` );
-				ret.push( `[[${ $page }${ $section }]]` );
 				return '<token>';
 			}
 			$title = ( `${ $page }${ $section }` ).replace( /\s/g, '_' ).replace( /\?/g, '%3F' ).replace( /!$/, '%21' ).replace( /:$/, '%3A' );
@@ -114,19 +112,18 @@ const linky = function ( string: string, articlepath: string ) {
 		} else if ( /^{{\s*([^|]+)(?:|.+)?}}$/.exec( $txt ) ) {
 			$m = $txt.match( /^{{\s*([^|]+)(?:|.+)?}}$/ );
 			$page = $m[ 1 ].trim();
-			$title = ` ${ $page.startsWith( ':' ) ? $page.replace( /^:/, '' ) : `Template:${ $page }` }`;
+			$title = `${ $page.startsWith( ':' ) ? $page.replace( /^:/, '' ) : `Template:${ $page }` }`;
 		}
-		ret.push( articlepath.replace( '$1', $title ) );
+		ret.push( articlepath.replace( '$1', $title.trim() ) );
 		return '<token>';
 	} );
 
 	return ret;
-
 };
 
 const processlinky = async function ( context: Context ) {
 	try {
-		const uid = BridgeMsg.getUIDFromContext( context, String( context.to ) );
+		const uid = moduleTransport.BridgeMsg.getUIDFromContext( context, String( context.to ) );
 
 		const rule = map[ uid ] || map.default;
 
@@ -134,6 +131,7 @@ const processlinky = async function ( context: Context ) {
 			const links = linky( context.text, rule );
 
 			if ( links.length > 0 ) {
+				winston.debug( `[wikilinkly.js] Msg ${ context.msgId } parselinks: ${ links.join( ', ' ) }` );
 				context.reply( links.join( '\n' ), {
 					noPrefix: true
 				} );
@@ -145,7 +143,7 @@ const processlinky = async function ( context: Context ) {
 						}, 1000 );
 					} ) );
 
-					moduleTransport.send( new BridgeMsg( context, {
+					moduleTransport.send( new moduleTransport.BridgeMsg( context, {
 						text: links.join( '\n' ),
 						isNotice: false,
 						noPrefix: true

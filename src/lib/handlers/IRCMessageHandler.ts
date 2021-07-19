@@ -1,12 +1,12 @@
-import { MessageHandler } from './MessageHandler';
-import { Context } from './Context';
+import { MessageHandler } from 'lib/handlers/MessageHandler';
+import { Context } from 'lib/handlers/Context';
 import IRCTS from 'irc';
 import irc = require( 'irc-upd' );
 import color = require( 'irc-colors' );
 import winston = require( 'winston' );
 import lodash from 'lodash';
 
-import { ConfigTS } from '../../../config/type';
+import { ConfigTS } from 'config';
 
 export type IRCRawMessage = {
 	/**

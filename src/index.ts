@@ -2,6 +2,9 @@
  * AFC-ICG-BOT
  * https://github.com/sunny00217wm/AFC-zhwiki-ICG-Bot
  */
+import moduleAlias from 'module-alias';
+moduleAlias.addPath( __dirname );
+
 import winston = require( 'winston' );
 
 import { Manager } from './init';

@@ -2,7 +2,7 @@
  * 測試看看模組有沒有啟用
  * 請從 Manager.global 呼叫
  */
-import config from '../../config/config';
+import config from 'config';
 
 export function ifEnable( module: string, func: () => void ): void {
 	if ( config.modules.includes( module ) ) {

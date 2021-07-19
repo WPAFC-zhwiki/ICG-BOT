@@ -2,7 +2,7 @@
  * 互聯機器人
  */
 
-import { Manager } from '../init';
+import { Manager } from 'init';
 import winston = require( 'winston' );
 
 import { BridgeMsg } from './transport/BridgeMsg.js';
@@ -45,14 +45,6 @@ export const handlers = Manager.handlers;
         }
      */
 const map = bridge.map;
-
-/**
- * 用戶端別名
- */
-export const aliases: Record<string, {
-	shortname: string,
-	fullname: string
-}> = {};
 
 Manager.global.ifEnable( 'transport', function () {
 	const groups = options.groups || [];
@@ -113,6 +105,11 @@ Manager.global.ifEnable( 'transport', function () {
 		}
 	}
 
+	/**
+	 * 用戶端別名
+	 */
+	const aliases: Record<string, bridge.alias> = {};
+
 	// 處理用戶端別名
 	for ( const a in options.aliases ) {
 		const cl = BridgeMsg.parseUID( a ).uid;
@@ -134,6 +131,8 @@ Manager.global.ifEnable( 'transport', function () {
 			};
 		}
 	}
+
+	bridge.setAliases( aliases );
 
 	// 调试日志
 	winston.debug( '' );

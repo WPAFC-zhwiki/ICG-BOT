@@ -1,17 +1,16 @@
 import EventSource from 'eventsource';
 import Discord from 'discord.js';
-import { $, mwbot, htmlToIRC, turndown } from '../util';
-import { send } from '../msg';
+import { $, mwbot, htmlToIRC, turndown, encodeURI, send } from 'modules/afc/util';
 import winston from 'winston';
 
 const RTRC = new EventSource( 'https://stream.wikimedia.org/v2/stream/recentchange' );
 
 function htmllink( title: string, text?: string ) {
-	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURIComponent( title ) }">${ text || title }</a>`;
+	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
 }
 
 function mdlink( title: string, text?: string ) {
-	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURIComponent( title ) })`;
+	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
 RTRC.onmessage = async function ( event ) {

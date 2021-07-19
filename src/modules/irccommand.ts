@@ -3,9 +3,8 @@
  */
 
 import winston = require( 'winston' );
-import { Manager } from '../init.js';
-import * as moduleTransport from './transport';
-import { BridgeMsg } from './transport/BridgeMsg.js';
+import { Manager } from 'init.js';
+import * as moduleTransport from 'modules/transport';
 
 if ( Manager.global.isEnable( 'transport' ) ) {
 	const options = Manager.config.irccommand;
@@ -14,7 +13,7 @@ if ( Manager.global.isEnable( 'transport' ) ) {
 	const echo = options.echo || true;
 	const ircHandler = Manager.handlers.get( 'IRC' );
 
-	moduleTransport.addCommand( `/${ prefix }command`, function ( context: BridgeMsg ) {
+	moduleTransport.addCommand( `/${ prefix }command`, function ( context: moduleTransport.BridgeMsg ) {
 		if ( !context.isPrivate ) {
 			if ( context.param ) {
 				if ( echo ) {
@@ -23,7 +22,7 @@ if ( Manager.global.isEnable( 'transport' ) ) {
 
 				let sentCount = 0;
 				for ( const c of context.extra.mapto ) {
-					const client = BridgeMsg.parseUID( c );
+					const client = moduleTransport.BridgeMsg.parseUID( c );
 					if ( client.client === 'IRC' ) {
 						sentCount++;
 						ircHandler.say( client.id, context.param );

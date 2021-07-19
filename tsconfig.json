@@ -10,13 +10,17 @@
 		"module": "CommonJS",
 		"moduleResolution": "node",
 		"outDir": "./build",
+		"baseUrl": "./src",
 		"removeComments": true,
 		"resolveJsonModule": true,
 		"sourceMap": false,
 		"target": "es2017"
 	},
-	"exclude": [
-		"./*.js",
-		"./**/*.js"
+	"include": [
+		"config/conifg.ts",
+		"src/*.js",
+		"src/*.ts",
+		"src/**/*.js",
+		"src/**/*.ts"
 	]
 }

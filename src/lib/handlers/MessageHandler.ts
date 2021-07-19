@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 import { Telegraf as TelegrafClient, Context as TContext } from 'telegraf';
 import { Client as DiscordClient } from 'discord.js';
 import { Client as IRCClient } from 'irc-upd';
-import { Context } from './Context';
+import { Context } from 'lib/handlers/Context';
 
 export type Command = ( context: Context, cmd: string, param: string ) => void;
 
@@ -72,7 +72,7 @@ export class MessageHandler extends EventEmitter {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	public async say( target: string | number, message: string, options: Record<string, unknown> ): Promise<unknown> {
+	public async say( target: string | number, message: string, options?: Record<string, unknown> ): Promise<unknown> {
 		if ( this._enabled ) {
 			return;
 		} else {
@@ -80,7 +80,7 @@ export class MessageHandler extends EventEmitter {
 		}
 	}
 
-	public async reply( context: Context, message: string, options: Record<string, unknown> ): Promise<unknown> {
+	public async reply( context: Context, message: string, options?: Record<string, unknown> ): Promise<unknown> {
 		return await this.say( context.from, message, options );
 	}
 

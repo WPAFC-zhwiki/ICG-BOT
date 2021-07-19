@@ -1,13 +1,12 @@
 import Discord = require( 'discord.js' );
-import getBacklogInfo from '../backlogInfo.js';
-import { setCommand } from '../msg';
+import { getBacklogInfo, encodeURI, setCommand } from 'modules/afc/util';
 
 function htmllink( title: string, text?: string ) {
-	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURIComponent( title ) }">${ text || title }</a>`;
+	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
 }
 
 function mdlink( title: string, text?: string ) {
-	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURIComponent( title ) })`;
+	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
 setCommand( 'waitlist', async function ( args, reply ) {
@@ -43,13 +42,13 @@ setCommand( 'waitlist', async function ( args, reply ) {
 		.setTitle( '候審草稿列表' )
 		.setDescription( list.map( function ( page ) {
 			return mdlink( page.title );
-		} ).slice( from - 1, to - 1 ).join( '\n' ) )
+		} ).slice( from - 1, to ).join( '\n' ) )
 		.setTimestamp()
 		.setFooter( `顯示第 ${ from } 至 ${ to } 項（共 ${ to - from + 1 } 項）${ sizeError ? '（警告：已忽略無效範圍參數）' : '' }` );
 
 	const tMsg = `<b>候審草稿列表</b>${ list.map( function ( page ) {
 		return `\n• ${ htmllink( page.title ) }`;
-	} ).slice( from - 1, to - 1 ).join( '' ) }\n顯示第 ${ from } 至 ${ to } 項（共 ${ to - from + 1 } 項）${ sizeError ? '\n<b>警告</b>：已忽略無效範圍參數。' : '' }`;
+	} ).slice( from - 1, to ).join( '' ) }\n顯示第 ${ from } 至 ${ to } 項（共 ${ to - from + 1 } 項）${ sizeError ? '\n<b>警告</b>：已忽略無效範圍參數。' : '' }`;
 
 	const iMsg = '請到 Telegram 或 Discord 查看，謝謝！'; // IRC不傳送這種東西，太長了
 

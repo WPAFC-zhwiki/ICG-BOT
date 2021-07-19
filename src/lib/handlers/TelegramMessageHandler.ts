@@ -1,5 +1,5 @@
-import { MessageHandler, Command } from './MessageHandler.js';
-import { Context } from './Context';
+import { MessageHandler, Command } from 'lib/handlers/MessageHandler';
+import { Context } from 'lib/handlers/Context';
 
 import https from 'https';
 import winston from 'winston';
@@ -9,10 +9,10 @@ import * as Tls from 'tls';
 import { Telegraf, Context as TContext, Telegram } from 'telegraf';
 import * as TT from 'telegraf/typings/telegram-types';
 
-import { getFriendlySize, getFriendlyLocation, copyObject } from '../util.js';
-import { HttpsProxyAgent } from '../proxy';
+import { getFriendlySize, getFriendlyLocation, copyObject } from 'lib/util';
+import HttpsProxyAgent from 'lib/proxy';
 
-import { ConfigTS } from '../../../config/type';
+import { ConfigTS } from 'config';
 
 /**
  * 使用通用介面處理 Telegram 訊息
@@ -66,10 +66,8 @@ export class TelegramMessageHandler extends MessageHandler {
 		let myAgent: https.Agent = https.globalAgent;
 		if ( botConfig.proxy && botConfig.proxy.host ) {
 			myAgent = new HttpsProxyAgent( {
-			// eslint-disable-next-line no-tabs
-			//	proxyHost: botConfig.proxy.host,
-			// eslint-disable-next-line no-tabs
-			//	proxyPort: botConfig.proxy.port
+				proxyHost: botConfig.proxy.host,
+				proxyPort: botConfig.proxy.port
 			} );
 		}
 
@@ -90,7 +88,9 @@ export class TelegramMessageHandler extends MessageHandler {
 			if ( webhookConfig.url ) {
 				if ( webhookConfig.ssl.certPath ) {
 					client.telegram.setWebhook( webhookConfig.url, {
-						source: webhookConfig.ssl.certPath
+						certificate: {
+							source: webhookConfig.ssl.certPath
+						}
 					} );
 				} else {
 					client.telegram.setWebhook( webhookConfig.url );
@@ -162,13 +162,13 @@ export class TelegramMessageHandler extends MessageHandler {
 				if ( ctx.message.reply_to_message ) {
 					const reply = ctx.message.reply_to_message;
 					const replyTo = that._getNick( reply.from );
-					const replyMessage = that._convertToText( reply );
+					const replyMessage = that._convertToText( Object.assign( reply ) );
 
 					context.extra.reply = {
 						nick: replyTo,
 						username: reply.from.username,
 						message: replyMessage,
-						isText: reply.text && true
+						isText: Object.assign( reply ).text && true
 					};
 				} else if ( ctx.message.forward_from ) {
 					const fwd = ctx.message.forward_from;
@@ -211,10 +211,10 @@ export class TelegramMessageHandler extends MessageHandler {
 					const message = ctx.message;
 					const setFile = async ( msg:
 						TT.PhotoSize & {
-							mime_type: string
+							mime_type?: string
 						} |
 						TT.Sticker & {
-							mime_type: string
+							mime_type?: string
 						} |
 						TT.Audio |
 						TT.Voice |
@@ -278,10 +278,10 @@ export class TelegramMessageHandler extends MessageHandler {
 									username: message.from.username
 								},
 								to: ctx.chat.id,
-								text: that._convertToText( message.pinned_message )
+								text: that._convertToText( Object.assign( message.pinned_message ) )
 							}, ctx );
 						} else {
-							context.text = `<Pinned Message: ${ that._convertToText( message.pinned_message ) }>`;
+							context.text = `<Pinned Message: ${ that._convertToText( Object.assign( message.pinned_message ) ) }>`;
 						}
 					} else if ( message.left_chat_member ) {
 						that.emit( 'leave', ctx.chat.id, {
@@ -368,7 +368,22 @@ export class TelegramMessageHandler extends MessageHandler {
 		}
 	}
 
-	private _convertToText( message: TT.Message ) {
+	private _convertToText( message: ( TT.Message | TT.ReplyMessage ) & {
+		audio?: TT.Audio;
+		photo?: TT.PhotoSize[];
+		document?: TT.Document;
+		game?: TT.Game;
+		sticker?: TT.Sticker;
+		video?: TT.Video;
+		voice?: TT.Voice;
+		contact?: TT.Contact;
+		location?: TT.Location;
+		venue?: TT.Venue;
+		pinned_message?: TT.ReplyMessage;
+		new_chat_members?: TT.User;
+		left_chat_member?: TT.User;
+		text?: string;
+	} ) {
 		if ( message.audio ) {
 			return '<Audio>';
 		} else if ( message.photo ) {
@@ -444,8 +459,8 @@ export class TelegramMessageHandler extends MessageHandler {
 	}
 
 	public sayWithHTML( target: string | number, message: string,
-		options?: TT.ExtraReplyMessage ): Promise<TT.Message> {
-		const options2: TT.ExtraReplyMessage = copyObject( options );
+		options?: TT.ExtraSendMessage ): Promise<TT.Message> {
+		const options2: TT.ExtraSendMessage = copyObject( options || {} );
 		options2.parse_mode = 'HTML';
 		return this.say( target, message, options2 );
 	}
@@ -477,7 +492,7 @@ export class TelegramMessageHandler extends MessageHandler {
 			if ( context.isPrivate ) {
 				return await this._say( method, context.to, message, options );
 			} else {
-				const options2: TT.ExtraReplyMessage = copyObject( options );
+				const options2: TT.ExtraReplyMessage = copyObject( options || {} );
 				options2.reply_to_message_id = context._rawdata.message.message_id;
 				return await this._say( method, context.to, message, options2 );
 			}

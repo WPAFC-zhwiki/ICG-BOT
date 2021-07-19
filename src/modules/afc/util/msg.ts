@@ -1,13 +1,13 @@
-import { BridgeMsg } from '../transport/BridgeMsg';
-
-import { Manager } from '../../init';
-import * as moduleTransport from '../transport';
+import { Manager } from 'init';
+import * as moduleTransport from 'modules/transport';
 
 import Discord from 'discord.js';
 
 const dc = Manager.handlers.get( 'Discord' );
 const tg = Manager.handlers.get( 'Telegram' );
 const irc = Manager.handlers.get( 'IRC' );
+
+const enableCommands: string[] = Manager.config.afc.enables.concat( Manager.config.afc.enableCommands || [] );
 
 type command = ( args: string[], replyfunc: ( msg: {
 	dMsg: string | Discord.MessageEmbed;
@@ -26,8 +26,8 @@ export function setCommand( cmd: string, func: command ): void {
 		} );
 		return Promise.resolve();
 	}, {
-		enables: Manager.config.afc.enables.filter( function ( c ) {
-			return BridgeMsg.parseUID( c ).client !== 'Telegram';
+		enables: enableCommands.filter( function ( c ) {
+			return moduleTransport.BridgeMsg.parseUID( c ).client !== 'Telegram';
 		} )
 	} );
 
@@ -41,18 +41,18 @@ export function setCommand( cmd: string, func: command ): void {
 		} );
 		return Promise.resolve();
 	}, {
-		enables: Manager.config.afc.enables.filter( function ( c ) {
-			return BridgeMsg.parseUID( c ).client !== 'IRC';
+		enables: enableCommands.filter( function ( c ) {
+			return moduleTransport.BridgeMsg.parseUID( c ).client !== 'IRC';
 		} )
 	} );
 }
 
-export async function reply( context: BridgeMsg, msg: {
+export async function reply( context: moduleTransport.BridgeMsg, msg: {
 	dMsg: string | Discord.MessageEmbed;
 	tMsg: string;
 	iMsg: string;
 } ): Promise<void> {
-	const that = BridgeMsg.parseUID( context.rawTo );
+	const that = moduleTransport.BridgeMsg.parseUID( context.rawTo );
 
 	if ( that.client === 'Discord' ) {
 		dc.say( that.id, msg.dMsg );
@@ -78,7 +78,7 @@ export async function reply( context: BridgeMsg, msg: {
 			if ( t === context.to_uid ) {
 				continue;
 			}
-			const s = BridgeMsg.parseUID( t );
+			const s = moduleTransport.BridgeMsg.parseUID( t );
 			if ( s.client === 'Discord' ) {
 				dc.say( s.id, msg.dMsg );
 			} else if ( s.client === 'Telegram' ) {
@@ -94,13 +94,15 @@ export async function reply( context: BridgeMsg, msg: {
 	}
 }
 
+const enableEvents: string[] = Manager.config.afc.enables.concat( Manager.config.afc.enableEvents || [] );
+
 export async function send( msg: {
 	dMsg: string | Discord.MessageEmbed;
 	tMsg: string;
 	iMsg: string;
 } ): Promise<void> {
-	Manager.config.afc.enables.forEach( function ( k ) {
-		const f = BridgeMsg.parseUID( k );
+	enableEvents.forEach( function ( k ) {
+		const f = moduleTransport.BridgeMsg.parseUID( k );
 		if ( f.client === 'Discord' ) {
 			dc.say( f.id, msg.dMsg );
 		} else if ( f.client === 'Telegram' ) {

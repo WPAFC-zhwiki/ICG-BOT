@@ -1,23 +1,21 @@
 import Discord = require( 'discord.js' );
 
-import { mwbot, turndown, $, htmlToIRC } from '../util';
-import { autoreview, issuesData } from '../autoreview.js';
-import { setCommand } from '../msg';
+import { mwbot, turndown, $, htmlToIRC, encodeURI, autoreview, issuesData, setCommand } from '../util';
 import { MwnPage } from 'mwn';
 import winston from 'winston';
 
 function htmllink( title: string, text?: string ) {
-	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURIComponent( title ) }">${ text || title }</a>`;
+	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
 }
 
 function mdlink( title: string, text?: string ) {
-	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURIComponent( title ) })`;
+	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
 setCommand( 'autoreview', async function ( args, reply ) {
 	let title = args.join( ' ' ).split( '#' )[ 0 ];
 
-	if ( !args.length ) {
+	if ( !args.length || !title.length ) {
 		reply( {
 			tMsg: '請輸入頁面名稱！',
 			dMsg: new Discord.MessageEmbed()
@@ -25,6 +23,7 @@ setCommand( 'autoreview', async function ( args, reply ) {
 				.setDescription( '請輸入頁面名稱！' ),
 			iMsg: '請輸入頁面名稱！'
 		} );
+		winston.debug( '[afc/commands/autoreview.js] title: null' );
 		return;
 	}
 
@@ -37,7 +36,7 @@ setCommand( 'autoreview', async function ( args, reply ) {
 			dMsg: new Discord.MessageEmbed()
 				.setColor( 'RED' )
 				.setDescription( `標題**${ mdlink( title ) }**不合法或是頁面不存在。` ),
-			iMsg: `標題 ${ title }<https://zhwp.org/${ encodeURIComponent( title ) }> 不合法或是頁面不存在。`
+			iMsg: `標題 ${ title }<https://zhwp.org/${ encodeURI( title ) }> 不合法或是頁面不存在。`
 		} );
 		winston.debug( `[afc/commands/autoreview.js] title: ${ title }, badTitle: true` );
 		return;
@@ -55,7 +54,7 @@ setCommand( 'autoreview', async function ( args, reply ) {
 			dMsg: new Discord.MessageEmbed()
 				.setColor( 'RED' )
 				.setDescription( `頁面**${ mdlink( title ) }**不存在。` ),
-			iMsg: `頁面 ${ title }<https://zhwp.org/${ encodeURIComponent( title ) }> 不存在。`
+			iMsg: `頁面 ${ title }<https://zhwp.org/${ encodeURI( title ) }> 不存在。`
 		} );
 		winston.debug( `[afc/commands/autoreview.js] title: ${ title }, exists: false` );
 		return;
@@ -74,7 +73,7 @@ setCommand( 'autoreview', async function ( args, reply ) {
 				dMsg: new Discord.MessageEmbed()
 					.setColor( 'YELLOW' )
 					.setDescription( `頁面${ mdlink( title ) }}${ redirect ? `（重新導向自${ mdlink( rdrFrom ) } ）` : '' }不在條目命名空間、使用者命名空間或草稿命名空間，不予解析。` ),
-				iMsg: `頁面 ${ title }<https://zhwp.org/${ encodeURI( title ) }> ${ redirect ? `（重新導向自 ${ rdrFrom }<https://zhwp.org/${ encodeURIComponent( rdrFrom ) }> ）` : '' }不在條目命名空間、使用者命名空間或草稿命名空間，不予解析。`
+				iMsg: `頁面 ${ title }<https://zhwp.org/${ encodeURI( title ) }> ${ redirect ? `（重新導向自 ${ rdrFrom }<https://zhwp.org/${ encodeURI( rdrFrom ) }> ）` : '' }不在條目命名空間、使用者命名空間或草稿命名空間，不予解析。`
 			} );
 			winston.debug( `[afc/commands/autoreview.js] title: ${ title }, rdrFrom: ${ rdrFrom }, namespace: ${ page.namespace }` );
 			return;
@@ -102,14 +101,14 @@ setCommand( 'autoreview', async function ( args, reply ) {
 
 	if ( issues && issues.length > 0 ) {
 		output += '，初步發現可能存在以下問題：';
-		dMsg.addField( '淺在問題', issues.map( function ( x ) {
-			return `• ${ turndown( issuesData[ x ] ) } (${ x })`;
+		dMsg.addField( '潛在問題', issues.map( function ( x ) {
+			return `• ${ turndown( issuesData[ x ].short ) } (${ x })`;
 		} ) );
 		output += issues.map( function ( x ) {
-			return `\n• ${ issuesData[ x ] } (${ x })`;
+			return `\n• ${ issuesData[ x ].short } (${ x })`;
 		} ).join( '' );
 	} else {
-		dMsg.addField( '淺在問題', [ '• 沒有發現顯著的問題。' ] );
+		dMsg.addField( '潛在問題', [ '• 沒有發現顯著的問題。' ] );
 		output += '，沒有發現顯著的問題。';
 	}
 

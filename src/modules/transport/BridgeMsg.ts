@@ -4,7 +4,7 @@ import { MessageHandler } from '../../lib/handlers/MessageHandler';
 
 let clientFullNames = {};
 
-type BridgeMsgOptin = optin & extra & {
+type BridgeMsgOptin = optin & {
 	noPrefix?: boolean;
 	isNotice?: boolean;
 	from_uid?: string;
@@ -30,13 +30,21 @@ export class BridgeMsg extends Context {
 	readonly rawFrom: string;
 	readonly rawTo: string;
 
+	private __from: string = null;
+	get from(): string {
+		return this.__from;
+	}
 	set from( f: string ) {
-		this._from = String( f );
+		this.__from = String( f );
 		this._from_uid = `${ ( this._from_client || '' ).toLowerCase() }/${ f }`;
 	}
 
+	private __to: string = null;
+	get to(): string {
+		return this.__to;
+	}
 	set to( f: string ) {
-		this._to = String( f );
+		this.__to = String( f );
 		this._to_uid = `${ ( this._to_client || '' ).toLowerCase() }/${ f }`;
 	}
 
@@ -49,7 +57,7 @@ export class BridgeMsg extends Context {
 	}
 	set from_uid( u: string ) {
 		const { client, id, uid } = BridgeMsg.parseUID( u );
-		this._from = id;
+		this.__from = id;
 		this._from_uid = uid;
 		this._from_client = client;
 	}
@@ -60,7 +68,7 @@ export class BridgeMsg extends Context {
 	}
 	set to_uid( u: string ) {
 		const { client, id, uid } = BridgeMsg.parseUID( u );
-		this._to = id;
+		this.__to = id;
 		this._to_uid = uid;
 		this._to_client = client;
 	}
@@ -70,46 +78,29 @@ export class BridgeMsg extends Context {
 		isNotice?: boolean;
 	};
 
-	constructor( context: Context | BridgeMsgOptin, overrides: BridgeMsgOptin = {} ) {
+	constructor( context: BridgeMsg | Context | BridgeMsgOptin, overrides: BridgeMsgOptin = {} ) {
 		super( context, overrides );
 
 		this._isNotice = false;
 
-		this.from = this._from;
-		this.to = this._to;
-
 		this._from_client = this._to_client = this.handler.type;
 
-		this.rawFrom = overrides.rawFrom || `${ this._from_client }/${ this._from }`;
-		this.rawTo = overrides.rawTo || `${ this._to_client }/${ this._to }`;
+		this.__from = String( context.from || this._from || super._from );
+		this.__to = String( context.to || this._from || super._to );
 
-		if ( overrides.from_uid !== undefined ) {
-			this.from_uid = overrides.from_uid;
-		} else {
-			this.from_uid = this.rawFrom;
-		}
+		this.rawFrom = overrides.rawFrom || `${ this._from_client }/${ this.__from }`;
+		this.rawTo = overrides.rawTo || `${ this._to_client }/${ this.__to }`;
 
-		if ( overrides.to_uid !== undefined ) {
-			this.to_uid = overrides.to_uid;
-		} else {
-			this.to_uid = this.rawTo;
-		}
+		this.from_uid = Context.getArgument( overrides.from_uid, this.rawFrom );
+		this.to_uid = Context.getArgument( overrides.to_uid, this.rawTo );
 
-		if ( overrides.noPrefix ) {
-			this._noPrefix = true;
-			this.extra.noPrefix = true;
-		} else {
-			this._noPrefix = false;
-			this.extra.noPrefix = false;
-		}
+		this._noPrefix = !!overrides.noPrefix;
+		this._isNotice = !!overrides.isNotice;
 
-		if ( overrides.isNotice ) {
-			this._isNotice = true;
-			this.extra.isNotice = true;
-		} else {
-			this._isNotice = false;
-			this.extra.isNotice = false;
-		}
+		Object.assign( this.extra, {
+			noPrefix: !!overrides.noPrefix,
+			isNotice: !!overrides.isNotice
+		} );
 	}
 
 	// eslint-disable-next-line no-shadow
@@ -151,5 +142,19 @@ export class BridgeMsg extends Context {
 		}
 
 		return `${ context.handler.type.toLowerCase() }/${ id }`;
+	}
+
+	static getSimpleContext( context: Context | BridgeMsg ): {
+		from: string;
+		to: string;
+		isPrivate: boolean;
+		handler: MessageHandler;
+	} {
+		return {
+			from: context.from,
+			to: context.to,
+			isPrivate: context.isPrivate,
+			handler: context.handler
+		};
 	}
 }

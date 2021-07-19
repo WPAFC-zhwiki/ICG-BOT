@@ -1,6 +1,6 @@
 import winston = require( 'winston' );
 
-import config from '../config/config';
+import { default as config } from 'config';
 
 import { version } from '../package.json';
 
@@ -53,6 +53,10 @@ process.on( 'uncaughtException', function ( err ) {
 
 process.on( 'rejectionHandled', function () {
 	// 忽略
+} );
+
+process.on( 'warning', ( warning ) => {
+	winston.warn( warning );
 } );
 
 // 日志等级、文件设置

@@ -1,6 +1,5 @@
 import { CronJob } from 'cron';
-import { send } from '../msg';
-import getBacklogInfo from '../backlogInfo.js';
+import { getBacklogInfo, send } from 'modules/afc/util';
 import winston from 'winston';
 
 const backlogCronJob = new CronJob( '0 0 */6 * * *', async function () {

@@ -6,7 +6,7 @@ import { BridgeMsg } from './BridgeMsg.js';
 type commandTS = {
 	options: {
 		disables: string[],
-		enables: string[]
+		enables?: string[]
 	},
 	callbacks: Record<string, bridge.hook>
 };
@@ -65,30 +65,32 @@ Record<string, bridge.hook> | ( ( msg: BridgeMsg ) => Promise<void> ), opts: {
 		}
 	}
 
-	const enables: string[] = [];
-	const disables: string[] = [];
+	const options: {
+		enables?: string[];
+		disables: string[];
+	} = {
+		disables: []
+	};
 
 	if ( opts.enables ) {
+		options.enables = [];
 		for ( const group of opts.enables ) {
 			const client = BridgeMsg.parseUID( group );
 			if ( client.uid ) {
-				enables.push( client.uid );
+				options.enables.push( client.uid );
 			}
 		}
 	} else if ( opts.disables ) {
 		for ( const group of opts.disables ) {
 			const client = BridgeMsg.parseUID( group );
 			if ( client.uid ) {
-				disables.push( client.uid );
+				options.disables.push( client.uid );
 			}
 		}
 	}
 
 	const cmd: commandTS = {
-		options: {
-			disables: disables,
-			enables: enables
-		},
+		options: options,
 		callbacks: cb
 	};
 

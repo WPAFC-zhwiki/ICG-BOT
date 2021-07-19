@@ -1,10 +1,10 @@
-import { MessageHandler } from './MessageHandler';
-import { Context } from './Context';
+import { MessageHandler } from 'lib/handlers/MessageHandler';
+import { Context } from 'lib/handlers/Context';
 import Discord from 'discord.js';
 import winston from 'winston';
 import { getFriendlySize } from '../util';
 
-import { ConfigTS } from '../../../config/type';
+import { ConfigTS } from 'config';
 
 /**
  * 使用通用介面處理 Discord 訊息

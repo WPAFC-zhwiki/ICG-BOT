@@ -14,7 +14,7 @@ Manager.global.ifEnable( 'transport', function () {
 			paeeye.inline.length && msg.text.includes( paeeye.inline ) ||
 			paeeye.regexp && msg.text.match( paeeye.regexp )
 			) ) {
-				winston.debug( `[paeeye.js] #${ msg.msgId }: Ignored.` );
+				winston.debug( `[transport/paeeye.js] #${ msg.msgId }: Ignored.` );
 				reject( false );
 				return;
 			} else if (
@@ -25,7 +25,7 @@ Manager.global.ifEnable( 'transport', function () {
 				paeeye.regexp && msg.extra.reply.message.match( paeeye.regexp )
 			)
 			) {
-				winston.debug( `[paeeye.js] #${ msg.msgId }: Ignored.` );
+				winston.debug( `[transport/paeeye.js] #${ msg.msgId }: Ignored.` );
 				reject( false );
 				return;
 			}
