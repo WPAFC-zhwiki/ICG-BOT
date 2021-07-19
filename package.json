@@ -24,7 +24,7 @@
 		"app-module-path": "^2.2.0",
 		"asciify-image": "^0.1.6",
 		"cron": "^1.8.2",
-		"discord.ts": "^12.5.3",
+		"discord.js": "^12.5.3",
 		"eslint-import-resolver-typescript": "^2.4.0",
 		"fs-extra": "^10.0.0",
 		"grunt": "^1.4.1",
