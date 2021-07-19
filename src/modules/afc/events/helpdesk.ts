@@ -46,7 +46,7 @@ RTRC.onmessage = async function ( event ) {
 	const parseHtml = $parse.text();
 	const parseMarkDown = turndown( parseHtml );
 
-	winston.debug( `[afc/events/autoreview.js] comment: ${ data.comment }, user: ${ data.user }, title: ${ data.title }, new: ${ parseHtml }` );
+	winston.debug( `[afc/events/autoreview] comment: ${ data.comment }, user: ${ data.user }, title: ${ data.title }, new: ${ parseHtml }` );
 
 	const dMsg = new Discord.MessageEmbed()
 		.setColor( 'BLUE' )

@@ -17,7 +17,7 @@ winston.info( 'Loading plugins...' );
 for ( const module of Manager.config.modules ) {
 	try {
 		winston.info( `Loading module: ${ module }` );
-		require( `./modules/${ module }.js` );
+		require( `./modules/${ module }` );
 	} catch ( ex ) {
 		winston.error( `Error while loading plugin ${ module }: `, ex );
 	}

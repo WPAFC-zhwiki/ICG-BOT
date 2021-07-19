@@ -11,7 +11,7 @@ setCommand( 'backlog', async function ( _args, reply ) {
 			iMsg
 		} );
 
-		winston.debug( `[afc/commands/backlog.js] count: ${ cnt }, level ${ lvl }` );
+		winston.debug( `[afc/commands/backlog] count: ${ cnt }, level ${ lvl }` );
 	} catch ( err ) {
 		const output = '生成等待時間數據失敗，請稍後再試。';
 

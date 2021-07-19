@@ -2,7 +2,6 @@
  * http://blog.vanamco.com/proxy-requests-in-node-js/
  * https://gist.github.com/matthias-christen/6beb3b4dda26bd6a221d
  */
-'use strict';
 
 const Http = require( 'http' );
 const Https = require( 'https' );

@@ -2,7 +2,7 @@ import path from 'path';
 import { Manager } from '../../../init';
 import * as bridge from '../bridge';
 import { ConfigTS } from '../../../../config/type';
-import { BridgeMsg } from '../BridgeMsg.js';
+import { BridgeMsg } from '../BridgeMsg';
 import format from 'string-format';
 import { Context } from '../../../lib/handlers/Context';
 import { TelegrafContext } from 'telegraf/typings/context';

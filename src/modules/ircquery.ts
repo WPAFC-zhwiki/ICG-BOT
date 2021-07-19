@@ -3,7 +3,7 @@
  */
 
 import winston = require( 'winston' );
-import { Manager } from 'init.js';
+import { Manager } from 'init';
 import * as moduleTransport from 'modules/transport';
 
 const ircHandler = Manager.handlers.get( 'IRC' );
@@ -36,7 +36,7 @@ async function processWhois( context: moduleTransport.BridgeMsg ) {
 			}
 
 			const outputStr = output.join( '\n' );
-			winston.debug( `[ircquery.js] Msg #${ context.msgId } whois: ${ outputStr }` );
+			winston.debug( `[ircquery] Msg #${ context.msgId } whois: ${ outputStr }` );
 			context.reply( outputStr );
 		} );
 	} else {
@@ -74,7 +74,7 @@ async function processNames( context: moduleTransport.BridgeMsg ) {
 
 		const outputStr = `Users on ${ chan }: ${ userlist.join( ', ' ) }`;
 		context.reply( outputStr );
-		winston.debug( `[ircquery.js] Msg #${ context.msgId } names: ${ outputStr }` );
+		winston.debug( `[ircquery] Msg #${ context.msgId } names: ${ outputStr }` );
 	}
 }
 
@@ -85,10 +85,10 @@ async function processTopic( context: moduleTransport.BridgeMsg ) {
 
 		if ( topic ) {
 			context.reply( `Topic for channel ${ chan }: ${ topic }` );
-			winston.debug( `[ircquery.js] Msg #${ context.msgId } topic: ${ topic }` );
+			winston.debug( `[ircquery] Msg #${ context.msgId } topic: ${ topic }` );
 		} else {
 			context.reply( `No topic for ${ chan }` );
-			winston.debug( `[ircquery.js] Msg #${ context.msgId } topic: No topic` );
+			winston.debug( `[ircquery] Msg #${ context.msgId } topic: No topic` );
 		}
 	}
 }

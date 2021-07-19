@@ -4,9 +4,9 @@ import { default as config } from 'config';
 
 import { version } from '../package.json';
 
-import { Context } from './lib/handlers/Context.js';
-import { MessageHandler } from './lib/handlers/MessageHandler';
-import { ifEnable, isEnable } from './modules/enable';
+import { Context } from 'lib/handlers/Context';
+import { MessageHandler } from 'lib/handlers/MessageHandler';
+import { ifEnable, isEnable } from 'modules/enable';
 
 export interface ExtendsMap<T extends string | number, S, M extends Record<T, S>> extends Map<T, S> {
     get<K extends keyof M>( key: K ): M[ K ];
@@ -149,7 +149,7 @@ for ( const client of enabledClients ) {
 
 	const options = config[ client ];
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	const Handler: typeof MessageHandler = require( `./lib/handlers/${ allHandlers.get( client ) }.js` )[ allHandlers.get( client ) ];
+	const Handler: typeof MessageHandler = require( `./lib/handlers/${ allHandlers.get( client ) }` )[ allHandlers.get( client ) ];
 	const handler: MessageHandler = new Handler( options );
 	handler.start();
 

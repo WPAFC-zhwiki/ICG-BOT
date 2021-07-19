@@ -23,7 +23,7 @@ setCommand( 'autoreview', async function ( args, reply ) {
 				.setDescription( '請輸入頁面名稱！' ),
 			iMsg: '請輸入頁面名稱！'
 		} );
-		winston.debug( '[afc/commands/autoreview.js] title: null' );
+		winston.debug( '[afc/commands/autoreview] title: null' );
 		return;
 	}
 
@@ -38,7 +38,7 @@ setCommand( 'autoreview', async function ( args, reply ) {
 				.setDescription( `標題**${ mdlink( title ) }**不合法或是頁面不存在。` ),
 			iMsg: `標題 ${ title }<https://zhwp.org/${ encodeURI( title ) }> 不合法或是頁面不存在。`
 		} );
-		winston.debug( `[afc/commands/autoreview.js] title: ${ title }, badTitle: true` );
+		winston.debug( `[afc/commands/autoreview] title: ${ title }, badTitle: true` );
 		return;
 	}
 
@@ -56,7 +56,7 @@ setCommand( 'autoreview', async function ( args, reply ) {
 				.setDescription( `頁面**${ mdlink( title ) }**不存在。` ),
 			iMsg: `頁面 ${ title }<https://zhwp.org/${ encodeURI( title ) }> 不存在。`
 		} );
-		winston.debug( `[afc/commands/autoreview.js] title: ${ title }, exists: false` );
+		winston.debug( `[afc/commands/autoreview] title: ${ title }, exists: false` );
 		return;
 	}
 
@@ -75,7 +75,7 @@ setCommand( 'autoreview', async function ( args, reply ) {
 					.setDescription( `頁面${ mdlink( title ) }}${ redirect ? `（重新導向自${ mdlink( rdrFrom ) } ）` : '' }不在條目命名空間、使用者命名空間或草稿命名空間，不予解析。` ),
 				iMsg: `頁面 ${ title }<https://zhwp.org/${ encodeURI( title ) }> ${ redirect ? `（重新導向自 ${ rdrFrom }<https://zhwp.org/${ encodeURI( rdrFrom ) }> ）` : '' }不在條目命名空間、使用者命名空間或草稿命名空間，不予解析。`
 			} );
-			winston.debug( `[afc/commands/autoreview.js] title: ${ title }, rdrFrom: ${ rdrFrom }, namespace: ${ page.namespace }` );
+			winston.debug( `[afc/commands/autoreview] title: ${ title }, rdrFrom: ${ rdrFrom }, namespace: ${ page.namespace }` );
 			return;
 		}
 	}
@@ -89,7 +89,7 @@ setCommand( 'autoreview', async function ( args, reply ) {
 
 	const { issues } = await autoreview( wikitext, $parseHTML );
 
-	winston.debug( `[afc/commands/autoreview.js] title: ${ title }, rdrFrom: ${ rdrFrom }, issues: ${ issues.join( ', ' ) }` );
+	winston.debug( `[afc/commands/autoreview] title: ${ title }, rdrFrom: ${ rdrFrom }, issues: ${ issues.join( ', ' ) }` );
 
 	let output = `系統剛剛自動審閱了頁面${ htmllink( title ) }${ redirect ? `（重新導向自${ htmllink( rdrFrom ) }）` : '' }`;
 

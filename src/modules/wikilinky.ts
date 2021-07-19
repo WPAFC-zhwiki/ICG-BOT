@@ -131,7 +131,7 @@ const processlinky = async function ( context: Context ) {
 			const links = linky( context.text, rule );
 
 			if ( links.length > 0 ) {
-				winston.debug( `[wikilinkly.js] Msg ${ context.msgId } parselinks: ${ links.join( ', ' ) }` );
+				winston.debug( `[wikilinkly] Msg ${ context.msgId } parselinks: ${ links.join( ', ' ) }` );
 				context.reply( links.join( '\n' ), {
 					noPrefix: true
 				} );

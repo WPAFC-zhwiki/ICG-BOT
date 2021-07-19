@@ -33,7 +33,7 @@ export function encodeURI( uri: string ): string {
 		.replace( /:$/, '%3A' );
 }
 
-export { default as jQuery, default as $ } from 'lib/jquery.js';
+export { default as jQuery, default as $ } from 'lib/jquery';
 
 export const mwbot = ( function (): mwn {
 	const mwnconfig = Manager.config.afc.mwn;
@@ -50,26 +50,26 @@ export const mwbot = ( function (): mwn {
 		case 'botpassword':
 			mwbot.login()
 				.then( function () {
-					winston.debug( `[afc/util/index.js] mwn login successful: ${ mwnconfig.username }@${ mwnconfig.apiUrl.split( '/api.php' ).join( '' ) }/index.php` );
+					winston.debug( `[afc/util/index] mwn login successful: ${ mwnconfig.username }@${ mwnconfig.apiUrl.split( '/api.php' ).join( '' ) }/index.php` );
 				} )
 				.catch( function ( err ) {
-					winston.debug( `[afc/util/index.js] mwn login error: ${ err }` );
+					winston.debug( `[afc/util/index] mwn login error: ${ err }` );
 				} );
 			break;
 		case 'oauth':
 			mwbot.initOAuth();
 			mwbot.getTokensAndSiteInfo()
 				.then( function () {
-					winston.debug( '[afc/util/index.js] mwn: success get tokens and site info.' );
+					winston.debug( '[afc/util/index] mwn: success get tokens and site info.' );
 				} )
 				.catch( function ( err ) {
-					winston.debug( `[afc/util/index.js] mwn error: ${ err }` );
+					winston.debug( `[afc/util/index] mwn error: ${ err }` );
 				} );
 			break;
 		default:
 			mwbot.getSiteInfo()
 				.then( function () {
-					winston.debug( '[afc/util/index.js] mwn: success get site info.' );
+					winston.debug( '[afc/util/index] mwn: success get site info.' );
 				} );
 			break;
 	}

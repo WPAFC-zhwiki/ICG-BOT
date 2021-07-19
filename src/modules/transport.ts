@@ -5,8 +5,8 @@
 import { Manager } from 'init';
 import winston = require( 'winston' );
 
-import { BridgeMsg } from './transport/BridgeMsg.js';
-export { BridgeMsg } from './transport/BridgeMsg.js';
+import { BridgeMsg } from './transport/BridgeMsg';
+export { BridgeMsg } from './transport/BridgeMsg';
 
 import * as bridge from './transport/bridge';
 export * from './transport/bridge';
@@ -94,7 +94,7 @@ Manager.global.ifEnable( 'transport', function () {
 
 	// 调试日志
 	winston.debug( '' );
-	winston.debug( '[transport.js] Bridge Map:' );
+	winston.debug( '[transport] Bridge Map:' );
 	for ( const client1 in map ) {
 		for ( const client2 in map[ client1 ] ) {
 			if ( map[ client1 ][ client2 ].disabled ) {
@@ -136,7 +136,7 @@ Manager.global.ifEnable( 'transport', function () {
 
 	// 调试日志
 	winston.debug( '' );
-	winston.debug( '[transport.js] Aliases:' );
+	winston.debug( '[transport] Aliases:' );
 	let aliasesCount = 0;
 	for ( const alias in aliases ) {
 		winston.debug( `${ alias }: ${ aliases[ alias ].shortname } ---> ${ aliases[ alias ].fullname }` );
@@ -149,8 +149,8 @@ Manager.global.ifEnable( 'transport', function () {
 	// 載入各用戶端的處理程式，並連接到 bridge 中
 	for ( const [ type ] of Manager.handlers ) {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
-		const processor: bridge.processor = require( `./transport/processors/${ type }.js` ).default;
-		winston.debug( `[transport.js] load processor ${ type }` );
+		const processor: bridge.processor = require( `./transport/processors/${ type }` ).default;
+		winston.debug( `[transport] load processor ${ type }` );
 		bridge.addProcessor( type, processor );
 	}
 } );

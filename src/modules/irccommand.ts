@@ -3,7 +3,7 @@
  */
 
 import winston = require( 'winston' );
-import { Manager } from 'init.js';
+import { Manager } from 'init';
 import * as moduleTransport from 'modules/transport';
 
 if ( Manager.global.isEnable( 'transport' ) ) {
@@ -26,12 +26,12 @@ if ( Manager.global.isEnable( 'transport' ) ) {
 					if ( client.client === 'IRC' ) {
 						sentCount++;
 						ircHandler.say( client.id, context.param );
-						winston.debug( `[irccommand.js] Msg #${ context.msgId }: IRC command has sent to ${ client.id }. Param = ${ context.param }` );
+						winston.debug( `[irccommand] Msg #${ context.msgId }: IRC command has sent to ${ client.id }. Param = ${ context.param }` );
 					}
 				}
 
 				if ( sentCount === 0 ) {
-					winston.debug( `[irccommand.js] Msg #${ context.msgId }: No IRC targets.` );
+					winston.debug( `[irccommand] Msg #${ context.msgId }: No IRC targets.` );
 				}
 			} else {
 				context.reply( `用法: /${ prefix }command <命令>` );

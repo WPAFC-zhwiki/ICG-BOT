@@ -1,7 +1,7 @@
 import winston = require( 'winston' );
 import { Manager } from '../../init';
 import * as bridge from './bridge';
-import { BridgeMsg } from './BridgeMsg.js';
+import { BridgeMsg } from './BridgeMsg';
 
 type commandTS = {
 	options: {
@@ -136,18 +136,18 @@ function sethook( event: string ) {
 
 			// 判斷當前群組是否在處理範圍內
 			if ( disables.indexOf( msg.to_uid ) !== -1 ) {
-				winston.debug( `[transport/command.js] Msg #${ msg.msgId } command ignored (in disables).` );
+				winston.debug( `[transport/command] Msg #${ msg.msgId } command ignored (in disables).` );
 				return Promise.resolve();
 			}
 
 			if ( !enables || ( enables && enables.indexOf( msg.to_uid ) !== -1 ) ) {
 				func = cmd.callbacks[ event ];
 			} else {
-				winston.debug( `[transport/command.js] Msg #${ msg.msgId } command ignored (not in enables).` );
+				winston.debug( `[transport/command] Msg #${ msg.msgId } command ignored (not in enables).` );
 			}
 
 			if ( func && ( typeof func === 'function' ) ) {
-				winston.debug( `[transport/command.js] Msg #${ msg.msgId } command: ${ msg.command }` );
+				winston.debug( `[transport/command] Msg #${ msg.msgId } command: ${ msg.command }` );
 				return func( msg );
 			} else {
 				return Promise.resolve();

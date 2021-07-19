@@ -61,9 +61,9 @@ new mwbot.stream( 'recentchange', {
 	},
 	onerror( err ) {
 		try {
-			winston.error( '[afc/event/watchlist.js] Recentchange Error (Throw by EventSource):' + JSON.stringify( err ) );
+			winston.error( '[afc/event/watchlist] Recentchange Error (Throw by EventSource):' + JSON.stringify( err ) );
 		} catch ( e ) {
-			winston.error( '[afc/event/watchlist.js] Recentchange Error (Throw by EventSource): <Throw at console>' );
+			winston.error( '[afc/event/watchlist] Recentchange Error (Throw by EventSource): <Throw at console>' );
 			console.log( err );
 		}
 	}
@@ -133,7 +133,7 @@ new mwbot.stream( 'recentchange', {
 				.setColor( 'GREEN' )
 				.setDescription( turndown( tMsg ) );
 
-			winston.debug( `[afc/events/autoreview.js] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: accept, tpClass: ${ tpClass.length && tpClass || undefined }` );
+			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: accept, tpClass: ${ tpClass.length && tpClass || undefined }` );
 		} else if ( !$submissionbox.length && page.namespace === 0 && user === creator ) {
 			const pagehistory = await page.history( 'user', 2 );
 			if ( pagehistory.length === 1 ) {
@@ -148,11 +148,11 @@ new mwbot.stream( 'recentchange', {
 					.setDescription( `${ mdlink( `User:${ user }`, user ) }在條目命名空間建立了草稿${ mdlink( title ) }` )
 					.setFooter( [ `[移動到草稿命名空間](${ moveurl })` ] );
 
-				winston.debug( `[afc/events/autoreview.js] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: create in ns0` );
+				winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: create in ns0` );
 			} else {
 				tMsg += `移除了在條目命名空間的草稿${ htmllink( title ) }中的AFC模板。`;
 				dMsg.setDescription( turndown( tMsg ) );
-				winston.debug( `[afc/events/autoreview.js] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & in ns0` );
+				winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & in ns0` );
 			}
 			dMsg.setColor( 'ORANGE' );
 		} else if ( !$submissionbox.length && page.namespace !== 0 ) {
@@ -161,7 +161,7 @@ new mwbot.stream( 'recentchange', {
 				.setColor( 'ORANGE' )
 				.setDescription( turndown( tMsg ) );
 
-			winston.debug( `[afc/events/autoreview.js] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & not in ns0` );
+			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & not in ns0` );
 		} else if ( $submissionbox.hasClass( 'afc-submission-pending' ) ) {
 			tMsg += '提交了';
 			if ( creator !== user ) {
@@ -170,7 +170,7 @@ new mwbot.stream( 'recentchange', {
 			tMsg += `草稿${ htmllink( title ) }。`;
 
 			const { issues } = await autoreview( wikitext, $parseHTML );
-			winston.debug( `[afc/events/autoreview.js] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: submit, issues: ${ issues.join( ', ' ) }` );
+			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: submit, issues: ${ issues.join( ', ' ) }` );
 
 			dMsg.setDescription( turndown( tMsg ) );
 
@@ -229,7 +229,7 @@ new mwbot.stream( 'recentchange', {
 				} );
 			}
 
-			winston.debug( `[afc/events/autoreview.js] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, submituser: ${ submituser }, action: ${ $submissionbox.hasClass( 'afc-submission-rejected' ) ? 'rejected' : 'declined' }, reasons: ${ JSON.stringify( reasons ) }` );
+			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, submituser: ${ submituser }, action: ${ $submissionbox.hasClass( 'afc-submission-rejected' ) ? 'rejected' : 'declined' }, reasons: ${ JSON.stringify( reasons ) }` );
 
 			if ( reasons.length ) {
 				dMsg.setDescription( turndown( tMsg ) );
@@ -244,7 +244,7 @@ new mwbot.stream( 'recentchange', {
 				dMsg.addField( '拒絕理由', [ '• 未提供理由' ] );
 			}
 		} else {
-			winston.debug( `[afc/events/autoreview.js] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: ignore` );
+			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: ignore` );
 			return;
 		}
 
@@ -256,6 +256,6 @@ new mwbot.stream( 'recentchange', {
 			iMsg
 		} );
 	} catch ( e ) {
-		winston.error( '[afc/event/watchlist.js] Recentchange Error:  (Throw by Async Function)' + e );
+		winston.error( '[afc/event/watchlist] Recentchange Error:  (Throw by Async Function)' + e );
 	}
 } );

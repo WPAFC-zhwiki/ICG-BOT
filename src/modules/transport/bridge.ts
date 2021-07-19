@@ -111,7 +111,7 @@ export async function emitHook( event: string, msg: BridgeMsg ): Promise<void> {
 	checkEnable();
 
 	if ( hooks[ event ] ) {
-		winston.debug( `[transport/bridge.js] emit hook: ${ event }` );
+		winston.debug( `[transport/bridge] emit hook: ${ event }` );
 		// eslint-disable-next-line no-shadow, @typescript-eslint/no-unused-vars
 		for ( const [ _priority, hook ] of hooks[ event ] ) {
 			await hook( msg );
@@ -142,20 +142,20 @@ function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
 				// eslint-disable-next-line no-shadow
 				const processor = processors.get( client );
 				if ( processor ) {
-					winston.debug( `[transport/bridge.js] <BotTransport> #${ currMsgId } ---> ${ new_uid.uid }` );
+					winston.debug( `[transport/bridge] <BotTransport> #${ currMsgId } ---> ${ new_uid.uid }` );
 					return processor( msg2, noPrefix );
 				} else {
-					winston.debug( `[transport/bridge.js] <BotTransport> #${ currMsgId } -X-> ${ new_uid.uid }: No processor` );
+					winston.debug( `[transport/bridge] <BotTransport> #${ currMsgId } -X-> ${ new_uid.uid }: No processor` );
 				}
 			} ) );
 		} else {
 			// eslint-disable-next-line no-shadow
 			const processor = processors.get( client );
 			if ( processor ) {
-				winston.debug( `[transport/bridge.js] <BotSend> #${ currMsgId } ---> ${ new_uid.uid }` );
+				winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } ---> ${ new_uid.uid }` );
 				promises.push( processor( msg2, noPrefix ) );
 			} else {
-				winston.debug( `[transport/bridge.js] <BotSend> #${ currMsgId } -X-> ${ new_uid.uid }: No processor` );
+				winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } -X-> ${ new_uid.uid }: No processor` );
 			}
 		}
 	}
@@ -169,10 +169,10 @@ export async function send( m: BridgeMsg | Context ): Promise<boolean> {
 	const msg: BridgeMsg = getBridgeMsg( m );
 
 	const currMsgId: number = msg.msgId;
-	winston.debug( `[transport/bridge.js] <UserSend> #${ currMsgId } ${ msg.from_uid } ---> ${ msg.to_uid }: ${ msg.text }` );
+	winston.debug( `[transport/bridge] <UserSend> #${ currMsgId } ${ msg.from_uid } ---> ${ msg.to_uid }: ${ msg.text }` );
 	const extraJson: string = JSON.stringify( msg.extra );
 	if ( extraJson !== 'null' && extraJson !== '{}' ) {
-		winston.debug( `[transport/bridge.js] <UserSend> #${ currMsgId } extra: ${ extraJson }` );
+		winston.debug( `[transport/bridge] <UserSend> #${ currMsgId } extra: ${ extraJson }` );
 	}
 
 	if ( String( msg.from_uid ).match( /undefined|null/ ) || String( msg.to_uid ).match( /undefined|null/ ) ) {
@@ -189,14 +189,14 @@ export async function send( m: BridgeMsg | Context ): Promise<boolean> {
 		await Promise.all( promises );
 	} catch ( e ) {
 		allresolved = false;
-		winston.error( '[transport/bridge.js] <BotSend> Rejected: ', e );
+		winston.error( '[transport/bridge] <BotSend> Rejected: ', e );
 	}
 
 	emitHook( 'bridge.sent', msg );
 	if ( promises.length > 0 ) {
-		winston.debug( `[transport/bridge.js] <BotSend> #${ currMsgId } done.` );
+		winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } done.` );
 	} else {
-		winston.debug( `[transport/bridge.js] <BotSend> #${ currMsgId } has no targets. Ignored.` );
+		winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } has no targets. Ignored.` );
 	}
 	return await Promise.resolve( allresolved );
 }
@@ -208,7 +208,7 @@ export function reply( context: BridgeMsg | Context, text: string, { isNotice, n
 	isNotice = !!isNotice;
 	noPrefix = !!noPrefix;
 
-	winston.debug( `[transport/bridge.js] <CommandReply> #${ context.msgId }: ${ text }` );
+	winston.debug( `[transport/bridge] <CommandReply> #${ context.msgId }: ${ text }` );
 
 	context.handler.reply( context, text );
 
@@ -220,11 +220,11 @@ export function reply( context: BridgeMsg | Context, text: string, { isNotice, n
 		noPrefix: noPrefix
 	} );
 
-	winston.debug( `[transport/bridge.js] <CommandReplyTransport> #${ context.msgId } ---> #${ msg2.msgId }: ${ text }` );
+	winston.debug( `[transport/bridge] <CommandReplyTransport> #${ context.msgId } ---> #${ msg2.msgId }: ${ text }` );
 
 	Manager.global.ifEnable( 'transport', function () {
 		Promise.all( sendMessage( msg2 ) ).catch( function ( e ) {
-			winston.error( '[transport/bridge.js] <BotSend> Rejected: ', e );
+			winston.error( '[transport/bridge] <BotSend> Rejected: ', e );
 		} );
 	} );
 }

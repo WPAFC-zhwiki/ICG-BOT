@@ -12,7 +12,7 @@ const backlogCronJob = new CronJob( '0 0 */6 * * *', async function () {
 			iMsg
 		} );
 
-		winston.debug( `[afc/event/backlog.js] count: ${ cnt }, level ${ lvl }` );
+		winston.debug( `[afc/event/backlog] count: ${ cnt }, level ${ lvl }` );
 	} catch ( err ) {
 		winston.error( err );
 	}

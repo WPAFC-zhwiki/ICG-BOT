@@ -14,13 +14,21 @@
 		"removeComments": true,
 		"resolveJsonModule": true,
 		"sourceMap": false,
-		"target": "es2017"
+		"target": "es2017",
+		"paths": {
+			"lib/*": [
+				"./lib/*"
+			],
+			"modules/*": [
+				"./modules/*"
+			]
+		}
 	},
 	"include": [
 		"config/conifg.ts",
-		"src/*.js",
 		"src/*.ts",
-		"src/**/*.js",
+		"src/*.ts",
+		"src/**/*.ts",
 		"src/**/*.ts"
 	]
 }

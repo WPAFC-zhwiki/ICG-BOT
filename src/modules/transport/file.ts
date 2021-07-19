@@ -335,7 +335,7 @@ const fileUploader = {
 			for ( const [ index, file ] of context.extra.files.entries() ) {
 				if ( servemedia.sizeLimit && servemedia.sizeLimit > 0 &&
 					file.size && file.size > servemedia.sizeLimit * 1024 ) {
-					winston.debug( `[file.js] <FileUploader> #${ context.msgId } File ${ index + 1 }/${ fileCount }: Size limit exceeded. Ignore.` );
+					winston.debug( `[file] <FileUploader> #${ context.msgId } File ${ index + 1 }/${ fileCount }: Size limit exceeded. Ignore.` );
 				} else {
 					promises.push( uploadFile( file ) );
 				}
@@ -344,7 +344,7 @@ const fileUploader = {
 			// 整理上传到服务器之后到URL
 			const uploads = ( await Promise.all( promises ) ).filter( ( x ) => x );
 			for ( const [ index, upload ] of uploads.entries() ) {
-				winston.debug( `[file.js] <FileUploader> #${ context.msgId } File ${ index + 1 }/${ uploads.length } (${ upload.type }): ${ upload.url }` );
+				winston.debug( `[file] <FileUploader> #${ context.msgId } File ${ index + 1 }/${ uploads.length } (${ upload.type }): ${ upload.url }` );
 			}
 
 			return uploads;
