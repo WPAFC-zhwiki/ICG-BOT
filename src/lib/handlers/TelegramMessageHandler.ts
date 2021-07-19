@@ -10,7 +10,7 @@ import { Telegraf, Context as TContext, Telegram } from 'telegraf';
 import * as TT from 'telegraf/typings/telegram-types';
 
 import { getFriendlySize, getFriendlyLocation, copyObject } from 'lib/util';
-import HttpsProxyAgent from 'lib/proxy';
+import HttpsProxyAgent from 'lib/proxy.js';
 
 import { ConfigTS } from 'config';
 
