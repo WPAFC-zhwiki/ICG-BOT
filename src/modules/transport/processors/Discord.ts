@@ -194,7 +194,10 @@ discordHandler.on( 'text', ( context: Context & { _rawdata: Discord.Message } ) 
 } );
 
 // 收到了來自其他群組的訊息
-export default async function ( msg: BridgeMsg, noPrefix = false ): Promise<void> {
+export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPrefix: boolean, isNotice: boolean } = {
+	noPrefix: false,
+	isNotice: false
+} ): Promise<void> {
 	// 元信息，用于自定义样式
 	const meta: Record<string, string> = {
 		nick: msg.nick,
@@ -224,12 +227,12 @@ export default async function ( msg: BridgeMsg, noPrefix = false ): Promise<void
 	// 自定义消息样式
 	const messageStyle = config.options.messageStyle;
 	let styleMode = 'simple';
-	if ( msg.extra.clients >= 3 && ( msg.extra.clientName.shortname || msg.isNotice ) ) {
+	if ( msg.extra.clients >= 3 && ( msg.extra.clientName.shortname || isNotice ) ) {
 		styleMode = 'complex';
 	}
 
 	let template: string;
-	if ( msg.isNotice ) {
+	if ( isNotice ) {
 		template = messageStyle[ styleMode ].notice;
 	} else if ( msg.extra.isAction ) {
 		template = messageStyle[ styleMode ].action;

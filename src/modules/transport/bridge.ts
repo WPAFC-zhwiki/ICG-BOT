@@ -9,7 +9,8 @@ function checkEnable(): void {
 	}
 }
 
-export type processor = ( msg: BridgeMsg, noPrefix?: boolean ) => Promise<void>;
+// eslint-disable-next-line max-len
+export type processor = ( msg: BridgeMsg, { noPrefix, isNotice }: { noPrefix: boolean, isNotice: boolean } ) => Promise<void>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type hook = ( ...args: any[] ) => Promise<any>;
@@ -121,6 +122,7 @@ export async function emitHook( event: string, msg: BridgeMsg ): Promise<void> {
 
 function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
 	const noPrefix = !!msg.extra.noPrefix;
+	const isNotice = !!msg.extra.isNotice;
 	const currMsgId = msg.msgId;
 
 	// 全部訊息已傳送 resolve( true )，部分訊息已傳送 resolve( false )；
@@ -143,7 +145,7 @@ function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
 				const processor = processors.get( client );
 				if ( processor ) {
 					winston.debug( `[transport/bridge] <BotTransport> #${ currMsgId } ---> ${ new_uid.uid }` );
-					return processor( msg2, noPrefix );
+					return processor( msg2, { noPrefix, isNotice } );
 				} else {
 					winston.debug( `[transport/bridge] <BotTransport> #${ currMsgId } -X-> ${ new_uid.uid }: No processor` );
 				}
@@ -153,7 +155,7 @@ function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
 			const processor = processors.get( client );
 			if ( processor ) {
 				winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } ---> ${ new_uid.uid }` );
-				promises.push( processor( msg2, noPrefix ) );
+				promises.push( processor( msg2, { noPrefix, isNotice } ) );
 			} else {
 				winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } -X-> ${ new_uid.uid }: No processor` );
 			}
