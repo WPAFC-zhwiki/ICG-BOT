@@ -81,7 +81,7 @@ async function processNames( context: moduleTransport.BridgeMsg ) {
 async function processTopic( context: moduleTransport.BridgeMsg ) {
 	const chans = getChans( context );
 	for ( const chan of chans ) {
-		const topic: string = Object.assign( ircHandler.chans[ chan ] ).topic;
+		const topic: string = ircHandler.chans[ chan ].topic;
 
 		if ( topic ) {
 			context.reply( `Topic for channel ${ chan }: ${ topic }` );

@@ -1,6 +1,5 @@
-import { MessageHandler } from 'lib/handlers/MessageHandler';
+import { Events, MessageHandler } from 'lib/handlers/MessageHandler';
 import { Context } from 'lib/handlers/Context';
-import IRCTS from 'irc';
 import irc = require( 'irc-upd' );
 import color = require( 'irc-colors' );
 import winston = require( 'winston' );
@@ -8,55 +7,26 @@ import lodash from 'lodash';
 
 import { ConfigTS } from 'config';
 
-export type IRCRawMessage = {
-	/**
-	 * The prefix for the message
-	 */
-    prefix?: string;
+export type IRCRawMessage = irc.IMessage;
 
-	/**
-	 * The nickname portion of the prefix
-	 */
-    nick?: string;
-
-	/**
-	 * The username portion of the prefix
-	 */
-    user?: string;
-
-	/**
-	 * The hostname portion of the prefix
-	 */
-    host?: string;
-
-	/**
-	 * The servername (if the prefix was a servername)
-	 */
-    server: string;
-
-	/**
-	 * The command exactly as sent from the server
-	 */
-    rawCommand: string;
-
-	/**
-	 * Human readable version of the command
-	 */
-    command: string;
-
-    commandType: 'normal' | 'error' | 'reply';
-
-	/**
-	 * arguments to the command
-	 */
-    args: string[];
+interface IRCEvents extends Events {
+	command( context: Context & { _rawdata: IRCRawMessage }, comand: string, param: string ): void;
+	text( context: Context & { _rawdata: IRCRawMessage } ): void;
+	join( channel: string, nick: string, message: IRCRawMessage ): void;
+	nick( oldnick: string, newnick: string, channels: string[], message: IRCRawMessage ): void;
+	quit( nick: string, reason: string, channels: string[], message: IRCRawMessage ): void;
+	part( channel: string, nick: string, reason: string, message: IRCRawMessage ): void;
+	kick( channel: string, nick: string, by: string, reason: string, message: IRCRawMessage ): void;
+	kill( nick: string, reason: string, channels: string[], message: IRCRawMessage ): void;
+	topic( channel: string, topic: string, nick: string, message: IRCRawMessage ): void;
+	registered( message: IRCRawMessage ): void;
 }
 
 /**
  * 使用通用接口处理 IRC 消息
  */
-export class IRCMessageHandler extends MessageHandler {
-	protected readonly _client: IRCTS.Client;
+export class IRCMessageHandler extends MessageHandler<IRCEvents> {
+	protected readonly _client: irc.Client;
 	protected readonly _type = 'IRC';
 	protected readonly _id = 'I';
 
@@ -76,7 +46,7 @@ export class IRCMessageHandler extends MessageHandler {
 		// 加载机器人
 		const botConfig: ConfigTS[ 'IRC' ][ 'bot' ] = config.bot;
 		const ircOptions: ConfigTS[ 'IRC' ][ 'options' ] = config.options;
-		const client: IRCTS.Client = new irc.Client( botConfig.server, botConfig.nick, {
+		const client = new irc.Client( botConfig.server, botConfig.nick, {
 			userName: botConfig.userName,
 			realName: botConfig.realName,
 			port: botConfig.port,
@@ -186,11 +156,11 @@ export class IRCMessageHandler extends MessageHandler {
 			that.emit( 'join', channel, nick, message );
 		} );
 
-		client.on( 'nick', function ( oldnick: string, newnick: string, channels: string, message: IRCRawMessage ) {
+		client.on( 'nick', function ( oldnick: string, newnick: string, channels: string[], message: IRCRawMessage ) {
 			that.emit( 'nick', oldnick, newnick, channels, message );
 		} );
 
-		client.on( 'quit', function ( nick: string, reason: string, channels: string, message: IRCRawMessage ) {
+		client.on( 'quit', function ( nick: string, reason: string, channels: string[], message: IRCRawMessage ) {
 			that.emit( 'quit', nick, reason, channels, message );
 		} );
 
@@ -202,7 +172,7 @@ export class IRCMessageHandler extends MessageHandler {
 			that.emit( 'kick', channel, nick, by, reason, message );
 		} );
 
-		client.on( 'kill', function ( nick: string, reason: string, channels: string, message: IRCRawMessage ) {
+		client.on( 'kill', function ( nick: string, reason: string, channels: string[], message: IRCRawMessage ) {
 			that.emit( 'kill', nick, reason, channels, message );
 		} );
 
@@ -213,31 +183,6 @@ export class IRCMessageHandler extends MessageHandler {
 		client.on( 'registered', function ( message: IRCRawMessage ) {
 			that.emit( 'registered', message );
 		} );
-	}
-
-	public on( event: 'command', listener: ( context: Context, comand: string, param: string ) => void ): this;
-
-	public on( event: 'text', listener: ( context: Context ) => void ): this;
-
-	public on( event: 'join', listener: ( channel: string, nick: string, message: IRCRawMessage ) => void ): this;
-
-	public on( event: 'nick', listener: ( oldnick: string, newnick: string, channels: string, message: IRCRawMessage ) => void ): this;
-
-	public on( event: 'quit', listener: ( nick: string, reason: string, channels: string, message: IRCRawMessage ) => void ): this;
-
-	public on( event: 'part', listener: ( channel: string, nick: string, reason: string, message: IRCRawMessage ) => void ): this;
-
-	public on( event: 'kick', listener: ( channel: string, nick: string, by: string, reason: string, message: IRCRawMessage ) => void ): this;
-
-	public on( event: 'kill', listener: ( nick: string, reason: string, channels: string, message: IRCRawMessage ) => void ): this;
-
-	public on( event: 'topic', listener: ( channel: string, topic: string, nick: string, message: IRCRawMessage ) => void ): this;
-
-	public on( event: 'registered', listener: ( message: IRCRawMessage ) => void ): this;
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public on( event: string | symbol, listener: ( ...args: any[] ) => void ): this {
-		return super.on( event, listener );
 	}
 
 	public get maxLines(): number {
@@ -302,16 +247,19 @@ export class IRCMessageHandler extends MessageHandler {
 	}
 
 	public get chans(): Record<string, {
-        key: string;
-        serverName: string;
-        users: Record<string, string>;
-        mode: string;
-        created: string;
-    }> {
+		key: string;
+		serverName: string;
+		users: Record<string, '' | '+' | '@'>;
+		mode: string;
+		modeParams: Record<string, string[]>;
+		topic?: string;
+		topicBy?: string;
+		created: string;
+	}> {
 		return this._client.chans;
 	}
 
-	public whois( nick: string ): Promise<IRCTS.IWhoisData> {
+	public whois( nick: string ): Promise<irc.IWhoisData> {
 		return new Promise( function ( resolve ) {
 			this._client.whois( nick, resolve );
 		} );
@@ -376,11 +324,11 @@ export class IRCMessageHandler extends MessageHandler {
 		return lines;
 	}
 
-	public join( channel: string, callback?: IRCTS.handlers.IJoinChannel ): void {
+	public join( channel: string, callback?: irc.handlers.IJoinChannel ): void {
 		this._client.join( channel, callback );
 	}
 
-	public part( channel: string, message: string, callback: IRCTS.handlers.IPartChannel ): void {
+	public part( channel: string, message: string, callback: irc.handlers.IPartChannel ): void {
 		this._client.part( channel, message, callback );
 	}
 

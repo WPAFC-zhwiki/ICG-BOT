@@ -1,4 +1,4 @@
-import { MessageHandler, Command } from 'lib/handlers/MessageHandler';
+import { Events, MessageHandler, Command } from 'lib/handlers/MessageHandler';
 import { Context } from 'lib/handlers/Context';
 
 import https from 'https';
@@ -14,10 +14,43 @@ import HttpsProxyAgent from 'lib/proxy.js';
 
 import { ConfigTS } from 'config';
 
+interface TelegramEvents extends Events {
+	command( context: Context & { _rawdata: TContext }, comand: string, param: string ): void;
+	text( context: Context & { _rawdata: TContext } ): void;
+	pin( info: {
+		from: {
+			id: number;
+			nick: string;
+			username?: string;
+		},
+		to: number;
+		text: string;
+	}, ctx: TContext ): void;
+	leave( group: number, from: {
+		id: number;
+		nick: string;
+		username?: string;
+	}, target: {
+		id: number;
+		nick: string;
+		username?: string;
+	}, ctx: TContext ): void;
+	join( group: number, from: {
+		id: number;
+		nick: string;
+		username?: string;
+	}, target: {
+		id: number;
+		nick: string;
+		username?: string;
+	}, ctx: TContext ): void;
+	richmessage( context: Context ): void;
+}
+
 /**
  * 使用通用介面處理 Telegram 訊息
  */
-export class TelegramMessageHandler extends MessageHandler {
+export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 	protected readonly _client: Telegraf<TContext>;
 	protected readonly _type = 'Telegram';
 	protected readonly _id = 'T';
@@ -312,42 +345,6 @@ export class TelegramMessageHandler extends MessageHandler {
 			}
 			return next();
 		} );
-	}
-
-	public on( event: 'command', listener: ( context: Context, comand: string, param: string ) => void ): this;
-	public on( event: 'text', listener: ( context: Context ) => void ): this;
-	public on( event: 'pin', listener: ( info: {
-		from: {
-			id: number;
-			nick: string;
-			username?: string;
-		},
-		to: number;
-		text: string;
-	}, ctx: TContext ) => void ): this;
-	public on( event: 'leave', listener: ( group: number, from: {
-		id: number;
-		nick: string;
-		username?: string;
-	}, target: {
-		id: number;
-		nick: string;
-		username?: string;
-	}, ctx: TContext ) => void ): this;
-	public on( event: 'join', listener: ( group: number, from: {
-		id: number;
-		nick: string;
-		username?: string;
-	}, target: {
-		id: number;
-		nick: string;
-		username?: string;
-	}, ctx: TContext ) => void ): this;
-	public on( event: 'richmessage', listener: ( context: Context ) => void ): this;
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public on( event: string | symbol, listener: ( ...args: any[] ) => void ): this {
-		return super.on( event, listener );
 	}
 
 	private _getNick( user: TT.User ): string {

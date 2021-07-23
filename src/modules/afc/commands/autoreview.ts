@@ -81,8 +81,7 @@ setCommand( 'autoreview', async function ( args, reply ) {
 	}
 	const wikitext: string = await page.text();
 
-	const html: string = await mwbot.parseWikitext( wikitext, {
-		title: title,
+	const html: string = await mwbot.parseTitle( title, {
 		uselang: 'zh-hant'
 	} );
 	const $parseHTML: JQuery<Node[]> = $( $.parseHTML( html ) );

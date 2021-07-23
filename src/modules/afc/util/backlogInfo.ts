@@ -22,6 +22,7 @@ export async function getBacklogInfo(): Promise<{
 		return x.title !== 'Category:正在等待审核的用户页草稿';
 	} );
 	const cnt = list.length;
+	await new mwbot.page( 'Template:AFC_status/level' ).purge();
 	const html = await mwbot.parseTitle( 'Template:AFC_status/level' );
 	const $rawLvl = $( $.parseHTML( html ) );
 	const lvl = parseInt( $rawLvl.find( 'p' ).text(), 10 );

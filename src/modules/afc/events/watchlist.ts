@@ -2,6 +2,7 @@
 import Discord from 'discord.js';
 
 import { turndown, mwbot, $, htmlToIRC, encodeURI, autoreview, issuesData, send } from 'modules/afc/util';
+import { MwnPage } from 'mwn';
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 import winston from 'winston';
 
@@ -61,7 +62,11 @@ new mwbot.stream( 'recentchange', {
 	},
 	onerror( err ) {
 		try {
-			winston.error( '[afc/event/watchlist] Recentchange Error (Throw by EventSource):' + JSON.stringify( err ) );
+			const errjson: string = JSON.stringify( err );
+			if ( errjson === '{"type":"error"}' ) {
+				return; // ignore
+			}
+			winston.error( '[afc/event/watchlist] Recentchange Error (Throw by EventSource):' + errjson );
 		} catch ( e ) {
 			winston.error( '[afc/event/watchlist] Recentchange Error (Throw by EventSource): <Throw at console>' );
 			console.log( err );
@@ -81,17 +86,16 @@ new mwbot.stream( 'recentchange', {
 	try {
 		const title: string = event.comment.replace( /^\[\[:?([^[\]]+)\]\].*$/, '$1' );
 
-		const { user } = event;
+		const { user }: { user: string } = event;
 
-		const page = new mwbot.page( title );
-		const creator = await page.getCreator();
+		const page: MwnPage = new mwbot.page( title );
+		const creator: string = await page.getCreator();
 		await page.purge();
-		let tMsg = htmllink( `User:${ user }`, user );
-		const dMsg = new Discord.MessageEmbed();
+		let tMsg: string = htmllink( `User:${ user }`, user );
+		const dMsg: Discord.MessageEmbed = new Discord.MessageEmbed();
 
-		const wikitext = await page.text();
-		const html = await mwbot.parseWikitext( wikitext, {
-			title: title,
+		const wikitext: string = await page.text();
+		const html: string = await mwbot.parseTitle( title, {
 			uselang: 'zh-hant'
 		} );
 		const $parseHTML = $( $.parseHTML( html ) );
@@ -248,7 +252,7 @@ new mwbot.stream( 'recentchange', {
 			return;
 		}
 
-		const iMsg = htmlToIRC( tMsg );
+		const iMsg: string = htmlToIRC( tMsg );
 
 		send( {
 			dMsg,

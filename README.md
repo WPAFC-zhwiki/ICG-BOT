@@ -5,9 +5,11 @@ ICG-BOT
 此儲存庫改自[WPAFC-zhwiki/ICG-Bot-old](https://github.com/WPAFC-zhwiki/ICG-Bot-old)及[lziad/LilyWhiteBot](#lilywhitebot)。
 
 ## 使用方法
-1. 根據 `config/config.example.ts` 上的註釋變更設置並將檔名改成 `config.ts`
-2. 運行 `npm run build`
-3. 運行 `npm start`
+1. 運行 `npm install`
+2. 根據 `config/config.example.ts` 上的註釋變更設置並將檔名改成 `config.ts`
+3. 運行 `npm start` 啟動 bot
+
+此方法需要使用[ts-node](https://www.npmjs.com/package/ts-node)解析 typescript ，如果無法使用的話可以使用 `npm run build` 先編譯成 javascript 再以 `npm run start-built` 運行。
 
 ## 作者
 以下按貢獻順序列出機械人的作者。

@@ -1,4 +1,4 @@
-import { MessageHandler } from 'lib/handlers/MessageHandler';
+import { Events, MessageHandler } from 'lib/handlers/MessageHandler';
 import { Context } from 'lib/handlers/Context';
 import Discord from 'discord.js';
 import winston from 'winston';
@@ -6,10 +6,16 @@ import { getFriendlySize } from '../util';
 
 import { ConfigTS } from 'config';
 
+interface DiscordEvents extends Events {
+	command( context: Context & { _rawdata: Discord.Message }, comand: string, param: string ): void;
+	text( context: Context & { _rawdata: Discord.Message } ): void;
+	ready( client: Discord.Client ): void;
+}
+
 /**
  * 使用通用介面處理 Discord 訊息
  */
-export class DiscordMessageHandler extends MessageHandler {
+export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 	private readonly _token: string;
 	protected readonly _client: Discord.Client;
 	protected readonly _type = 'Discord';
@@ -144,15 +150,6 @@ export class DiscordMessageHandler extends MessageHandler {
 			// eslint-disable-next-line prefer-rest-params
 			that.emit( 'ready', arguments[ 0 ] );
 		} );
-	}
-
-	public on( event: 'command', listener: ( context: Context, comand: string, param: string ) => void ): this;
-	public on( event: 'text', listener: ( context: Context ) => void ): this;
-	public on( event: 'ready', listener: ( client: Discord.Client ) => void ): this;
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public on( event: string | symbol, listener: ( ...args: any[] ) => void ): this {
-		return super.on( event, listener );
 	}
 
 	public async say( target: string, message: string | Discord.MessageEmbed ): Promise<Discord.Message> {
