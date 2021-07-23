@@ -8,7 +8,7 @@ import { Context } from 'lib/handlers/Context';
 import { MessageHandler } from 'lib/handlers/MessageHandler';
 import { ifEnable, isEnable } from 'modules/enable';
 
-export interface ExtendsMap<T extends string | number, S, M extends Record<T, S>> extends Map<T, S> {
+export interface ExtendsMap<T extends string, S, M extends Record<T, S>> extends Map<T, S> {
     get<K extends keyof M>( key: K ): M[ K ];
 	get( key: T ): S;
     set<K extends keyof M>( key: K, value: M[ K ] ): this;

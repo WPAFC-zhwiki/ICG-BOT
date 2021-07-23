@@ -26,9 +26,9 @@
 	},
 	"include": [
 		"config/conifg.ts",
+		"src/*.js",
 		"src/*.ts",
-		"src/*.ts",
-		"src/**/*.ts",
+		"src/**/*.js",
 		"src/**/*.ts"
 	]
 }
