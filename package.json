@@ -1,6 +1,6 @@
 {
 	"name": "afc-icg-bot",
-	"version": "1.0.0",
+	"version": "1.0.1-rc1",
 	"description": "中文維基百科建立條目專題互聯群機器人",
 	"repository": "git+https://github.com/WPAFC-zhwiki/ICG-Bot",
 	"author": {
@@ -13,8 +13,8 @@
 		"build": "grunt",
 		"start-built": "grunt built && node bin/index",
 		"lint": "eslint src/*.ts src/**/*.ts",
-		"forever-win": "forever start -c cmd -o logs/forever.log main.bat",
-		"forever-lux": "forever start -c bash -o logs/forever.log main.sh"
+		"forever": "forever start -c bash -o logs/forever.log main.sh",
+		"forever-win": "forever start -c cmd -o logs/forever.log main.bat"
 	},
 	"main": "bin/index.js",
 	"license": "MIT",

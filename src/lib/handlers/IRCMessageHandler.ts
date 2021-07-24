@@ -260,8 +260,10 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 	}
 
 	public whois( nick: string ): Promise<irc.IWhoisData> {
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const that = this;
 		return new Promise( function ( resolve ) {
-			this._client.whois( nick, resolve );
+			that._client.whois( nick, resolve );
 		} );
 	}
 
