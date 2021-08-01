@@ -25,6 +25,10 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 	public readonly useProxyURL: boolean = false;
 	public readonly relayEmoji: boolean = false;
 
+	public get rawClient(): Discord.Client {
+		return this._client;
+	}
+
 	public constructor( config: ConfigTS[ 'Discord' ] ) {
 		super( config );
 

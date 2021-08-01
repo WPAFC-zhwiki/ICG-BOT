@@ -346,8 +346,9 @@ export interface ConfigTS {
 				/**
 				 * 下面是其他群裡面互連機器人的「ID」。在轉發這些機器人的訊息時，程式會嘗試從訊息中提取出真正的暱稱，
 				 * 而不是顯示機器人的名稱。格式為 「機器人名稱」「機器人discriminator編號」。
+				 * 參數「[]」、「<>」指真正發訊息者暱稱兩邊的括號樣式，目前只支援這兩種括號。
 				 */
-				forwardBots: Record<string, string | number>;
+				forwardBots: Record<string, [ string | number, '[]' | '<>' ]>;
 			};
 
 			/**
@@ -459,7 +460,12 @@ export interface ConfigTS {
 			 * 預設狀態
 			 */
 			default: string | false;
-		}
+		};
+
+		/**
+		 * 不解析在此名單的uid所發出的訊息
+		 */
+		ignores?: string[];
 	};
 
 	afc?: {
@@ -587,15 +593,11 @@ type TransportServemediaSelf = TransportServemediaBase & {
 	type: 'self';
 
 	/**
-	 * type為self時有效
-	 *
 	 * 快取存放位置
 	 */
 	cachePath: string;
 
 	/**
-	 * type為self時有效
-	 *
 	 * URL 的字首，通常需要以斜線結尾
 	 */
 	serveUrl: string;
@@ -608,8 +610,6 @@ type TransportServemediaLinx = TransportServemediaBase & {
 	type: 'linx';
 
 	/**
-	 * type為linx時有效
-	 *
 	 * linx API 位址（例如 https://www.xxx.com/upload/），通常以斜線結尾
 	 */
 	linxApiUrl: string;
@@ -622,8 +622,6 @@ type TransportServemediaUguu = TransportServemediaBase & {
 	type: 'uguu';
 
 	/**
-	 * type為uguu時有效
-	 *
 	 * 請以 /api.php?d=upload-tool 結尾
 	 */
 	uguuApiUrl: string;
@@ -635,9 +633,6 @@ type TransportServemediaImgur = TransportServemediaBase & {
 	 */
 	type: 'imgur';
 
-	/**
-	 * type為imgur時有效
-	 */
 	imgur: {
 		/**
 		 * 以斜線結尾

@@ -12,6 +12,14 @@ function htmlEscape( str: string ): string {
 	return jQuery( '<div>' ).text( str ).html();
 }
 
+function truncate( str: string, maxLen = 20 ) {
+	str = str.replace( /\n/gu, '' );
+	if ( str.length > maxLen ) {
+		str = str.substring( 0, maxLen - 3 ) + '...';
+	}
+	return str;
+}
+
 const config: ConfigTS[ 'transport' ] = Manager.config.transport;
 const tgHandler = Manager.handlers.get( 'Telegram' );
 
@@ -28,7 +36,7 @@ function parseForwardBot( username: string, text: string ) {
 	const symbol = forwardBots[ username ];
 	if ( symbol === 'self' ) {
 		// TODO 更換匹配方式
-		// [, , realNick, realText] = text.match(/^(|<.> )\[(.*?)\] ([^]*)$/mu) || [];
+		// [ , , realNick, realText ] = text.match(/^(|<.> )\[(.*?)\] ([^]*)$/mu) || [];
 		[ , realNick, realText ] = text.match( /^\[(.*?)\] ([^]*)$/mu ) || [];
 	} else if ( symbol === '[]' ) {
 		[ , realNick, realText ] = text.match( /^\[(.*?)\](?::? |\n)([^]*)$/mu ) || [];
@@ -174,7 +182,7 @@ export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPref
 	isNotice: false
 } ): Promise<void> {
 	// 元信息，用于自定义样式
-	const meta = {
+	const meta: Record<string, string> = {
 		nick: `<b>${ htmlEscape( msg.nick ) }</b>`,
 		from: htmlEscape( msg.from ),
 		to: htmlEscape( msg.to ),
@@ -184,6 +192,20 @@ export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPref
 		command: htmlEscape( msg.command ),
 		param: htmlEscape( msg.param )
 	};
+	if ( msg.extra.reply ) {
+		const reply = msg.extra.reply;
+		meta.reply_nick = reply.nick;
+		meta.reply_user = reply.username;
+		if ( reply.isText ) {
+			meta.reply_text = truncate( reply.message );
+		} else {
+			meta.reply_text = reply.message;
+		}
+	}
+	if ( msg.extra.forward ) {
+		meta.forward_nick = msg.extra.forward.nick;
+		meta.forward_user = msg.extra.forward.username;
+	}
 
 	// 自定义消息样式
 	let styleMode: 'simple' | 'complex' = 'simple';
@@ -197,6 +219,10 @@ export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPref
 		template = messageStyle[ styleMode ].notice;
 	} else if ( msg.extra.isAction ) {
 		template = messageStyle[ styleMode ].action;
+	} else if ( msg.extra.reply ) {
+		template = messageStyle[ styleMode ].reply;
+	} else if ( msg.extra.forward ) {
+		template = messageStyle[ styleMode ].forward;
 	} else if ( noPrefix ) {
 		template = '{text}';
 	} else {

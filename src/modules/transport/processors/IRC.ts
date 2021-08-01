@@ -6,13 +6,13 @@ import * as bridge from '../bridge';
 import { ConfigTS } from '../../../../config/type';
 import { IRCRawMessage } from '../../../lib/handlers/IRCMessageHandler';
 
-const truncate = function ( str: string, maxLen = 10 ) {
+function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );
 	if ( str.length > maxLen ) {
 		str = str.substring( 0, maxLen - 3 ) + '...';
 	}
 	return str;
-};
+}
 
 const config: ConfigTS[ 'transport' ] = Manager.config.transport;
 const ircHandler = Manager.handlers.get( 'IRC' );
@@ -112,7 +112,7 @@ const isActive = function ( nick: string | number, channel: string ) {
 			awaySpan > 0 && ( now - userlist[ nick ][ channel ] <= awaySpan );
 };
 
-ircHandler.on( 'nick', function ( oldnick, newnick, channels, rawdata ) {
+ircHandler.on( 'nick', function ( oldnick, newnick, _channels, rawdata ) {
 	// 記錄使用者更名情況
 	if ( userlist[ oldnick ] ) {
 		userlist[ newnick ] = userlist[ oldnick ];
@@ -141,7 +141,7 @@ ircHandler.on( 'nick', function ( oldnick, newnick, channels, rawdata ) {
 	}
 } );
 
-const leaveHandler = function ( nick: string, chans: typeof ircHandler.chans | Record<string, unknown>,
+const leaveHandler = function ( nick: string, chans: string[],
 	action: string, reason: string, rawdata: IRCRawMessage ): void {
 	let message: string;
 	if ( reason ) {
@@ -150,13 +150,13 @@ const leaveHandler = function ( nick: string, chans: typeof ircHandler.chans | R
 		message = `${ nick } 已${ action }`;
 	}
 
-	for ( const ch in chans ) {
+	chans.forEach( function ( ch ) {
 		const chan = ch.toLowerCase();
 		if ( ( options.notify.leave === 'all' && nick !== ircHandler.nick ) ||
 			( options.notify.leave === 'onlyactive' && isActive( nick, chan ) )
 		) {
 			bridge.send( new BridgeMsg( {
-				from: chan,
+				from: nick,
 				to: chan,
 				nick: nick,
 				text: message,
@@ -170,23 +170,23 @@ const leaveHandler = function ( nick: string, chans: typeof ircHandler.chans | R
 		if ( userlist[ nick ] ) {
 			delete userlist[ nick ][ chan ];
 		}
-	}
+	} );
 };
 
-ircHandler.on( 'quit', ( nick, reason, _channels, message ) => {
-	leaveHandler( nick, ircHandler.chans, '離開IRC', reason, message );
+ircHandler.on( 'quit', ( nick, reason, channels, message ) => {
+	leaveHandler( nick, channels, '離開IRC', reason, message );
 } );
 
 ircHandler.on( 'part', ( channel, nick, reason, message ) => {
-	leaveHandler( nick, { [ channel ]: {} }, '離開頻道', reason, message );
+	leaveHandler( nick, [ channel ], '離開頻道', reason, message );
 } );
 
 ircHandler.on( 'kick', ( channel, nick, by, reason, message ) => {
-	leaveHandler( nick, { [ channel ]: {} }, `被 ${ by } 踢出頻道`, reason, message );
+	leaveHandler( nick, [ channel ], `被 ${ by } 踢出頻道`, reason, message );
 } );
 
 ircHandler.on( 'kill', ( nick, reason, channels, message ) => {
-	leaveHandler( nick, ircHandler.chans, '被kill', reason, message );
+	leaveHandler( nick, channels, '被kill', reason, message );
 } );
 
 // 收到了來自其他群組的訊息

@@ -1,7 +1,7 @@
 /* eslint-disable no-jquery/no-class-state */
 import Discord from 'discord.js';
 
-import { turndown, mwbot, $, htmlToIRC, encodeURI, autoreview, issuesData, send } from 'modules/afc/util';
+import { turndown, mwbot, $, htmlToIRC, encodeURI, isReviewer, AFCPage, autoReview, autoReviewExtends, getIssusData, send } from 'modules/afc/util';
 import { MwnPage } from 'mwn';
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 import winston from 'winston';
@@ -88,13 +88,15 @@ new mwbot.stream( 'recentchange', {
 
 		const { user }: { user: string } = event;
 
-		const page: MwnPage = new mwbot.page( title );
+		const afcpage: AFCPage = await AFCPage.new( title );
+
+		const page: MwnPage = afcpage.mwnpage;
 		const creator: string = await page.getCreator();
 		await page.purge();
 		let tMsg: string = htmllink( `User:${ user }`, user );
 		const dMsg: Discord.MessageEmbed = new Discord.MessageEmbed();
 
-		const wikitext: string = await page.text();
+		const wikitext: string = afcpage.text;
 		const html: string = await mwbot.parseTitle( title, {
 			uselang: 'zh-hant'
 		} );
@@ -103,7 +105,19 @@ new mwbot.stream( 'recentchange', {
 			$parseHTML.find( '.afc-submission-pending' ).first() :
 			$parseHTML.find( '.afc-submission' ).first();
 
-		if ( !$submissionbox.length && page.namespace === 0 && user !== creator ) {
+		let submitter = user;
+
+		if ( $submissionbox.length ) {
+			afcpage.cleanUp();
+
+			const templateuser = afcpage.text.match( /\|u=([^|{}[\]]+)[|}]/ );
+
+			if ( templateuser && templateuser[ 1 ] ) {
+				submitter = templateuser[ 1 ];
+			}
+		}
+
+		if ( !$submissionbox.length && page.namespace === 0 && user !== creator && isReviewer( user ) ) {
 			tMsg += `已接受${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ htmllink( title ) }`;
 			let tpClass: string;
 			try {
@@ -133,13 +147,18 @@ new mwbot.stream( 'recentchange', {
 			if ( cClass.length > 0 ) {
 				tMsg += `（${ cClass }級）`;
 			}
+
+			tMsg += '。';
+
 			dMsg
 				.setColor( 'GREEN' )
 				.setDescription( turndown( tMsg ) );
 
 			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: accept, tpClass: ${ tpClass.length && tpClass || undefined }` );
 		} else if ( !$submissionbox.length && page.namespace === 0 && user === creator ) {
-			const pagehistory = await page.history( 'user', 2 );
+			const pagehistory = await page.history( 'user', 2, {
+				rvslots: 'main'
+			} );
 			if ( pagehistory.length === 1 ) {
 				const movequery = new URLSearchParams( {
 					wpOldTitle: title,
@@ -159,7 +178,7 @@ new mwbot.stream( 'recentchange', {
 				winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & in ns0` );
 			}
 			dMsg.setColor( 'ORANGE' );
-		} else if ( !$submissionbox.length && page.namespace !== 0 ) {
+		} else if ( !$submissionbox.length ) {
 			tMsg += `移除了${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ htmllink( title ) }的AFC模板。`;
 			dMsg
 				.setColor( 'ORANGE' )
@@ -167,13 +186,19 @@ new mwbot.stream( 'recentchange', {
 
 			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & not in ns0` );
 		} else if ( $submissionbox.hasClass( 'afc-submission-pending' ) ) {
+			if ( submitter !== user ) {
+				tMsg += `以${ htmllink( `User:${ encodeURI( submitter ) }`, submitter ) }的身分`;
+			}
 			tMsg += '提交了';
 			if ( creator !== user ) {
 				tMsg += `${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }建立的`;
 			}
 			tMsg += `草稿${ htmllink( title ) }。`;
 
-			const { issues } = await autoreview( wikitext, $parseHTML );
+			const { issues } = await autoReview( wikitext, $parseHTML );
+
+			autoReviewExtends( user, creator, page, wikitext, issues );
+
 			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: submit, issues: ${ issues.join( ', ' ) }` );
 
 			dMsg.setDescription( turndown( tMsg ) );
@@ -182,12 +207,12 @@ new mwbot.stream( 'recentchange', {
 
 			if ( issues && issues.length > 0 ) {
 				tMsg += issues.map( function ( x ) {
-					return `\n• ${ issuesData[ x ].short } (${ x })`;
+					return `\n• ${ getIssusData( x, true ) }`;
 				} ).join( '' );
 				dMsg
 					.setColor( 'RED' )
 					.addField( '自動檢測問題', issues.map( function ( x ) {
-						return `• ${ turndown( issuesData[ x ].short ) } (${ x })`;
+						return `• ${ turndown( getIssusData( x, true ) ) }`;
 					} ) );
 			} else {
 				tMsg += '\n• 沒有發現顯著問題。';

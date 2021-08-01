@@ -28,12 +28,19 @@ for ( const group in groups ) {
 	}
 }
 
-const linky = function ( string: string, articlepath: string ) {
-	const text = {}; // 去重複
+const ignores: string[] = ( options.ignores || [] ).map( function ( uid: string ) {
+	const u = moduleTransport.BridgeMsg.parseUID( uid );
+	return u.uid;
+} ).filter( function ( uid ) {
+	return uid;
+} );
+
+function linky( string: string, articlepath: string ) {
+	const text: Record<string, true> = {}; // 去重複
 
 	const ret: string[] = [];
 
-	let $m: RegExpMatchArray,
+	let $m: RegExpMatchArray | null,
 		$page: string,
 		$section: string,
 		$title: string;
@@ -51,12 +58,12 @@ const linky = function ( string: string, articlepath: string ) {
 			$m = $txt.match( /^\[\[([^|#]+)(?:#([^|]+))?.*?\]\]$/ );
 			$page = $m[ 1 ].trim();
 			if ( $m[ 2 ] ) {
-				$section = '#' + $m[ 0 ][ 2 ].trimRight();
+				$section = '#' + $m[ 2 ].trimRight();
 			} else {
 				$section = '';
 			}
 			if ( $page.startsWith( '../' ) ) {
-				winston.warn( `Refused parse link like "../": "${ $page }${ $section }"` );
+				winston.warn( `Refused parse link like "../": "${ $txt }"` );
 				return '<token>';
 			}
 			$title = ( `${ $page }${ $section }` ).replace( /\s/g, '_' ).replace( /\?/g, '%3F' ).replace( /!$/, '%21' ).replace( /:$/, '%3A' );
@@ -113,19 +120,31 @@ const linky = function ( string: string, articlepath: string ) {
 			$m = $txt.match( /^{{\s*([^|]+)(?:|.+)?}}$/ );
 			$page = $m[ 1 ].trim();
 			$title = `${ $page.startsWith( ':' ) ? $page.replace( /^:/, '' ) : `Template:${ $page }` }`;
+		} else {
+			return '<token>';
 		}
-		ret.push( articlepath.replace( '$1', $title.trim() ) );
+
+		try {
+			ret.push( new URL( articlepath.replace( '$1', $title.trim() ) ).href );
+		} catch ( e ) {
+			ret.push( articlepath.replace( '$1', $title.trim() ) );
+		}
 		return '<token>';
 	} );
 
 	return ret;
-};
+}
 
-const processlinky = async function ( context: Context ) {
+async function processlinky( context: Context ) {
 	try {
-		const uid = moduleTransport.BridgeMsg.getUIDFromContext( context, String( context.to ) );
+		const from_uid = moduleTransport.BridgeMsg.getUIDFromContext( context, String( context.from ) );
+		const to_uid = moduleTransport.BridgeMsg.getUIDFromContext( context, String( context.to ) );
 
-		const rule = map[ uid ] || map.default;
+		if ( ignores.includes( from_uid ) ) {
+			return;
+		}
+
+		const rule = map[ to_uid ] || map.default;
 
 		if ( rule ) {
 			const links = linky( context.text, rule );
@@ -152,9 +171,9 @@ const processlinky = async function ( context: Context ) {
 			}
 		}
 	} catch ( ex ) {
-
+		winston.error( `[wikilinkly] error: ${ ex }` );
 	}
-};
+}
 
 Manager.handlers.forEach( function ( handlers ) {
 	handlers.on( 'text', function ( context ) {

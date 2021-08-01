@@ -74,6 +74,10 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 	private _nickStyle: 'username' | 'fullname' | 'firstname';
 	private _startTime: number = new Date().getTime() / 1000;
 
+	public get rawClient(): Telegraf<TContext> {
+		return this._client;
+	}
+
 	public constructor( config: ConfigTS[ 'Telegram' ] ) {
 		super( config );
 

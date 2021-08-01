@@ -13,7 +13,10 @@ export const IRCBold = '\x02';
 
 export function htmlToIRC( text: string ): string {
 	return text
-		.replace( /<a href="([^"]+)">([^<]+)<\/a>/g, ' $2 <$1> ' )
+		.replace( /<a href="([^"]+)">([^<]+)<\/a>/g, function ( _all: string, href: string, txt: string ) {
+			href = href.trim().replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
+			return ` ${ txt } <${ decodeURI( href ) }>`;
+		} )
 		.replace( /https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' )
 		.replace( /<b>(.*?)<\/b>/g, `${ IRCBold }$1${ IRCBold }` );
 }

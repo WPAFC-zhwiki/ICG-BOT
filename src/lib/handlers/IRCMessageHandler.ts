@@ -40,6 +40,10 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		postfix: 'string'
 	};
 
+	public get rawClient(): irc.Client {
+		return this._client;
+	}
+
 	public constructor( config: ConfigTS[ 'IRC' ] ) {
 		super( config );
 

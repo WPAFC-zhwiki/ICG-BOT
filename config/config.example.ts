@@ -112,8 +112,8 @@ const config: ConfigTS = {
 		'ircquery', // 允許查詢 IRC 的一些訊息
 		'irccommand', // 允許向 IRC 發送一些命令（注意，不是 IRC 命令而是給頻道內機器人使用的命令）
 		'pia',
-		'wikilinky', // 提供連結
-		'afc' // afc主模組
+		'wikilinky' // 提供連結
+		// 'afc' // afc主模組
 	],
 
 	transport: {
@@ -211,7 +211,7 @@ const config: ConfigTS = {
 
 			Discord: {
 				forwardBots: { // 指出在 Discord 運行的傳話機器人，以便取得訊息中的真實暱稱
-					LilyWhiteBot: '1234' // 格式為 "機器人名稱": 機器人discriminator編號。
+					LilyWhiteBot: [ '1234', '[]' ] // 格式為 "機器人名稱": 機器人discriminator編號。
 				}
 			},
 
@@ -227,6 +227,10 @@ const config: ConfigTS = {
 			// 轉發類：forward_nick、forward_user
 			// 注意：此處的 nick 並不一定是暱稱，具體內容受前面各聊天軟體機器人的 nickStyle 屬性控制。
 			// 例如 Telegram.options.nickStyle 為 fullname 的話，在轉發 Telegram 群訊息時，nick 也會變成該使用者的全名。
+			//
+			// message、reply、forward 建議格式為 `[暱稱] 轉發回覆之類的 文字`
+			// 若不使用此類格式需自行改寫程式碼
+			// 否則將有嚴重兼容性問題
 			messageStyle: {
 				// 兩群互聯樣式
 				simple: {
@@ -313,7 +317,9 @@ const config: ConfigTS = {
 			'telegram/-12345678': 'https://en.wikipedia.org/wiki/$1',
 			'discord/87654321': false // 不在 Discord 頻道 8765432 啟用
 		}
-	},
+	}
+
+	/*
 
 	afc: {
 		// 在這些群啟用
@@ -323,18 +329,16 @@ const config: ConfigTS = {
 			'discord/87654321'
 		],
 
-		/**
-		 * 使用 https://www.npmjs.com/package/mwn
-		 *
-		 * 支援以下幾種登入方式：
-		 *
-		 * botpassword: 以 https://www.mediawiki.org/wiki/Manual:Bot_passwords 登入
-		 * oauth: 以 https://www.mediawiki.org/wiki/Extension:OAuth 登入（需要該維基有開啟擴展）
-		 *
-		 * 或是你懶得登入也可以留空或填入 none
-		 *
-		 * 請注意 mwn 僅支援 Oauth 1.0 ，若是申請成 Oauth 2.0 將會無法使用！
-		 */
+		// 使用 https://www.npmjs.com/package/mwn
+		//
+		// 支援以下幾種登入方式：
+		//
+		// botpassword: 以 https://www.mediawiki.org/wiki/Manual:Bot_passwords 登入
+		// oauth: 以 https://www.mediawiki.org/wiki/Extension:OAuth 登入（需要該維基有開啟擴展）
+		//
+		// 或是你懶得登入也可以留空或填入 none
+		//
+		// 請注意 mwn 僅支援 Oauth 1.0 ，若是申請成 Oauth 2.0 將會無法使用！
 		mwn: {
 			apiUrl: 'https://zh.wikipedia.org/w/api.php', // 以 /api.php 結尾
 
@@ -362,6 +366,8 @@ const config: ConfigTS = {
 			}
 		}
 	}
+	*/
+
 };
 
 export default config;

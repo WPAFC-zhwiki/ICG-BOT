@@ -1,7 +1,8 @@
 import { $ } from 'modules/afc/util/index';
+import { MwnPage } from 'mwn';
 
-import issuesDataJSON from 'modules/afc/util/issuesData.json';
-export const issuesData: Record<string, { short: string; long: string }> = issuesDataJSON;
+import issuesData from './issuesData.json';
+import issuesDataExtends from './issuesDataExtends.json';
 
 export type elementsTS = {
 	intLinks: RegExpMatchArray;
@@ -18,7 +19,7 @@ export type elementsTS = {
 	cats: RegExpMatchArray
 }
 
-export async function autoreview( wikitext: string, $parseHTML: JQuery<HTMLElement|Node[]> ): Promise<{
+export async function autoReview( wikitext: string, $parseHTML: JQuery<HTMLElement|Node[]> ): Promise<{
 	issues: string[];
 	elements: elementsTS;
 }> {
@@ -187,7 +188,7 @@ export async function autoreview( wikitext: string, $parseHTML: JQuery<HTMLEleme
 		} ).length &&
 		$parseHTML.find( 'pre' ).filter( function ( _i, ele ) {
 			const parent = $( ele ).parent().get( 0 );
-			return Array.from( parent.classList ).indexOf( 'mw-0highlight' ) > -1;
+			return Array.from( parent.classList ).indexOf( 'mw-highlight' ) > -1;
 		} ).length
 	) {
 		issues.push( 'bad-indents' );
@@ -197,4 +198,59 @@ export async function autoreview( wikitext: string, $parseHTML: JQuery<HTMLEleme
 		issues,
 		elements
 	};
+}
+
+// eslint-disable-next-line max-len
+export function autoReviewExtends( user: string, creator: string, page: MwnPage, wikitext: string, issues: string[] ): void {
+	let title = page.getMainText();
+
+	if ( title === user ) {
+		issues.push( 'same-name' );
+	} else if ( title === creator ) {
+		issues.push( 'same-name-creator' );
+	} else {
+		if ( page.namespace === 2 ) {
+			const split = title.split( '/' );
+			split.shift();
+
+			if ( !split.length ) {
+				return;
+			}
+
+			title = split.join( '/' );
+		}
+
+		if ( title.includes( user ) || user.includes( title ) ) {
+			issues.push( 'same-name' );
+		} else if ( title.includes( creator ) || creator.includes( title ) ) {
+			issues.push( 'same-name-creator' );
+		}
+	}
+
+	const defaults = [
+		'\'\'\'此处改为条目主题\'\'\'(?:是一个)?',
+		'==\\s*章节标题\\s*=='
+	];
+	const regexp = new RegExp( `(${ defaults.join( '|' ) })` );
+	if ( regexp.exec( wikitext ) ) {
+		issues.push( 'default-wikitext' );
+	}
+}
+
+export function getIssusData( key: string, notice?: boolean ): string {
+	if ( issuesDataExtends[ key ] && notice ) {
+		return `${ issuesDataExtends[ key ] } (${ key })`;
+	} else if ( issuesData[ key ] ) {
+		if ( notice ) {
+			return `${ issuesData[ key ].short } (${ key })`;
+		} else {
+			return `${ issuesData[ key ].long } (${ key })`;
+		}
+	} else {
+		if ( notice ) {
+			return `⧼${ key }⧽ (${ key })`;
+		} else {
+			return '';
+		}
+	}
 }

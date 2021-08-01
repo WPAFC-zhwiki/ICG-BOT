@@ -1,6 +1,6 @@
 import Discord = require( 'discord.js' );
 
-import { mwbot, turndown, $, htmlToIRC, encodeURI, autoreview, issuesData, setCommand } from '../util';
+import { mwbot, turndown, $, htmlToIRC, encodeURI, autoReview, getIssusData, setCommand, autoReviewExtends } from '../util';
 import { MwnPage } from 'mwn';
 import winston from 'winston';
 
@@ -86,7 +86,9 @@ setCommand( 'autoreview', async function ( args, reply ) {
 	} );
 	const $parseHTML: JQuery<Node[]> = $( $.parseHTML( html ) );
 
-	const { issues } = await autoreview( wikitext, $parseHTML );
+	const { issues } = await autoReview( wikitext, $parseHTML );
+
+	autoReviewExtends( '', '', page, wikitext, issues );
 
 	winston.debug( `[afc/commands/autoreview] title: ${ title }, rdrFrom: ${ rdrFrom }, issues: ${ issues.join( ', ' ) }` );
 
@@ -101,10 +103,10 @@ setCommand( 'autoreview', async function ( args, reply ) {
 	if ( issues && issues.length > 0 ) {
 		output += '，初步發現可能存在以下問題：';
 		dMsg.addField( '潛在問題', issues.map( function ( x ) {
-			return `• ${ turndown( issuesData[ x ].short ) } (${ x })`;
+			return `• ${ turndown( getIssusData( x ) ) }`;
 		} ) );
 		output += issues.map( function ( x ) {
-			return `\n• ${ issuesData[ x ].short } (${ x })`;
+			return `\n• ${ getIssusData( x ) }`;
 		} ).join( '' );
 	} else {
 		dMsg.addField( '潛在問題', [ '• 沒有發現顯著的問題。' ] );

@@ -81,6 +81,8 @@ export class BridgeMsg extends Context {
 	constructor( context: BridgeMsg | Context | BridgeMsgOptin, overrides: BridgeMsgOptin = {} ) {
 		super( context, overrides );
 
+		const that = Object.assign( {}, context, overrides );
+
 		this._isNotice = false;
 
 		this._from_client = this._to_client = this.handler.type;
@@ -94,12 +96,12 @@ export class BridgeMsg extends Context {
 		this.from_uid = Context.getArgument( overrides.from_uid, this.rawFrom );
 		this.to_uid = Context.getArgument( overrides.to_uid, this.rawTo );
 
-		this._noPrefix = !!overrides.noPrefix;
-		this._isNotice = !!overrides.isNotice;
+		this._noPrefix = !!that.noPrefix;
+		this._isNotice = !!that.isNotice;
 
 		Object.assign( this.extra, {
-			noPrefix: !!overrides.noPrefix,
-			isNotice: !!overrides.isNotice
+			noPrefix: !!that.noPrefix,
+			isNotice: !!that.isNotice
 		} );
 	}
 

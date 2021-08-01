@@ -8,13 +8,13 @@ import * as bridge from '../bridge';
 import { ConfigTS } from '../../../../config/type';
 import { BridgeMsg } from '../BridgeMsg';
 
-const truncate = ( str: string, maxLen = 10 ) => {
+function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );
 	if ( str.length > maxLen ) {
 		str = str.substring( 0, maxLen - 3 ) + '...';
 	}
 	return str;
-};
+}
 
 const userInfo = new LRU<string, Discord.User>( {
 	max: 500,
@@ -24,66 +24,27 @@ const userInfo = new LRU<string, Discord.User>( {
 const config: ConfigTS[ 'transport' ] = Manager.config.transport;
 const discordHandler = Manager.handlers.get( 'Discord' );
 const options: ConfigTS[ 'transport' ][ 'options' ][ 'Discord' ] = config.options.Discord;
-const forwardBots: ConfigTS[ 'transport' ][ 'options' ][ 'Discord' ][ 'forwardBots' ] = options.forwardBots;
+const forwardBots: Record<string, [ string | number, '[]' | '<>' | 'self' ]> = options.forwardBots;
 
-// eslint-disable-next-line no-shadow
-function parseForwardBot( text: string, options: ConfigTS[ 'transport' ][ 'options' ][ 'messageStyle' ] ) {
-	const tester: {
-		simple?: {
-			message: RegExp;
-			reply: RegExp;
-			forward: RegExp;
-			action: RegExp;
-			notice: RegExp;
-		};
-		complex?: {
-			message: RegExp;
-			reply: RegExp;
-			forward: RegExp;
-			action: RegExp;
-			notice: RegExp;
-		};
-	} = {};
-	for ( const style in options ) {
-		tester[ style ] = {};
-		for ( const template in options[ style ] ) {
-			tester[ style ][ template ] = new RegExp( '^' + options[ style ][ template ].replace( /\[/g, '\\[' ).replace( /\]/g, '\\]' ).replace( /\*/g, '\\*' )
-				.replace( '{text}', '(?<text>[^]*)' ).replace( '{nick}', '(?<nick>.*?)' ).replace( /\{[^{}]+\}/g, '(.*?)' ) + '$', 'mu' );
-		}
+function parseForwardBot( username: string, text: string ) {
+	let realText: string, realNick: string;
+	const symbol = forwardBots[ username ] && forwardBots[ username ][ '1' ];
+	if ( symbol === 'self' ) {
+		// TODO 更換匹配方式
+		// [ , , realNick, realText ] = text.match(/^(|<.> )\[(.*?)\] ([^]*)$/mu) || [];
+		[ , realNick, realText ] = text.match( /^\[(.*?)\] ([^]*)$/mu ) || [];
+	} else if ( symbol === '[]' ) {
+		[ , realNick, realText ] = text.match( /^\[(.*?)\](?::? |\n)([^]*)$/mu ) || [];
+	} else if ( symbol === '<>' ) {
+		[ , realNick, realText ] = text.match( /^<(.*?)>(?::? |\n)([^]*)$/mu ) || [];
 	}
-
-	let groups: Record<string, string>;
-	if ( tester.complex.reply.test( text ) ) {
-		groups = text.match( tester.complex.reply ).groups || {};
-	} else if ( tester.complex.forward.test( text ) ) {
-		groups = text.match( tester.complex.forward ).groups || {};
-	} else if ( tester.complex.action.test( text ) ) {
-		groups = text.match( tester.complex.action ).groups || {};
-	} else if ( tester.complex.message.test( text ) ) {
-		groups = text.match( tester.complex.message ).groups || {};
-	} else if ( tester.complex.notice.test( text ) ) {
-		groups = text.match( tester.complex.notice ).groups || {};
-		groups.nick = '';
-	} else if ( tester.simple.reply.test( text ) ) {
-		groups = text.match( tester.simple.reply ).groups || {};
-	} else if ( tester.simple.forward.test( text ) ) {
-		groups = text.match( tester.simple.forward ).groups || {};
-	} else if ( tester.simple.action.test( text ) ) {
-		groups = text.match( tester.simple.action ).groups || {};
-	} else if ( tester.simple.message.test( text ) ) {
-		groups = text.match( tester.simple.message ).groups || {};
-	} else if ( tester.simple.notice.test( text ) ) {
-		groups = text.match( tester.simple.notice ).groups || {};
-		groups.nick = '';
-	}
-	const [ realNick, realText ] = [ groups.nick, groups.text ];
 
 	return { realNick, realText };
 }
 
 /*
-     * 傳話
-     */
+ * 傳話
+ */
 
 // 將訊息加工好並發送給其他群組
 discordHandler.on( 'text', ( context: Context & { _rawdata: Discord.Message } ) => {
@@ -100,8 +61,9 @@ discordHandler.on( 'text', ( context: Context & { _rawdata: Discord.Message } ) 
 	const extra = context.extra;
 
 	// 檢查是不是在回覆自己
-	if ( extra.reply && String( forwardBots[ extra.reply.username ] ) === String( extra.reply.discriminator ) ) {
-		const { realNick, realText } = parseForwardBot( extra.reply.message, config.options.messageStyle );
+	// eslint-disable-next-line max-len
+	if ( extra.reply && String( forwardBots[ extra.reply.username ] && forwardBots[ extra.reply.username ][ 0 ] ) === String( extra.reply.discriminator ) ) {
+		const { realNick, realText } = parseForwardBot( extra.reply.username, extra.reply.message );
 		if ( realText ) {
 			[ extra.reply.nick, extra.reply.message ] = [ realNick, realText ];
 		}
