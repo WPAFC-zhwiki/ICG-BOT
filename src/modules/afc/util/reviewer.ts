@@ -1,6 +1,6 @@
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 import winston from 'winston';
-import { mwbot } from './index';
+import { mwbot, recentChange } from './index';
 
 let caches: string[] = [];
 
@@ -30,31 +30,19 @@ export async function rebuildReviewerCaches(): Promise<void> {
 	winston.debug( `[afc/util/reviewer] rebuild reviewer caches, length: ${ caches.length }` );
 }
 
-export function isReviewer( user: string ): boolean {
-	return caches.includes( `User:${ user }` );
+function upperFirst( str: string ) {
+	return str.substring( 0, 1 ).toUpperCase() + str.substring( 1, str.length );
 }
 
-export function hasCaches(): boolean {
+export function isReviewer( user: string ): boolean {
+	return caches.includes( `User:${ upperFirst( user ) }` );
+}
+
+export function hasReviewerCaches(): boolean {
 	return !!caches.length;
 }
 
-new mwbot.stream( 'recentchange', {
-	onopen() {
-		return;
-	},
-	onerror( err ) {
-		try {
-			const errjson: string = JSON.stringify( err );
-			if ( errjson === '{"type":"error"}' ) {
-				return; // ignore
-			}
-			winston.error( '[afc/event/watchlist] Recentchange Error (Throw by EventSource): ' + errjson );
-		} catch ( e ) {
-			winston.error( '[afc/event/watchlist] Recentchange Error (Throw by EventSource): <Throw at console>' );
-			console.log( err );
-		}
-	}
-} ).addListener( function ( event: RecentChangeStreamEvent ): boolean {
+recentChange( function ( event: RecentChangeStreamEvent ): boolean {
 	if (
 		event.wiki === 'zhwiki' &&
 		event.type === 'edit' &&

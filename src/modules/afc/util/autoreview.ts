@@ -31,7 +31,6 @@ export async function autoReview( wikitext: string, $parseHTML: JQuery<HTMLEleme
 			'td',
 			'tr',
 			'th',
-			'pre',
 			// 樣式
 			'style',
 			// 標題常常解析出一堆亂象
@@ -55,11 +54,11 @@ export async function autoReview( wikitext: string, $parseHTML: JQuery<HTMLEleme
 			'infobox',
 			'wikitable',
 			'navbox',
-			// &#60;syntaxhighlight&#62;
+			// <syntaxhighlight>
 			'mw-highlight',
 			// 圖片說明
 			'thumb',
-			// &#60;reference /&#62;
+			// <reference />
 			'reflist',
 			'references',
 			'reference',
@@ -101,8 +100,6 @@ export async function autoReview( wikitext: string, $parseHTML: JQuery<HTMLEleme
 
 	const issues: string[] = [];
 
-	wikitext.replace( /<ref.*?>.*?<\/ref>/gi, '' );
-
 	const refs = {
 		wt: ( wikitext.match( /<ref.*?>.*?<\/ref>/gi ) || [] ).map( function ( x, i ) {
 			return [ String( i ), x ];
@@ -110,6 +107,8 @@ export async function autoReview( wikitext: string, $parseHTML: JQuery<HTMLEleme
 		$ele: $parseHTML.find( 'ol.references' )
 	};
 	refs.$ele.find( '.mw-cite-backlink' ).remove();
+
+	wikitext.replace( /<ref.*?>.*?<\/ref>/gi, '' );
 
 	const elements: elementsTS = {
 		intLinks: wikitext.match( /\[\[.*?\]\]/g ),
@@ -201,14 +200,14 @@ export async function autoReview( wikitext: string, $parseHTML: JQuery<HTMLEleme
 }
 
 // eslint-disable-next-line max-len
-export function autoReviewExtends( user: string, creator: string, page: MwnPage, wikitext: string, issues: string[] ): void {
+export function autoReviewExtends( page: MwnPage, wikitext: string, issues: string[], { user, creator }: { user?: string, creator?: string } = {} ): void {
 	let title = page.getMainText();
 
 	if ( title === user ) {
 		issues.push( 'same-name' );
 	} else if ( title === creator ) {
 		issues.push( 'same-name-creator' );
-	} else {
+	} else if ( user && creator ) {
 		if ( page.namespace === 2 ) {
 			const split = title.split( '/' );
 			split.shift();
@@ -235,17 +234,21 @@ export function autoReviewExtends( user: string, creator: string, page: MwnPage,
 	if ( regexp.exec( wikitext ) ) {
 		issues.push( 'default-wikitext' );
 	}
+
+	if ( /AFC.*(?:[测測]試|沙盒)/i.exec( title ) || /{{(?:Template:)?Afctest(?:\||}})/i.exec( wikitext ) ) {
+		issues.push( 'afc-test' );
+	}
 }
 
 export function getIssusData( key: string, notice?: boolean ): string {
-	if ( issuesDataExtends[ key ] && notice ) {
-		return `${ issuesDataExtends[ key ] } (${ key })`;
-	} else if ( issuesData[ key ] ) {
+	if ( issuesData[ key ] ) {
 		if ( notice ) {
 			return `${ issuesData[ key ].short } (${ key })`;
 		} else {
-			return `${ issuesData[ key ].long } (${ key })`;
+			return issuesData[ key ].long;
 		}
+	} else if ( issuesDataExtends[ key ] && notice ) {
+		return `${ issuesDataExtends[ key ] } (${ key })`;
 	} else {
 		if ( notice ) {
 			return `⧼${ key }⧽ (${ key })`;

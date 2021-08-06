@@ -4,22 +4,14 @@ import { version, repository } from 'config';
 
 import TurndownService from 'turndown';
 import winston from 'winston';
+import EventSource from 'eventsource';
+import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 
 const service = new TurndownService();
 
 export const turndown: typeof TurndownService.prototype.turndown = service.turndown.bind( service );
 
 export const IRCBold = '\x02';
-
-export function htmlToIRC( text: string ): string {
-	return text
-		.replace( /<a href="([^"]+)">([^<]+)<\/a>/g, function ( _all: string, href: string, txt: string ) {
-			href = href.trim().replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
-			return ` ${ txt } <${ decodeURI( href ) }>`;
-		} )
-		.replace( /https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' )
-		.replace( /<b>(.*?)<\/b>/g, `${ IRCBold }$1${ IRCBold }` );
-}
 
 /**
  * Encodes a text string as a valid Uniform Resource Identifier (URI)
@@ -34,6 +26,19 @@ export function encodeURI( uri: string ): string {
 			decodeURIComponent
 		)
 		.replace( /:$/, '%3A' );
+}
+
+const oldDecodeURI = global.decodeURI;
+
+/**
+ * Gets the unencoded version of an encoded Uniform Resource Identifier (URI).
+ *
+ * @param {string} encodedURI A value representing an encoded URI.
+ * @return {string} decode url
+ */
+export function decodeURI( encodedURI: string ): string {
+	return oldDecodeURI( encodedURI )
+		.replace( /\s/g, '_' );
 }
 
 export { default as jQuery, default as $ } from 'lib/jquery';
@@ -88,3 +93,47 @@ export function parseWikiLink( context: string ): string {
 		.replace( /&#91;/g, '[' )
 		.replace( /&#93;/g, ']' );
 }
+
+const EventStream = new EventSource( 'https://stream.wikimedia.org/v2/stream/recentchange', {
+	headers: {
+		'User-Agent': mwbot.options.userAgent
+
+	}
+} );
+
+EventStream.onerror = function ( err ) {
+	try {
+		const errjson: string = JSON.stringify( err );
+		if ( errjson === '{"type":"error"}' ) {
+			return; // ignore
+		}
+		winston.error( '[afc/event/clean] Recentchange Error (Throw by EventSource):' + errjson );
+	} catch ( e ) {
+		winston.error( '[afc/event/clean] Recentchange Error (Throw by EventSource): <Throw at console>' );
+		console.log( err );
+	}
+};
+
+let i = 0;
+
+// eslint-disable-next-line max-len
+const EventStreamManager = new Map<number, [( data: RecentChangeStreamEvent ) => boolean, ( data: RecentChangeStreamEvent ) => void]>();
+
+// eslint-disable-next-line max-len
+export function recentChange( filter: ( data: RecentChangeStreamEvent ) => boolean, action: ( data: RecentChangeStreamEvent ) => void ): void {
+	EventStreamManager.set( i++, [ filter, action ] );
+}
+
+EventStream.onmessage = function ( { data } ) {
+	const event: RecentChangeStreamEvent = JSON.parse( data );
+
+	EventStreamManager.forEach( function ( [ filter, action ] ) {
+		if ( filter( event ) ) {
+			try {
+				action( event );
+			} catch ( e ) {
+
+			}
+		}
+	} );
+};

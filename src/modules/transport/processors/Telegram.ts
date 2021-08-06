@@ -5,7 +5,7 @@ import { ConfigTS } from '../../../../config/type';
 import { BridgeMsg } from '../BridgeMsg';
 import format from 'string-format';
 import { Context } from '../../../lib/handlers/Context';
-import { TelegrafContext } from 'telegraf/typings/context';
+import { TelegrafContext as TContext } from 'telegraf/typings/context';
 import jQuery from '../../../lib/jquery';
 
 function htmlEscape( str: string ): string {
@@ -97,7 +97,7 @@ tgHandler.on( 'pin', ( info: {
     };
     to: number;
     text: string;
-}, ctx: TelegrafContext ) => {
+}, ctx: TContext ) => {
 	if ( options.notify.pin ) {
 		bridge.send( new BridgeMsg( {
 			from: info.from.id,
@@ -122,7 +122,7 @@ tgHandler.on( 'join', ( group: number, from: {
     id: number;
     nick: string;
     username?: string;
-}, ctx: TelegrafContext ) => {
+}, ctx: TContext ) => {
 	let text: string;
 	if ( from.id === target.id ) {
 		text = `${ target.nick } 加入群組`;
@@ -131,7 +131,7 @@ tgHandler.on( 'join', ( group: number, from: {
 	}
 
 	if ( options.notify.join ) {
-		bridge.send( new BridgeMsg( {
+		bridge.send( new BridgeMsg<TContext>( {
 			from: target.id,
 			to: group,
 			nick: target.nick,
@@ -153,7 +153,7 @@ tgHandler.on( 'leave', ( group: number, from: {
     id: number;
     nick: string;
     username?: string;
-}, ctx: TelegrafContext ) => {
+}, ctx: TContext ) => {
 	let text: string;
 	if ( from.id === target.id ) {
 		text = `${ target.nick } 離開群組`;

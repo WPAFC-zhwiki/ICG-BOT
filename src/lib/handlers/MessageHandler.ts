@@ -1,4 +1,5 @@
-import EventEmitter from 'events';
+import EventEmitter, { Events } from '../event';
+export { Events } from '../event';
 import { Telegraf as TelegrafClient, Context as TContext } from 'telegraf';
 import { Client as DiscordClient } from 'discord.js';
 import { Client as IRCClient } from 'irc-upd';
@@ -10,9 +11,6 @@ export type Telegraf = TelegrafClient<TContext>;
 export type Telegram = Telegraf['telegram'];
 export type Discord = DiscordClient;
 export type IRC = IRCClient;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Events = Record<string, ( ...args: any[] ) => void>;
 
 /**
  * 使用統一介面處理訊息
@@ -28,7 +26,7 @@ export type Events = Record<string, ( ...args: any[] ) => void>;
  *
  * context 須使用統一格式
  */
-export class MessageHandler<events extends Events = Events> extends EventEmitter {
+export class MessageHandler<events extends Events = Events> extends EventEmitter<events> {
 	protected _client: Telegraf | Discord | IRC = null;
 	protected _type: string;
 	protected _id: string;
@@ -72,22 +70,6 @@ export class MessageHandler<events extends Events = Events> extends EventEmitter
 
 	public get started(): boolean {
 		return this._started;
-	}
-
-	public addListener<event extends string>( event: event, listener: events[ event ] ): this {
-		return super.addListener( event, listener );
-	}
-	public removeListener<event extends string>( event: event, listener: events[ event ] ): this {
-		return super.removeListener( event, listener );
-	}
-	public on<event extends string>( event: event, listener: events[ event ] ): this {
-		return super.on( event, listener );
-	}
-	public once<event extends string>( event: event, listener: events[ event ] ): this {
-		return super.once( event, listener );
-	}
-	public off<event extends string>( event: event, listener: events[ event ] ): this {
-		return super.off( event, listener );
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars

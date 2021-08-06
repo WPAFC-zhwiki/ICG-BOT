@@ -17,7 +17,7 @@
 		"sourceMap": false,
 		"strict": true,
 		"strictNullChecks": false,
-		"target": "es2017",
+		"target": "es2020",
 		"paths": {
 			"lib/*": [
 				"./lib/*"

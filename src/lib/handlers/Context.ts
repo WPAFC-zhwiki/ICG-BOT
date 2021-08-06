@@ -66,7 +66,7 @@ export type extra = {
 	isAction?: boolean;
 };
 
-export type optin = {
+export type optin<rawdata = unknown> = {
 	from?: string | number;
 	to?: string | number;
 	nick?: string;
@@ -74,7 +74,7 @@ export type optin = {
 	isPrivate?: boolean;
 	extra?: extra;
 	handler?: MessageHandler;
-	_rawdata?: unknown;
+	_rawdata?: rawdata;
 	command?: string;
 	param?: string;
 }
@@ -136,7 +136,7 @@ function getMsgId(): number {
  * }
  * ```
  */
-export class Context {
+export class Context<rawdata = unknown> {
 	protected _from: string = null;
 	get from(): string {
 		return this._from;
@@ -163,7 +163,7 @@ export class Context {
 
 	public extra: extra = {};
 	public readonly handler: MessageHandler = null;
-	public _rawdata: unknown = null;
+	public _rawdata: rawdata = null;
 	public command = '';
 	public param = '';
 
@@ -178,7 +178,7 @@ export class Context {
 		return undefined;
 	}
 
-	public constructor( options: Context | optin = {}, overrides: optin = {} ) {
+	public constructor( options: Context<rawdata> | optin<rawdata> = {}, overrides: optin<rawdata> = {} ) {
 		// TODO 雖然這樣很醜陋，不過暫時先這樣了
 		this._from = String( Context.getArgument( overrides.from, options.from, null ) );
 		this._to = String( Context.getArgument( overrides.to, options.to, null ) );

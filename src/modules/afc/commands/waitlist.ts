@@ -16,14 +16,17 @@ setCommand( 'waitlist', async function ( args, reply ) {
 	const from = 1,
 		to = list.length;
 
-	const dMsg = new Discord.MessageEmbed()
-		.setColor( 0x708ad7 )
-		.setTitle( '候審草稿列表' )
-		.setDescription( list.map( function ( page ) {
+	const dMsg = new Discord.MessageEmbed( {
+		title: '候審草稿列表',
+		color: 0x708ad7,
+		description: list.map( function ( page ) {
 			return mdlink( page.title );
-		} ).slice( from - 1, to ).join( '\n' ) )
-		.setTimestamp()
-		.setFooter( `顯示第 ${ from } 至 ${ to } 項（共 ${ to - from + 1 } 項）` );
+		} ).slice( from - 1, to ).join( '\n' ),
+		timestamp: Date.now(),
+		footer: {
+			text: `顯示第 ${ from } 至 ${ to } 項（共 ${ to - from + 1 } 項）`
+		}
+	} );
 
 	const tMsg = `<b>候審草稿列表</b>${ list.map( function ( page ) {
 		return `\n• ${ htmllink( page.title ) }`;

@@ -1,8 +1,13 @@
+import Discord from 'discord.js';
 import winston from 'winston';
-import { rebuildReviewerCaches, hasCaches, isReviewer, htmlToIRC, turndown, encodeURI, setCommand } from '../util';
+import { rebuildReviewerCaches, hasReviewerCaches, isReviewer, encodeURI, turndown, htmlToIRC, setCommand } from '../util';
+
+function upperFirst( str: string ) {
+	return str.substring( 0, 1 ).toUpperCase() + str.substring( 1, str.length );
+}
 
 setCommand( 'isreviewer', async function ( args, reply, bridgemsg ) {
-	const user = args.join( ' ' );
+	const user = upperFirst( args.join( ' ' ) );
 
 	if ( !user.trim().length ) {
 		if ( bridgemsg.extra.reply ) {
@@ -21,11 +26,14 @@ setCommand( 'isreviewer', async function ( args, reply, bridgemsg ) {
 		return;
 	}
 
-	if ( hasCaches() ) {
+	if ( hasReviewerCaches() ) {
 		winston.debug( `[afc/command/isreviewer] user: ${ user }, isreviewer: ${ isReviewer( user ) }` );
-		const msg = `使用者<a href="https://zh.wikipedia.org/wiki/User:${ encodeURI( user ) }">${ user }</a>${ isReviewer( `User:${ user }` ) ? '是' : '不是' }審核員。`;
+		const msg = `使用者<a href="https://zh.wikipedia.org/wiki/User:${ encodeURI( user ) }">${ user }</a>${ isReviewer( user ) ? '是' : '不是' }審核員。`;
 		reply( {
-			dMsg: turndown( msg ),
+			dMsg: new Discord.MessageEmbed( {
+				description: turndown( msg ),
+				color: isReviewer( user ) ? 'GOLD' : null
+			} ),
 			tMsg: msg,
 			iMsg: htmlToIRC( msg )
 		} );

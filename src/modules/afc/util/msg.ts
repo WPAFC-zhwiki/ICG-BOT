@@ -4,6 +4,8 @@ import * as moduleTransport from 'modules/transport';
 
 import Discord from 'discord.js';
 
+import { IRCBold, $, decodeURI } from './index';
+
 const dc = Manager.handlers.get( 'Discord' );
 const tg = Manager.handlers.get( 'Telegram' );
 const irc = Manager.handlers.get( 'IRC' );
@@ -116,4 +118,27 @@ export async function send( msg: {
 			} );
 		}
 	} );
+}
+
+function htmlExcape( str: string ) {
+	return $( '<div>' ).text( str ).html();
+}
+
+export function htmlToIRC( text: string ): string {
+	const $ele = $( '<div>' ).append( $.parseHTML( text ) );
+
+	$ele.find( 'a' ).each( function ( _i, a ) {
+		const $a: JQuery<HTMLAnchorElement> = $( a );
+		const href = decodeURI( $a.attr( 'href' ) ).replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
+
+		$a.html( ` ${ $a.html() } &lt;${ htmlExcape( href ) }&gt;` );
+	} );
+
+	$ele.find( 'b' ).each( function ( _i: number, b: HTMLElement ): void {
+		const $b: JQuery<HTMLElement> = $( b );
+
+		$b.html( `${ IRCBold }${ $b.html() }${ IRCBold }` );
+	} );
+
+	return $ele.text();
 }

@@ -10,17 +10,24 @@ import { ConfigTS } from 'config';
 export type IRCRawMessage = irc.IMessage;
 
 interface IRCEvents extends Events {
-	command( context: Context & { _rawdata: IRCRawMessage }, comand: string, param: string ): void;
-	text( context: Context & { _rawdata: IRCRawMessage } ): void;
-	join( channel: string, nick: string, message: IRCRawMessage ): void;
-	nick( oldnick: string, newnick: string, channels: string[], message: IRCRawMessage ): void;
-	quit( nick: string, reason: string, channels: string[], message: IRCRawMessage ): void;
-	part( channel: string, nick: string, reason: string, message: IRCRawMessage ): void;
-	kick( channel: string, nick: string, by: string, reason: string, message: IRCRawMessage ): void;
-	kill( nick: string, reason: string, channels: string[], message: IRCRawMessage ): void;
-	topic( channel: string, topic: string, nick: string, message: IRCRawMessage ): void;
-	registered( message: IRCRawMessage ): void;
+	command( context: Context<irc.IMessage>, comand: string, param: string ): void;
+	text( context: Context<irc.IMessage> ): void;
+	join( channel: string, nick: string, message: irc.IMessage ): void;
+	nick( oldnick: string, newnick: string, channels: string[], message: irc.IMessage ): void;
+	quit( nick: string, reason: string, channels: string[], message: irc.IMessage ): void;
+	part( channel: string, nick: string, reason: string, message: irc.IMessage ): void;
+	kick( channel: string, nick: string, by: string, reason: string, message: irc.IMessage ): void;
+	kill( nick: string, reason: string, channels: string[], message: irc.IMessage ): void;
+	topic( channel: string, topic: string, nick: string, message: irc.IMessage ): void;
+	registered( message: irc.IMessage ): void;
 }
+
+type Me = {
+	nick: string;
+	userName: string;
+	realName: string;
+	chans: irc.IChans;
+};
 
 /**
  * 使用通用接口处理 IRC 消息
@@ -42,6 +49,11 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 
 	public get rawClient(): irc.Client {
 		return this._client;
+	}
+
+	private _me: Me;
+	public get me(): Me {
+		return this._me;
 	}
 
 	public constructor( config: ConfigTS[ 'IRC' ] ) {
@@ -92,11 +104,18 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		this._client = client;
 		this._maxLines = ircOptions.maxLines || 4;
 
+		this._me = {
+			nick: this._client.nick,
+			userName: botConfig.userName,
+			realName: botConfig.realName,
+			chans: this.chans
+		};
+
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		const that = this;
 
 		// 绑定事件
-		function processMessage( from: string, to: string, text: string, rawdata: IRCRawMessage, isAction = false ) {
+		function processMessage( from: string, to: string, text: string, rawdata: irc.IMessage, isAction = false ) {
 
 			if (
 				!that._enabled ||
@@ -113,7 +132,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 			// 去除訊息中的格式字元
 			const plainText: string = color.stripColorsAndStyle( text );
 
-			const context = new Context( {
+			const context = new Context<irc.IMessage>( {
 				from: from,
 				to: to === client.nick ? to : to.toLowerCase(),
 				nick: from,
@@ -152,39 +171,39 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		}
 
 		client.on( 'message', processMessage );
-		client.on( 'action', ( from: string, to: string, text: string, rawdata: IRCRawMessage ) => {
+		client.on( 'action', ( from: string, to: string, text: string, rawdata: irc.IMessage ) => {
 			processMessage( from, to, text, rawdata, true );
 		} );
 
-		client.on( 'join', function ( channel: string, nick: string, message: IRCRawMessage ) {
+		client.on( 'join', function ( channel: string, nick: string, message: irc.IMessage ) {
 			that.emit( 'join', channel, nick, message );
 		} );
 
-		client.on( 'nick', function ( oldnick: string, newnick: string, channels: string[], message: IRCRawMessage ) {
+		client.on( 'nick', function ( oldnick: string, newnick: string, channels: string[], message: irc.IMessage ) {
 			that.emit( 'nick', oldnick, newnick, channels, message );
 		} );
 
-		client.on( 'quit', function ( nick: string, reason: string, channels: string[], message: IRCRawMessage ) {
+		client.on( 'quit', function ( nick: string, reason: string, channels: string[], message: irc.IMessage ) {
 			that.emit( 'quit', nick, reason, channels, message );
 		} );
 
-		client.on( 'part', function ( channel: string, nick: string, reason: string, message: IRCRawMessage ) {
+		client.on( 'part', function ( channel: string, nick: string, reason: string, message: irc.IMessage ) {
 			that.emit( 'part', channel, nick, reason, message );
 		} );
 
-		client.on( 'kick', function ( channel: string, nick: string, by: string, reason: string, message: IRCRawMessage ) {
+		client.on( 'kick', function ( channel: string, nick: string, by: string, reason: string, message: irc.IMessage ) {
 			that.emit( 'kick', channel, nick, by, reason, message );
 		} );
 
-		client.on( 'kill', function ( nick: string, reason: string, channels: string[], message: IRCRawMessage ) {
+		client.on( 'kill', function ( nick: string, reason: string, channels: string[], message: irc.IMessage ) {
 			that.emit( 'kill', nick, reason, channels, message );
 		} );
 
-		client.on( 'topic', function ( channel: string, topic: string, nick: string, message: IRCRawMessage ) {
+		client.on( 'topic', function ( channel: string, topic: string, nick: string, message: irc.IMessage ) {
 			that.emit( 'topic', channel, topic, nick, message );
 		} );
 
-		client.on( 'registered', function ( message: IRCRawMessage ) {
+		client.on( 'registered', function ( message: irc.IMessage ) {
 			that.emit( 'registered', message );
 		} );
 	}
@@ -250,16 +269,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		}
 	}
 
-	public get chans(): Record<string, {
-		key: string;
-		serverName: string;
-		users: Record<string, '' | '+' | '@'>;
-		mode: string;
-		modeParams: Record<string, string[]>;
-		topic?: string;
-		topicBy?: string;
-		created: string;
-	}> {
+	public get chans(): irc.IChans {
 		return this._client.chans;
 	}
 

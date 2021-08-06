@@ -1,7 +1,6 @@
 import LRU from 'lru-cache';
 import format from 'string-format';
 import winston = require( 'winston' );
-import { Context } from '../../../../src/lib/handlers/Context';
 import Discord = require( 'discord.js' );
 import { Manager } from '../../../init';
 import * as bridge from '../bridge';
@@ -47,7 +46,7 @@ function parseForwardBot( username: string, text: string ) {
  */
 
 // 將訊息加工好並發送給其他群組
-discordHandler.on( 'text', ( context: Context & { _rawdata: Discord.Message } ) => {
+discordHandler.on( 'text', ( context ) => {
 	async function send() {
 		try {
 			return bridge.send( context );
@@ -119,12 +118,12 @@ discordHandler.on( 'text', ( context: Context & { _rawdata: Discord.Message } ) 
 		}
 	}
 
-	if ( /<@\d*?>/u.test( context.text ) ) {
+	if ( /<@!\d*?>/u.test( context.text ) ) {
 		// 處理 at
 		let ats: string[] = [];
 		const promises = [];
 
-		context.text.replace( /<@(\d*?)>/gu, function ( _: string, id: string ) {
+		context.text.replace( /<@!(\d*?)>/gu, function ( _: string, id: string ) {
 			ats.push( id );
 			return '';
 		} );
@@ -144,7 +143,7 @@ discordHandler.on( 'text', ( context: Context & { _rawdata: Discord.Message } ) 
 			for ( const info of infos ) {
 				if ( info ) {
 					userInfo.set( info.id, info );
-					context.text = context.text.replace( new RegExp( `<@${ info.id }>`, 'gu' ), `@${ discordHandler.getNick( info ) }` );
+					context.text = context.text.replace( new RegExp( `<@!${ info.id }>`, 'gu' ), `@${ discordHandler.getNick( info ) }` );
 				}
 			}
 		} ).catch( ( e ) => winston.error( e.trace ) ).then( function () {
@@ -187,8 +186,8 @@ export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPref
 	}
 
 	// 自定义消息样式
+	let styleMode: 'simple' | 'complex' = 'simple';
 	const messageStyle = config.options.messageStyle;
-	let styleMode = 'simple';
 	if ( msg.extra.clients >= 3 && ( msg.extra.clientName.shortname || isNotice ) ) {
 		styleMode = 'complex';
 	}

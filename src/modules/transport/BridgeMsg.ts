@@ -4,7 +4,7 @@ import { MessageHandler } from '../../lib/handlers/MessageHandler';
 
 let clientFullNames = {};
 
-type BridgeMsgOptin = optin & {
+type BridgeMsgOptin<rawdata = unknown> = optin<rawdata> & {
 	noPrefix?: boolean;
 	isNotice?: boolean;
 	from_uid?: string;
@@ -13,7 +13,7 @@ type BridgeMsgOptin = optin & {
 	rawTo?: string;
 }
 
-export class BridgeMsg extends Context {
+export class BridgeMsg<rawdata = unknown> extends Context<rawdata> {
 	private _isNotice: boolean;
 	get isNotice(): boolean {
 		return this._isNotice;
@@ -78,7 +78,8 @@ export class BridgeMsg extends Context {
 		isNotice?: boolean;
 	};
 
-	constructor( context: BridgeMsg | Context | BridgeMsgOptin, overrides: BridgeMsgOptin = {} ) {
+	// eslint-disable-next-line max-len
+	constructor( context: BridgeMsg<rawdata> | Context<rawdata> | BridgeMsgOptin<rawdata>, overrides: BridgeMsgOptin<rawdata> = {} ) {
 		super( context, overrides );
 
 		const that = Object.assign( {}, context, overrides );

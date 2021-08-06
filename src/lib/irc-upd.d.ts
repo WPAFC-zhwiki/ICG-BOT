@@ -7,7 +7,17 @@
 
 declare module 'irc-upd' {
 	import IRC from 'irc';
-	export { IChannel, IMessage, IWhoisData, IClientOpts, handlers, CommandType } from 'irc';
+	export { IMessage, IChannel, IWhoisData, IClientOpts, handlers, CommandType } from 'irc';
+	export type IChans = typeof IRC.Client.prototype.chans & Record<string, {
+		key: string;
+		serverName: string;
+		users: Record<string, '' | '+' | '@'>;
+		mode: string;
+		modeParams: Record<string, string[]>;
+		topic?: string;
+		topicBy?: string;
+		created: string;
+	}>;
 
 	import net = require( 'net' );
 	import { EventEmitter } from 'events';
@@ -273,16 +283,7 @@ declare module 'irc-upd' {
 			renickInterval?: NodeJS.Timer;
 			cyclingPingTimer?: CyclingPingTimer;
 		};
-		public chans: Record<string, {
-			key: string;
-			serverName: string;
-			users: Record<string, '' | '+' | '@'>;
-			mode: string;
-			modeParams: Record<string, string[]>;
-			topic?: string;
-			topicBy?: string;
-			created: string;
-		}>;
+		public chans: IChans;
 		protected prefixForMode: Record<string, string>;
 		modeForPrefix: Record<string, string>;
 		_whoisData: Record<string, IRC.IWhoisData>;

@@ -1,6 +1,6 @@
 import Discord = require( 'discord.js' );
 
-import { mwbot, turndown, $, htmlToIRC, encodeURI, autoReview, getIssusData, setCommand, autoReviewExtends } from '../util';
+import { mwbot, $, autoReview, autoReviewExtends, getIssusData, encodeURI, turndown, htmlToIRC, setCommand } from '../util';
 import { MwnPage } from 'mwn';
 import winston from 'winston';
 
@@ -18,9 +18,10 @@ setCommand( 'autoreview', async function ( args, reply ) {
 	if ( !args.length || !title.length ) {
 		reply( {
 			tMsg: '請輸入頁面名稱！',
-			dMsg: new Discord.MessageEmbed()
-				.setColor( 'RED' )
-				.setDescription( '請輸入頁面名稱！' ),
+			dMsg: new Discord.MessageEmbed( {
+				color: 'RED',
+				description: '請輸入頁面名稱！'
+			} ),
 			iMsg: '請輸入頁面名稱！'
 		} );
 		winston.debug( '[afc/commands/autoreview] title: null' );
@@ -33,9 +34,10 @@ setCommand( 'autoreview', async function ( args, reply ) {
 	} catch ( e ) {
 		reply( {
 			tMsg: `標題<b>${ htmllink( title ) }</b>不合法或是頁面不存在。`,
-			dMsg: new Discord.MessageEmbed()
-				.setColor( 'RED' )
-				.setDescription( `標題**${ mdlink( title ) }**不合法或是頁面不存在。` ),
+			dMsg: new Discord.MessageEmbed( {
+				color: 'RED',
+				description: `標題**${ mdlink( title ) }**不合法或是頁面不存在。`
+			} ),
 			iMsg: `標題 ${ title }<https://zhwp.org/${ encodeURI( title ) }> 不合法或是頁面不存在。`
 		} );
 		winston.debug( `[afc/commands/autoreview] title: ${ title }, badTitle: true` );
@@ -51,9 +53,10 @@ setCommand( 'autoreview', async function ( args, reply ) {
 	} catch ( e ) {
 		reply( {
 			tMsg: `頁面<b>${ htmllink( title ) }</b>不存在。`,
-			dMsg: new Discord.MessageEmbed()
-				.setColor( 'RED' )
-				.setDescription( `頁面**${ mdlink( title ) }**不存在。` ),
+			dMsg: new Discord.MessageEmbed( {
+				color: 'RED',
+				description: `頁面**${ mdlink( title ) }**不存在。`
+			} ),
 			iMsg: `頁面 ${ title }<https://zhwp.org/${ encodeURI( title ) }> 不存在。`
 		} );
 		winston.debug( `[afc/commands/autoreview] title: ${ title }, exists: false` );
@@ -70,9 +73,10 @@ setCommand( 'autoreview', async function ( args, reply ) {
 		if ( redirect && page.namespace >= 0 ) {
 			reply( {
 				tMsg: `頁面${ htmllink( title ) }${ redirect ? `（重新導向自${ htmllink( rdrFrom ) }）` : '' }不在條目命名空間、使用者命名空間或草稿命名空間，不予解析。`,
-				dMsg: new Discord.MessageEmbed()
-					.setColor( 'YELLOW' )
-					.setDescription( `頁面${ mdlink( title ) }}${ redirect ? `（重新導向自${ mdlink( rdrFrom ) } ）` : '' }不在條目命名空間、使用者命名空間或草稿命名空間，不予解析。` ),
+				dMsg: new Discord.MessageEmbed( {
+					color: 'YELLOW',
+					description: `頁面${ mdlink( title ) }}${ redirect ? `（重新導向自${ mdlink( rdrFrom ) } ）` : '' }不在條目命名空間、使用者命名空間或草稿命名空間，不予解析。`
+				} ),
 				iMsg: `頁面 ${ title }<https://zhwp.org/${ encodeURI( title ) }> ${ redirect ? `（重新導向自 ${ rdrFrom }<https://zhwp.org/${ encodeURI( rdrFrom ) }> ）` : '' }不在條目命名空間、使用者命名空間或草稿命名空間，不予解析。`
 			} );
 			winston.debug( `[afc/commands/autoreview] title: ${ title }, rdrFrom: ${ rdrFrom }, namespace: ${ page.namespace }` );
@@ -88,25 +92,26 @@ setCommand( 'autoreview', async function ( args, reply ) {
 
 	const { issues } = await autoReview( wikitext, $parseHTML );
 
-	autoReviewExtends( '', '', page, wikitext, issues );
+	autoReviewExtends( page, wikitext, issues );
 
 	winston.debug( `[afc/commands/autoreview] title: ${ title }, rdrFrom: ${ rdrFrom }, issues: ${ issues.join( ', ' ) }` );
 
 	let output = `系統剛剛自動審閱了頁面${ htmllink( title ) }${ redirect ? `（重新導向自${ htmllink( rdrFrom ) }）` : '' }`;
 
-	const dMsg = new Discord.MessageEmbed()
-		.setColor( issues && issues.length ? 'RED' : 'GREEN' )
-		.setTitle( '自動審閱系統' )
-		.setDescription( `${ turndown( output ) }` )
-		.setTimestamp();
+	const dMsg = new Discord.MessageEmbed( {
+		title: '自動審閱系統',
+		color: issues && issues.length ? 'RED' : 'GREEN',
+		description: turndown( output ),
+		timestamp: Date.now()
+	} );
 
 	if ( issues && issues.length > 0 ) {
 		output += '，初步發現可能存在以下問題：';
 		dMsg.addField( '潛在問題', issues.map( function ( x ) {
-			return `• ${ turndown( getIssusData( x ) ) }`;
+			return `• ${ turndown( getIssusData( x, true ) ) }`;
 		} ) );
 		output += issues.map( function ( x ) {
-			return `\n• ${ getIssusData( x ) }`;
+			return `\n• ${ getIssusData( x, true ) }`;
 		} ).join( '' );
 	} else {
 		dMsg.addField( '潛在問題', [ '• 沒有發現顯著的問題。' ] );

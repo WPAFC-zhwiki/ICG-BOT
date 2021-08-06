@@ -7,8 +7,8 @@ import { getFriendlySize } from '../util';
 import { ConfigTS } from 'config';
 
 interface DiscordEvents extends Events {
-	command( context: Context & { _rawdata: Discord.Message }, comand: string, param: string ): void;
-	text( context: Context & { _rawdata: Discord.Message } ): void;
+	command( context: Context<Discord.Message>, comand: string, param: string ): void;
+	text( context: Context<Discord.Message> ): void;
 	ready( client: Discord.Client ): void;
 }
 
@@ -29,6 +29,11 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		return this._client;
 	}
 
+	private _me: Discord.ClientUser;
+	public get me(): Discord.ClientUser {
+		return this._me;
+	}
+
 	public constructor( config: ConfigTS[ 'Discord' ] ) {
 		super( config );
 
@@ -37,6 +42,8 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		const discordOptions: ConfigTS[ 'Discord' ][ 'options' ] = config.options;
 
 		const client = new Discord.Client();
+
+		this._me = client.user;
 
 		client.on( 'ready', () => {
 			winston.info( 'DiscordBot is ready.' );
@@ -114,7 +121,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 				}
 			}
 
-			const context = new Context( {
+			const context = new Context<Discord.Message>( {
 				from: rawdata.author.id,
 				to: rawdata.channel.id,
 				nick: that.getNick( rawdata.member || rawdata.author ),

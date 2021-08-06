@@ -1,7 +1,7 @@
 /* eslint-disable no-jquery/no-class-state */
 import Discord from 'discord.js';
 
-import { turndown, mwbot, $, htmlToIRC, encodeURI, isReviewer, AFCPage, autoReview, autoReviewExtends, getIssusData, send } from 'modules/afc/util';
+import { mwbot, $, recentChange, AFCPage, autoReview, autoReviewExtends, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'modules/afc/util';
 import { MwnPage } from 'mwn';
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 import winston from 'winston';
@@ -44,7 +44,11 @@ function getReason( $e: JQuery, title: string ) {
 			return x.length && x !== '。';
 		} )
 		.map( function ( x ) {
-			return x.split( /[。！？]/g )[ 0 ] + '。';
+			if ( x.match( /「.*」/ ) ) {
+				return x.replace( /^([^「]*「[^」]*」[^。！？]*)([。！？]).*$/g, '$1$2' );
+			} else {
+				return x.split( /[。！？]/g )[ 0 ] + '。';
+			}
 		} );
 }
 
@@ -56,23 +60,7 @@ function mdlink( title: string, text?: string ) {
 	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
-new mwbot.stream( 'recentchange', {
-	onopen() {
-		return;
-	},
-	onerror( err ) {
-		try {
-			const errjson: string = JSON.stringify( err );
-			if ( errjson === '{"type":"error"}' ) {
-				return; // ignore
-			}
-			winston.error( '[afc/event/watchlist] Recentchange Error (Throw by EventSource):' + errjson );
-		} catch ( e ) {
-			winston.error( '[afc/event/watchlist] Recentchange Error (Throw by EventSource): <Throw at console>' );
-			console.log( err );
-		}
-	}
-} ).addListener( function ( event: RecentChangeStreamEvent ) {
+recentChange( function ( event: RecentChangeStreamEvent ) {
 	if (
 		event.wiki === 'zhwiki' &&
 		event.type === 'categorize' &&
@@ -117,7 +105,7 @@ new mwbot.stream( 'recentchange', {
 			}
 		}
 
-		if ( !$submissionbox.length && page.namespace === 0 && user !== creator && isReviewer( user ) ) {
+		if ( !$submissionbox.length && page.namespace === 0 && user !== creator && AFCPage.isReviewer( user ) ) {
 			tMsg += `已接受${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ htmllink( title ) }`;
 			let tpClass: string;
 			try {
@@ -197,7 +185,7 @@ new mwbot.stream( 'recentchange', {
 
 			const { issues } = await autoReview( wikitext, $parseHTML );
 
-			autoReviewExtends( user, creator, page, wikitext, issues );
+			autoReviewExtends( page, wikitext, issues, { user, creator } );
 
 			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: submit, issues: ${ issues.join( ', ' ) }` );
 
@@ -285,6 +273,9 @@ new mwbot.stream( 'recentchange', {
 			iMsg
 		} );
 	} catch ( e ) {
-		winston.error( '[afc/event/watchlist] Recentchange Error:  (Throw by Async Function)' + e );
+		winston.error( '[afc/event/watchlist] Recentchange Error:  (Throw by Async Function) ' + e );
+		if ( e instanceof Error ) {
+			console.log( e.stack );
+		}
 	}
 } );

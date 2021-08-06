@@ -2,6 +2,7 @@ import winston from 'winston';
 import { Manager } from '../../init';
 import { Context } from '../../lib/handlers/Context';
 import { BridgeMsg } from './BridgeMsg';
+import { EventArgument } from 'lib/event';
 
 function checkEnable(): void {
 	if ( !Manager.global.isEnable( 'transport' ) ) {
@@ -40,11 +41,11 @@ export function setAliases( a: Record<string, alias> ): void {
 	Object.assign( aliases, a );
 }
 
-function getBridgeMsg( msg: BridgeMsg | Context ): BridgeMsg {
+function getBridgeMsg<T = unknown>( msg: BridgeMsg<T> | Context<T> ): BridgeMsg<T> {
 	if ( msg instanceof BridgeMsg ) {
 		return msg;
 	} else {
-		return new BridgeMsg( msg );
+		return new BridgeMsg<T>( msg );
 	}
 }
 
@@ -82,7 +83,7 @@ export function deleteProcessor( type: string ): void {
 	processors.delete( type );
 }
 
-export function addHook<key extends keyof hooks>( event: key, func: hooks[ key ], priority = 100 ): void {
+export function addHook<V extends keyof hooks>( event: V, func: hooks[ V ], priority = 100 ): void {
 	// Event:
 	// bridge.send：剛發出，尚未準備傳話
 	// bridge.receive：已確認目標
@@ -108,14 +109,14 @@ export function deleteHook( func: hook ): void {
 	}
 }
 
-export async function emitHook( event: string, msg: BridgeMsg ): Promise<void> {
+export async function emitHook<V extends keyof hooks>( event: V, ...args: EventArgument<hooks[V]> ): Promise<void> {
 	checkEnable();
 
 	if ( hooks[ event ] ) {
 		winston.debug( `[transport/bridge] emit hook: ${ event }` );
 		// eslint-disable-next-line no-shadow, @typescript-eslint/no-unused-vars
 		for ( const [ _priority, hook ] of hooks[ event ] ) {
-			await hook( msg );
+			await hook( ...args );
 		}
 	}
 }
@@ -181,7 +182,11 @@ export async function send( m: BridgeMsg | Context ): Promise<boolean> {
 		throw new TypeError( `Can't not send Msg #${ currMsgId } where target is null or undefined.` );
 	}
 
-	await prepareBridgeMsg( msg );
+	try {
+		await prepareBridgeMsg( msg );
+	} catch ( e ) {
+		return;
+	}
 
 	let allresolved = false;
 

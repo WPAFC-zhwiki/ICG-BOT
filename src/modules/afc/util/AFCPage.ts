@@ -1,8 +1,10 @@
 import { mwbot, $ } from './index';
+import { isReviewer } from './reviewer';
 
 import { ApiPage, ApiRevision, MwnPage } from 'mwn';
 import type { ApiQueryRevisionsParams } from 'mwn/build/api_params';
 import { MwnError } from 'mwn/build/error';
+import winston from 'winston';
 
 async function revisionRequest( title: string, props: ApiQueryRevisionsParams[ 'rvprop' ],
 	limit: number, customOptions?: ApiQueryRevisionsParams ): Promise<ApiRevision[]> {
@@ -68,7 +70,7 @@ export class AFCPage {
 		this._page = new mwbot.page( title );
 	}
 
-	private async init(): Promise<void> {
+	private async _init(): Promise<void> {
 		this._page.history = function ( props: ApiQueryRevisionsParams[ 'rvprop' ],
 			limit: number, customOptions?: ApiQueryRevisionsParams ) {
 			return revisionRequest( this.toString(), props, limit, customOptions );
@@ -80,7 +82,7 @@ export class AFCPage {
 
 	public static async new( title: string ): Promise<AFCPage> {
 		const page = new AFCPage( title );
-		await page.init();
+		await page._init();
 		return page;
 	}
 
@@ -94,7 +96,7 @@ export class AFCPage {
 
 	private async _getTemplates(): Promise<void> {
 		if ( !this._text ) {
-			throw new ReferenceError( 'You must call method getPageText before call method getTemplates!' );
+			throw new ReferenceError( 'You must call method _getPageText before call method _getTemplates !' );
 		}
 
 		const templates: {
@@ -115,10 +117,10 @@ export class AFCPage {
 		 * @return {string}
 		 */
 		function parseValue( $v: JQuery ): string {
-			let text: string = $( '<div>' ).append( $v ).html();
+			let text: string = $( '<div>' ).append( $v.clone() ).html();
 
 			// Convert templates to look more template-y
-			text = text.replace( /<template>/g, '{{' );
+			text = text.replace( /<template([^>]+)?>/g, '{{' );
 			text = text.replace( /<\/template>/g, '}}' );
 			text = text.replace( /<part>/g, '|' );
 
@@ -321,15 +323,14 @@ export class AFCPage {
 
 	private _removeExcessNewlines(): void {
 		this._text = this._text
-			// Replace 3+ newlines with just two
-			.replace( /(?:[\t ]*(?:\r?\n|\r)){3,}/ig, '\n\n' )
-			// Remove all whitespace at the top of the article
-			.replace( /^\s*/, '' )
+			// Replace 4+ newlines with just three
+			.replace( /(?:[\t ]*(?:\r?\n|\r)){4,}/ig, '\n\n\n' )
 			// Remove initial request artifact
 			.replace( /=+([^=\n]+)=+[\t\n\s]*$/gi, function ( _all: string, title: string ) {
 				const regexp = /^(?:外部(?:[链鏈]接|[连連]結)|[参參]考(?:[资資]料|[来來]源|文[档檔献獻]))$/;
 				return regexp.exec( title ) ? `== ${ title } ==` : '';
-			} );
+			} )
+			.trim();
 	}
 
 	private _removeAfcTemplates(): void {
@@ -526,7 +527,7 @@ export class AFCPage {
 
 			// Move punctuation before <ref> tags
 			.replace(
-				/\s*((<\s*ref\s*(name\s*=|group\s*=)*\s*.*[/]{1}>)|(<\s*ref\s*(name\s*=|group\s*=)*\s*[^/]*>(?:<[^<>]*>|[^><])*<\/\s*ref\s*>))[ \t]*([.。!！?？,，;；:：])+$/gim,
+				/\s*((<\s*ref\s*(name\s*=|group\s*=)*\s*.*[/]{1}>)|(<\s*ref\s*(name\s*=|group\s*=)*\s*[^/]*>(?:<[^<>\n]*>|[^<>\n])*<\/\s*ref\s*>))[\s\t]*([.。!！?？,，;；:：])+$/gim,
 				'$6$1'
 			)
 
@@ -598,13 +599,13 @@ export class AFCPage {
 		/* || this._page.namespace === 102 && !!this._page.getMainText().match( /^建立條目\// ) */
 	}
 
-	public async postEdit(): Promise<ApiEditResponse> {
+	public async postEdit( summary?: string ): Promise<ApiEditResponse> {
 		if ( !mwbot.loggedIn && !mwbot.usingOAuth ) {
 			throw new Error( 'You must login to edit.' );
 		}
 
 		try {
-			const data: ApiEditResponse = await this._page.save( this.text, '測試：自動清理AFC草稿', {
+			const data: ApiEditResponse = await this._page.save( this.text, summary || '自動清理AFC草稿', {
 				bot: true,
 				starttimestamp: this._starttimestamp,
 				basetimestamp: this._basetimestamp,
@@ -613,12 +614,14 @@ export class AFCPage {
 				nocreate: true
 			} );
 
-			console.debug( '[afc/event/clean] Edit success:  ' + JSON.stringify( data ) );
+			winston.debug( '[afc/util/AFCPage] Edit success:  ' + JSON.stringify( data ) );
 
 			return data;
 		} catch ( err ) {
-			console.error( '[afc/event/clean] Edit Error:  ' + err );
+			winston.error( '[afc/util/AFCPage] Edit Error:  ' + err );
 			throw err;
 		}
 	}
+
+	public static isReviewer = isReviewer;
 }

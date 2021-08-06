@@ -30,7 +30,7 @@ async function pia( context: Context ) {
 	const command = context.command;
 	const action = piaMap.get( command.replace( '!', '' ) );
 
-	moduleTransport.reply( context, `${ action } ${ context.param }`, {
+	moduleTransport.reply( context, `${ action }${ context.param ? ` ${ context.param }` : '' }`, {
 		isNotice: true
 	} );
 }

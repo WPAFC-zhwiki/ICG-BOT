@@ -108,6 +108,8 @@ export const Manager: {
 	handlerClasses: ExtendsMap<string, {
 		object: typeof MessageHandler;
 		options: typeof config.IRC | typeof config.Telegram | typeof config.Discord;
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
 	}, handlerClasses>,
 
 	config: typeof config,

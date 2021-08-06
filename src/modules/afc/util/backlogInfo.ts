@@ -27,8 +27,9 @@ export async function getBacklogInfo(): Promise<{
 	const $rawLvl = $( $.parseHTML( html ) );
 	const lvl = parseInt( $rawLvl.find( 'p' ).text(), 10 );
 
-	const dMsg = new Discord.MessageEmbed()
-		.setColor( function () {
+	const dMsg = new Discord.MessageEmbed( {
+		title: '條目審核積壓',
+		color: ( function () {
 			switch ( lvl ) {
 				case 0:
 					return 0x87ceeb;
@@ -53,16 +54,17 @@ export async function getBacklogInfo(): Promise<{
 				default:
 					return 0x708ad7;
 			}
-		}() )
-		.setTitle( '條目審核積壓' )
-		.setDescription(
-			`現時條目審核專題共有 **${ cnt }** 個積壓草稿需要審核，積壓約 **${ lvl }** 週。`
-		)
-		.addField( '工具欄', [
-			'[待審草稿](https://zh.wikipedia.org/wiki/Category:正在等待審核的草稿)',
-			'[隨機跳轉](https://zh.wikipedia.org/wiki/Special:RandomInCategory/Category:正在等待審核的草稿)'
-		].join( ' **·** ' ) )
-		.setTimestamp();
+		}() ),
+		description: `現時條目審核專題共有 **${ cnt }** 個積壓草稿需要審核，積壓約 **${ lvl }** 週。`,
+		fields: [ {
+			name: '工具欄',
+			value: [
+				'[待審草稿](https://zh.wikipedia.org/wiki/Category:正在等待審核的草稿)',
+				'[隨機跳轉](https://zh.wikipedia.org/wiki/Special:RandomInCategory/Category:正在等待審核的草稿)'
+			].join( ' **·** ' )
+		} ],
+		timestamp: Date.now()
+	} );
 
 	const tMsg = `<b>條目審核積壓</b>
 現時條目審核專題共有 <b>${ cnt }</b> 個積壓草稿需要審核，積壓約 <b>${ lvl }</b> 週。

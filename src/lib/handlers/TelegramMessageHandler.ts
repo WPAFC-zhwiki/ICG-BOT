@@ -15,8 +15,8 @@ import HttpsProxyAgent from 'lib/proxy.js';
 import { ConfigTS } from 'config';
 
 interface TelegramEvents extends Events {
-	command( context: Context & { _rawdata: TContext }, comand: string, param: string ): void;
-	text( context: Context & { _rawdata: TContext } ): void;
+	command( context: Context<TContext>, comand: string, param: string ): void;
+	text( context: Context<TContext> ): void;
 	pin( info: {
 		from: {
 			id: number;
@@ -76,6 +76,11 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 	public get rawClient(): Telegraf<TContext> {
 		return this._client;
+	}
+
+	private _me: TT.User;
+	public get me(): TT.User {
+		return this._me;
 	}
 
 	public constructor( config: ConfigTS[ 'Telegram' ] ) {
@@ -175,6 +180,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 		client.telegram.getMe().then( function ( me ) {
 			that._username = me.username;
+			that._me = me;
 		} );
 
 		client.on( 'message', async function ( ctx, next ) {
@@ -183,7 +189,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					return;
 				}
 
-				const context = new Context( {
+				const context = new Context<TContext>( {
 					from: ctx.message.from.id,
 					to: ctx.chat.id,
 					nick: that._getNick( ctx.message.from ),

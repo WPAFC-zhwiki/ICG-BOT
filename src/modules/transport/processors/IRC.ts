@@ -78,7 +78,7 @@ ircHandler.on( 'topic', ( channel, topic, nick, message ) => {
 const awaySpan = 1000 * ( options.notify.timeBeforeLeave || 0 );
 const userlist: Record<string, Record<string, number>> = {};
 
-ircHandler.on( 'join', ( channel, nick, message ) => {
+ircHandler.on( 'join', async function ( channel, nick, message ) {
 	if ( options.notify.join && nick !== ircHandler.nick ) {
 		bridge.send( new BridgeMsg( {
 			from: channel.toLowerCase(),
@@ -221,8 +221,8 @@ export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPref
 	}
 
 	// 自定义消息样式
+	let styleMode: 'simple' | 'complex' = 'simple';
 	const messageStyle = config.options.messageStyle;
-	let styleMode = 'simple';
 	if ( msg.extra.clients >= 3 && ( msg.extra.clientName.shortname || isNotice ) ) {
 		styleMode = 'complex';
 	}

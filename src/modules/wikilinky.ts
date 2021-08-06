@@ -144,7 +144,7 @@ async function processlinky( context: Context ) {
 			return;
 		}
 
-		const rule = map[ to_uid ] || map.default;
+		const rule = Object.prototype.hasOwnProperty.call( map, to_uid ) ? map[ to_uid ] : map.default;
 
 		if ( rule ) {
 			const links = linky( context.text, rule );
