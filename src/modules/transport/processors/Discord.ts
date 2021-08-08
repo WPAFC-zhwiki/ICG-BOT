@@ -118,12 +118,12 @@ discordHandler.on( 'text', ( context ) => {
 		}
 	}
 
-	if ( /<@!\d*?>/u.test( context.text ) ) {
+	if ( /<@!?\d*?>/u.test( context.text ) ) {
 		// 處理 at
 		let ats: string[] = [];
 		const promises = [];
 
-		context.text.replace( /<@!(\d*?)>/gu, function ( _: string, id: string ) {
+		context.text.replace( /<@!?(\d*?)>/gu, function ( _: string, id: string ) {
 			ats.push( id );
 			return '';
 		} );
@@ -139,11 +139,17 @@ discordHandler.on( 'text', ( context ) => {
 			}
 		}
 
-		Promise.all( promises ).then( ( infos ) => {
+		Promise.all<Discord.User>( promises ).then( ( infos ) => {
 			for ( const info of infos ) {
 				if ( info ) {
-					userInfo.set( info.id, info );
-					context.text = context.text.replace( new RegExp( `<@!${ info.id }>`, 'gu' ), `@${ discordHandler.getNick( info ) }` );
+					if ( !userInfo.has( info.id ) ) {
+						userInfo.set( info.id, info );
+					}
+
+					context.text = context.text.replace(
+						new RegExp( `<@!?${ info.id }>`, 'gu' ),
+						info.bot ? `<@bot ${ discordHandler.getNick( info ) }>` : `@${ discordHandler.getNick( info ) }`
+					);
 				}
 			}
 		} ).catch( ( e ) => winston.error( e.trace ) ).then( function () {
