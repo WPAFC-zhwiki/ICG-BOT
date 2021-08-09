@@ -98,13 +98,14 @@ export async function reply( context: moduleTransport.BridgeMsg, msg: {
 }
 
 const enableEvents: string[] = Manager.config.afc.enables.concat( Manager.config.afc.enableEvents || [] );
+const debugGroups: string[] = Manager.config.afc.debugGroups || [];
 
 export async function send( msg: {
 	dMsg?: string | Discord.MessageEmbed;
 	tMsg?: string;
 	iMsg?: string;
-} ): Promise<void> {
-	enableEvents.forEach( function ( k ) {
+}, debug?: boolean ): Promise<void> {
+	( debug ? debugGroups : enableEvents ).forEach( function ( k ) {
 		const f = moduleTransport.BridgeMsg.parseUID( k );
 		if ( f.client === 'Discord' ) {
 			msg.dMsg && dc.say( f.id, msg.dMsg );

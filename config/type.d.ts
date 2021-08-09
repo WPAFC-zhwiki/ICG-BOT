@@ -484,6 +484,8 @@ export interface ConfigTS {
 		 */
 		enableCommands?: string[];
 
+		debugGroups?: string[];
+
 		/**
 		 * 使用 https://www.npmjs.com/package/mwn
 		 *

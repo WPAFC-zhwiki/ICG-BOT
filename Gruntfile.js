@@ -1,5 +1,3 @@
-'use strict';
-
 const { exec } = require( 'child_process' );
 let path = require( 'path' );
 const fs = require( 'fs-extra' );
