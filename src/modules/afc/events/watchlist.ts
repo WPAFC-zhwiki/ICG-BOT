@@ -1,7 +1,7 @@
 /* eslint-disable no-jquery/no-class-state */
 import Discord from 'discord.js';
 
-import { mwbot, $, recentChange, namespaceData, AFCPage, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'modules/afc/util';
+import { mwbot, $, recentChange, AFCPage, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'modules/afc/util';
 import { MwnPage } from 'mwn';
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 import winston from 'winston';
@@ -201,7 +201,7 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 			}
 			dMsg.setColor( 'ORANGE' );
 		} else if ( !$submissionbox.length ) {
-			tMsg += `移除了在${ namespaceData[ page.namespace ] }命名空間${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ pagelink }的AFC模板。`;
+			tMsg += `移除了${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ pagelink }的AFC模板。`;
 			dMsg
 				.setColor( 'ORANGE' )
 				.setDescription( turndown( tMsg ) );
