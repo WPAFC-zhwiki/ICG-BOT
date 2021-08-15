@@ -47,6 +47,10 @@ interface TelegramEvents extends Events {
 	richmessage( context: Context ): void;
 }
 
+type SendMessageOpipons = TT.ExtraSendMessage & TT.ExtraReplyMessage & {
+	withNick?: boolean
+};
+
 /**
  * 使用通用介面處理 Telegram 訊息
  */
@@ -453,7 +457,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 	private async _say( method: string, target: string | number,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		message: any, options?: TT.ExtraReplyMessage ): Promise<any> {
+		message: any, options?: SendMessageOpipons ): Promise<any> {
 		if ( !this._enabled ) {
 			throw new Error( 'Handler not enabled' );
 		} else {
@@ -461,13 +465,13 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		}
 	}
 
-	public say( target: string | number, message: string, options?: TT.ExtraReplyMessage ): Promise<TT.Message> {
+	public say( target: string | number, message: string, options?: SendMessageOpipons ): Promise<TT.Message> {
 		return this._say( 'sendMessage', target, message, options );
 	}
 
 	public sayWithHTML( target: string | number, message: string,
-		options?: TT.ExtraSendMessage ): Promise<TT.Message> {
-		const options2: TT.ExtraSendMessage = copyObject( options || {} );
+		options?: SendMessageOpipons ): Promise<TT.Message> {
+		const options2: SendMessageOpipons = copyObject( options || {} );
 		options2.parse_mode = 'HTML';
 		return this.say( target, message, options2 );
 	}
@@ -492,28 +496,32 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		return this._client.telegram.sendDocument.bind( this._client.telegram );
 	}
 
-	private async _reply( method: string, context: Context & { _rawdata: TContext },
+	private async _reply( method: string, context: Context<TContext>,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		message: any, options?: TT.ExtraReplyMessage ): Promise<any> {
+		message: any, options?: SendMessageOpipons ): Promise<any> {
 		if ( ( context._rawdata && context._rawdata.message ) ) {
 			if ( context.isPrivate ) {
 				return await this._say( method, context.to, message, options );
 			} else {
-				const options2: TT.ExtraReplyMessage = copyObject( options || {} );
+				const options2: SendMessageOpipons = copyObject( options || {} );
 				options2.reply_to_message_id = context._rawdata.message.message_id;
-				return await this._say( method, context.to, message, options2 );
+				if ( options2.withNick ) {
+					return await this._say( method, String( context.to ), `${ context.nick }: ${ message }`, options2 );
+				} else {
+					return await this._say( method, context.to, `${ message }`, options2 );
+				}
 			}
 		} else {
 			throw new Error( 'No messages to reply' );
 		}
 	}
 
-	public reply( context: Context & { _rawdata: TContext },
+	public reply( context: Context<TContext>,
 		message: string, options?: TT.ExtraReplyMessage ): Promise<TT.Message> {
 		return this._reply( 'sendMessage', context, message, options );
 	}
 
-	public replyWithPhoto( context: Context & { _rawdata: TContext },
+	public replyWithPhoto( context: Context<TContext>,
 		photo: TT.InputFile, options?: TT.ExtraPhoto ): Promise<TT.MessagePhoto> {
 		return this._reply( 'sendPhoto', context, photo, options );
 	}

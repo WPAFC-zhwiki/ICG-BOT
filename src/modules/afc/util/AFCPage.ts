@@ -324,7 +324,7 @@ export class AFCPage {
 	private _removeExcessNewlines(): void {
 		this._text = this._text
 			// Replace 4+ newlines with just three
-			.replace( /(?:[\t ]*(?:\r?\n|\r)){4,}/ig, '\n\n\n' )
+			.replace( /([\s\t]*[\r\n]){4,}/g, '\n\n\n' )
 			// Remove initial request artifact
 			.replace( /=+([^=\n]+)=+[\t\n\s]*$/gi, function ( _all: string, title: string ) {
 				const regexp = /^(?:外部(?:[链鏈]接|[连連]結)|[参參]考(?:[资資]料|[来來]源|文[档檔献獻]))$/;
@@ -485,7 +485,7 @@ export class AFCPage {
 			}
 		}
 
-		const CategoriesNeedRemove = [ '使用创建条目精灵建立的页面', '用条目向导创建的草稿' ];
+		const CategoriesNeedRemove = [ '使用创建条目精灵建立的页面', '用条目向导创建的草稿', '正在等待審核的草稿' ];
 		for ( const cat in this.categories ) {
 			if ( CategoriesNeedRemove.indexOf( cat ) === -1 ) {
 				this._text += `\n[[:Category:${ cat }${ ( this.categories[ cat ] ? `|${ this.categories[ cat ] }` : '' ) }]]`;
@@ -512,6 +512,11 @@ export class AFCPage {
 				/\{\{(userspacedraft|userspace draft|user sandbox|用戶沙盒|用户沙盒|draft copyvio|七日草稿|7D draft|Draft|草稿|Please leave this line alone \(sandbox heading\))(?:\{\{[^{}]*\}\}|[^}{])*\}\}/ig,
 				''
 			)
+
+			// 移除掉不知道為甚麼沒移除的預設內容
+			.replace( /'''此处改为条目主题'''(?:是一个)?/, '' )
+
+			.replace( /==\s*章节标题\s*==/, '' )
 
 			// Remove html comments (<!--) that surround categories
 			.replace( /<!--\s*((?:\[\[:{0,1}(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):.*?\]\]\s*)+)-->/gi, '$1' )

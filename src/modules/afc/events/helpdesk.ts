@@ -16,7 +16,7 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 		event.wiki === 'zhwiki' &&
 		event.type === 'edit' &&
 		event.title === 'WikiProject:建立條目/詢問桌' &&
-		( event.length?.old || 11 ) < ( event.length?.new || 0 ) + 10
+		( event.length?.old || 0 ) < ( event.length?.new || 0 ) + 10
 	) {
 		return true;
 	}
@@ -58,7 +58,8 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 		fields: [ {
 			name: '留言內容',
 			value: parseMarkDown.length > 1024 ? parseMarkDown.substring( 0, 1021 ) + '...' : parseMarkDown
-		} ]
+		} ],
+		timestamp: event.timestamp * 1000
 	} );
 
 	const tMsg = `${ htmllink( diff, '<b>詢問桌有新留言！</b>' ) }

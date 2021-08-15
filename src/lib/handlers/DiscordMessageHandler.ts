@@ -12,6 +12,8 @@ interface DiscordEvents extends Events {
 	ready( client: Discord.Client ): void;
 }
 
+export type DiscordSendMessage = string | string[] | Discord.MessageEmbed | Discord.MessageAttachment
+
 /**
  * 使用通用介面處理 Discord 訊息
  */
@@ -133,9 +135,11 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 			} );
 
 			// 檢查是不是命令
-			for ( const [ cmd, callback ] of that._commands ) {
-				if ( rawdata.content.startsWith( cmd ) ) {
-					let param = rawdata.content.trim().substring( cmd.length );
+			if ( rawdata.content.startsWith( '!' ) || rawdata.content.startsWith( '/' ) ) {
+				const cmd = rawdata.content.substring( 1, rawdata.content.match( ' ' ).index );
+				if ( that._commands.has( cmd ) ) {
+					const callback = that._commands.get( cmd );
+					let param = rawdata.content.trim().substring( cmd.length + 1 );
 					if ( param === '' || param.startsWith( ' ' ) ) {
 						param = param.trim();
 
@@ -163,28 +167,28 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		} );
 	}
 
-	public async say( target: string, message: string | Discord.MessageEmbed ): Promise<Discord.Message> {
+	public async say( target: string, message: DiscordSendMessage ): Promise<Discord.Message> {
 		if ( !this._enabled ) {
 			throw new Error( 'Handler not enabled' );
 		} else {
-			const channel: Discord.TextChannel = Object.assign( await this._client.channels.fetch( target ) );
-			if ( typeof channel.send !== 'function' ) {
-				throw new Error( `Channel ${ target } is not't a text channel.` );
+			const channel = await this._client.channels.fetch( target );
+			if ( channel.isText() ) {
+				return await channel.send( message );
 			}
-			return await channel.send( message );
+			throw new Error( `Channel ${ target } is not't a text channel.` );
 		}
 	}
 
-	public async reply( context: Context, message: string | Discord.MessageEmbed, options: {
-		noPrefix?: boolean
-	} ): Promise<Discord.Message> {
+	public async reply( context: Context, message: DiscordSendMessage, options: {
+		withNick?: boolean
+	} = {} ): Promise<Discord.Message> {
 		if ( context.isPrivate ) {
 			return await this.say( String( context.from ), message );
 		} else {
-			if ( options.noPrefix ) {
-				return await this.say( String( context.to ), `${ message }` );
-			} else {
+			if ( options.withNick ) {
 				return await this.say( String( context.to ), `${ context.nick }: ${ message }` );
+			} else {
+				return await this.say( String( context.to ), `${ message }` );
 			}
 		}
 	}

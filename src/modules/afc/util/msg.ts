@@ -5,6 +5,8 @@ import * as moduleTransport from 'modules/transport';
 import Discord from 'discord.js';
 
 import { IRCBold, $, decodeURI } from './index';
+import { parseUID, getUIDFromContext, addCommand } from 'lib/message';
+import { Context } from 'lib/handlers/Context';
 
 const dc = Manager.handlers.get( 'Discord' );
 const tg = Manager.handlers.get( 'Telegram' );
@@ -16,48 +18,31 @@ type command = ( args: string[], replyfunc: ( msg: {
 	dMsg?: string | Discord.MessageEmbed;
 	tMsg?: string;
 	iMsg?: string;
-} ) => void, msg: moduleTransport.BridgeMsg ) => void;
+} ) => void, msg: Context ) => void;
 
 export function setCommand( cmd: string, func: command ): void {
-	moduleTransport.addCommand( `!${ cmd }`, function ( bridgeMsg ) {
-		func( bridgeMsg.param.split( ' ' ), function ( msg: {
+	addCommand( `${ cmd }`, function ( context ) {
+		func( context.param.split( ' ' ), function ( msg: {
 			dMsg?: string | Discord.MessageEmbed;
 			tMsg?: string;
 			iMsg?: string;
 		} ) {
-			reply( bridgeMsg, msg );
-		}, bridgeMsg );
+			reply( context, msg );
+		}, context );
 		return Promise.resolve();
 	}, {
-		enables: enableCommands.filter( function ( c ) {
-			return moduleTransport.BridgeMsg.parseUID( c ).client !== 'Telegram';
-		} )
-	} );
-
-	moduleTransport.addCommand( `/${ cmd }`, function ( bridgeMsg ) {
-		func( bridgeMsg.param.split( ' ' ), function ( msg: {
-			dMsg?: string | Discord.MessageEmbed;
-			tMsg?: string;
-			iMsg?: string;
-		} ) {
-			reply( bridgeMsg, msg );
-		}, bridgeMsg );
-		return Promise.resolve();
-	}, {
-		enables: enableCommands.filter( function ( c ) {
-			return moduleTransport.BridgeMsg.parseUID( c ).client !== 'IRC';
-		} )
+		enables: enableCommands
 	} );
 }
 
-export async function reply( context: moduleTransport.BridgeMsg, msg: {
+export async function reply( context: Context, msg: {
 	dMsg?: string | Discord.MessageEmbed;
 	tMsg?: string;
 	iMsg?: string;
 } ): Promise<void> {
-	const that = moduleTransport.BridgeMsg.parseUID( context.rawTo );
+	const that = parseUID( getUIDFromContext( context, context.to ) );
 
-	if ( that.client === 'Discord' ) {
+	if ( context.handler.id === 'Discord' ) {
 		msg.dMsg && dc.say( that.id, msg.dMsg );
 	} else if ( that.client === 'Telegram' ) {
 		msg.tMsg && tg.sayWithHTML( that.id, msg.tMsg, {
@@ -69,6 +54,8 @@ export async function reply( context: moduleTransport.BridgeMsg, msg: {
 		} );
 	}
 
+	moduleTransport.prepareBridgeMsg( context );
+
 	// 若互聯且在公開群組調用，則讓其他群也看到
 	if ( context.extra.mapto ) {
 		await ( new Promise<void>( function ( resolve ) {
@@ -78,10 +65,10 @@ export async function reply( context: moduleTransport.BridgeMsg, msg: {
 		} ) );
 
 		for ( const t of context.extra.mapto ) {
-			if ( t === context.to_uid ) {
+			if ( t === that.uid ) {
 				continue;
 			}
-			const s = moduleTransport.BridgeMsg.parseUID( t );
+			const s = parseUID( t );
 			if ( s.client === 'Discord' ) {
 				msg.dMsg && dc.say( s.id, msg.dMsg );
 			} else if ( s.client === 'Telegram' ) {
@@ -106,7 +93,7 @@ export async function send( msg: {
 	iMsg?: string;
 }, debug?: boolean ): Promise<void> {
 	( debug ? debugGroups : enableEvents ).forEach( function ( k ) {
-		const f = moduleTransport.BridgeMsg.parseUID( k );
+		const f = parseUID( k );
 		if ( f.client === 'Discord' ) {
 			msg.dMsg && dc.say( f.id, msg.dMsg );
 		} else if ( f.client === 'Telegram' ) {
@@ -130,7 +117,8 @@ export function htmlToIRC( text: string ): string {
 
 	$ele.find( 'a' ).each( function ( _i, a ) {
 		const $a: JQuery<HTMLAnchorElement> = $( a );
-		const href = decodeURI( $a.attr( 'href' ) ).replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
+		// TODO: zhwp.org 憑證過期，先改成IP
+		const href = decodeURI( $a.attr( 'href' ) ).replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'http://52.52.154.135/' );
 
 		$a.html( ` ${ $a.html() } &lt;${ htmlExcape( href ) }&gt;` );
 	} );

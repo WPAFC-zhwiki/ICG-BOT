@@ -9,9 +9,9 @@ import { MessageHandler } from 'lib/handlers/MessageHandler';
 import { ifEnable, isEnable } from 'modules/enable';
 
 export interface ExtendsMap<T extends string, S, M extends Record<T, S>> extends Map<T, S> {
-    get<K extends keyof M>( key: K ): M[ K ];
+	get<K extends keyof M>( key: K ): M[ K ];
 	get( key: T ): S;
-    set<K extends keyof M>( key: K, value: M[ K ] ): this;
+	set<K extends keyof M>( key: K, value: M[ K ] ): this;
 	set( key: T, value: S ): this;
 }
 
@@ -22,7 +22,7 @@ const allHandlers: ExtendsMap<string, string, Record<string, string>> = new Map(
 ] );
 
 // 日志初始化
-const logFormat: winston.Logform.FormatWrap = winston.format( ( info ) => {
+const logFormat: winston.Logform.FormatWrap = winston.format( function ( info: winston.Logform.TransformableInfo ) {
 	info.level = info.level.toUpperCase();
 	if ( info.stack ) {
 		info.message = `${ info.message }\n${ info.stack }`;
@@ -74,7 +74,9 @@ if ( config.logging && config.logging.logfile ) {
 			winston.format.timestamp( {
 				format: 'YYYY-MM-DD HH:mm:ss'
 			} ),
-			winston.format.printf( ( info ) => `${ info.timestamp } [${ info.level }] ${ info.message }` )
+			winston.format.printf( function ( info ) {
+				return `${ info.timestamp } [${ info.level }] ${ info.message }`;
+			} )
 		)
 	} );
 	winston.add( files );
@@ -101,6 +103,8 @@ type handlerClasses = {
 	};
 }
 
+const botSymbol: unique symbol = Symbol();
+
 // 所有擴充套件包括傳話機器人都只與該物件打交道
 export const Manager: {
 	handlers: ExtendsMap<string, MessageHandler, handlers>,
@@ -118,7 +122,8 @@ export const Manager: {
 		Context: typeof Context;
 		Message: typeof MessageHandler;
 		ifEnable: typeof ifEnable;
-		isEnable: typeof isEnable
+		isEnable: typeof isEnable;
+		readonly bot: typeof botSymbol;
 	}
 } = {
 	handlers: new Map(),
@@ -128,7 +133,8 @@ export const Manager: {
 		Context,
 		Message: MessageHandler,
 		ifEnable,
-		isEnable
+		isEnable,
+		bot: botSymbol
 	}
 };
 

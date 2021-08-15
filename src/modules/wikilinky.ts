@@ -7,6 +7,7 @@ import * as moduleTransport from 'modules/transport';
 
 import winston = require( 'winston' );
 import { Context } from 'lib/handlers/Context';
+import msgManage from 'lib/message/msgManage';
 
 const options = Manager.config.wikilinky;
 
@@ -135,10 +136,10 @@ function linky( string: string, articlepath: string ) {
 	return ret;
 }
 
-async function processlinky( context: Context ) {
+async function processlinky( from: string, to: string, text: string, context: Context ) {
 	try {
-		const from_uid = moduleTransport.BridgeMsg.getUIDFromContext( context, String( context.from ) );
-		const to_uid = moduleTransport.BridgeMsg.getUIDFromContext( context, String( context.to ) );
+		const from_uid = moduleTransport.BridgeMsg.getUIDFromContext( context, from );
+		const to_uid = moduleTransport.BridgeMsg.getUIDFromContext( context, to );
 
 		if ( ignores.includes( from_uid ) ) {
 			return;
@@ -147,7 +148,7 @@ async function processlinky( context: Context ) {
 		const rule = Object.prototype.hasOwnProperty.call( map, to_uid ) ? map[ to_uid ] : map.default;
 
 		if ( rule ) {
-			const links = linky( context.text, rule );
+			const links = linky( text, rule );
 
 			if ( links.length > 0 ) {
 				winston.debug( `[wikilinkly] Msg ${ context.msgId } parselinks: ${ links.join( ', ' ) }` );
@@ -164,8 +165,7 @@ async function processlinky( context: Context ) {
 
 					moduleTransport.send( new moduleTransport.BridgeMsg( context, {
 						text: links.join( '\n' ),
-						isNotice: false,
-						noPrefix: true
+						withNick: false
 					} ) );
 				}
 			}
@@ -175,8 +175,8 @@ async function processlinky( context: Context ) {
 	}
 }
 
-Manager.handlers.forEach( function ( handlers ) {
-	handlers.on( 'text', function ( context ) {
-		processlinky( context );
+Manager.handlers.forEach( function ( _handlers, name ) {
+	msgManage.on( name.toLocaleUpperCase(), function ( from, to, text, context ) {
+		processlinky( from, to, text, context );
 	} );
 } );

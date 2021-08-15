@@ -12,16 +12,11 @@ type commandTS = {
 };
 
 const commands: Map<string, commandTS> = new Map();
-const commands_telegram: Map<string, commandTS> = new Map();
 
 const clientFullNames = {};
 for ( const [ type, handler ] of Manager.handlers ) {
 	clientFullNames[ handler.id.toLowerCase() ] = type;
 	clientFullNames[ type.toLowerCase() ] = type;
-}
-
-function getNameForTelegram( cmd: string ) {
-	return cmd.replace( /[^A-Za-z0-9_]/gu, '' );
 }
 
 export function addCommand( command: string, callbacks:
@@ -95,7 +90,6 @@ Record<string, bridge.hook> | ( ( msg: BridgeMsg ) => Promise<void> ), opts: {
 	};
 
 	commands.set( command, cmd );
-	commands_telegram.set( getNameForTelegram( command ), cmd );
 }
 
 export function deleteCommand( command: string ): void {
@@ -105,7 +99,6 @@ export function deleteCommand( command: string ): void {
 			handler.deleteCommand( command );
 		}
 		commands.delete( command );
-		commands_telegram.delete( getNameForTelegram( command ) );
 	}
 }
 
@@ -114,12 +107,7 @@ export function getCommand( command: string ): commandTS {
 }
 
 function getCmd( msg: BridgeMsg ) {
-	// Telegram 需要特殊處理
-	if ( msg.handler.type === 'Telegram' ) {
-		return commands_telegram.get( msg.command );
-	} else {
-		return commands.get( msg.command );
-	}
+	return commands.get( msg.command );
 }
 
 function sethook( event: string ) {

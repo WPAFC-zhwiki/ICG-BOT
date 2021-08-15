@@ -1,4 +1,4 @@
-import { $ } from 'modules/afc/util/index';
+import { $, encodeURI } from './index';
 import { MwnPage } from 'mwn';
 
 import issuesData from './issuesData.json';
@@ -16,10 +16,19 @@ export type elementsTS = {
 		$disallowed: JQuery<HTMLElement>;
 		$unreliable: JQuery<HTMLElement>;
 	},
+	extlinks: {
+		all: string[];
+		disallowed: string[];
+		unreliable: string[];
+	},
 	cats: RegExpMatchArray
 }
 
-export async function autoReview( wikitext: string, $parseHTML: JQuery<HTMLElement|Node[]> ): Promise<{
+// eslint-disable-next-line max-len
+export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: JQuery<JQuery.Node[]|HTMLElement>, { user, creator }: {
+	user?: string;
+	creator?: string;
+} = {} ): Promise<{
 	issues: string[];
 	elements: elementsTS;
 }> {
@@ -110,6 +119,17 @@ export async function autoReview( wikitext: string, $parseHTML: JQuery<HTMLEleme
 
 	wikitext.replace( /<ref.*?>.*?<\/ref>/gi, '' );
 
+	const extlink = $parseHTML.find( 'a' ).filter( function ( _i, a ) {
+		try {
+			return !$( a ).parents( '.ambox, .ombox, .fmbox, .dmbox, .stub, .afc-comment' ).length &&
+				new URL( $( a ).attr( 'href' ), `https://zh.wikipedia.org/wiki/${ encodeURI( page.toText() ) }` ).hostname !== 'zh.wikipedia.org';
+		} catch {
+			return false;
+		}
+	} ).get().map( function ( a ) {
+		return a.href;
+	} );
+
 	const elements: elementsTS = {
 		intLinks: wikitext.match( /\[\[.*?\]\]/g ),
 		refs: {
@@ -119,17 +139,39 @@ export async function autoReview( wikitext: string, $parseHTML: JQuery<HTMLEleme
 				return !/group=/i.test( String( x ) );
 			} ),
 			$references: refs.$ele.filter( function ( _i, ele ) {
-				return !!$( ele ).find( 'a' ).length;
+				return !!$( ele ).find( 'a, cite.citation' ).length;
 			} ),
 			$disallowed: refs.$ele.filter( function ( _i, ele ) {
-				return !!$( ele ).html().match( /baike.baidu.com|百度|quora.com|toutiao.com|pincong.rocks|zhihu.com|知乎/ );
+				return !!$( ele ).html().match( /baike\.baidu\.com|百度|quora\.com|toutiao\.com|pincong\.rocks|zhihu\.com|知乎/ );
 			} ),
 			$unreliable: refs.$ele.filter( function ( _i, ele ) {
-				return !!$( ele ).html().match( /百家[号號]|baijiahao.baidu.com|bigexam.hk|boxun.com|bowenpress.com|hkgpao.com|peopo.org|qyer.com|speakout.hk|songshuhui.net|youtube.com|youtu.be|acfun.cn|bilibili.com/ );
+				return !!$( ele ).html().match( /百家[号號]|baijiahao\.baidu\.com|bigexam\.hk|boxun\.com|bowenpress\.com|hkgpao.com|peopo\.org|qyer\.com|speakout\.hk|songshuhui\.net|youtube\.com|youtu\.be|acfun\.cn|bilibili\.com/ );
+			} )
+		},
+		extlinks: {
+			all: extlink,
+			disallowed: extlink.filter( function ( href ) {
+				return href.match( /baike\.baidu\.com|quora\.com|toutiao\.com|pincong\.rocks|zhihu\.com/ );
+			} ),
+			unreliable: extlink.filter( function ( href ) {
+				return href.match( /baijiahao\.baidu\.com|bigexam\.hk|boxun\.com|bowenpress\.com|hkgpao.com|peopo\.org|qyer\.com|speakout\.hk|songshuhui\.net|youtube\.com|youtu\.be|acfun\.cn|bilibili\.com/ );
 			} )
 		},
 		cats: wikitext.match( /\[\[(?:[Cc]at|[Cc]ategory|分[类類]):/gi ) || []
 	};
+
+	if ( !elements.extlinks.all.length ) {
+		issues.push( 'no-extlink' );
+	} else {
+		if ( elements.extlinks.disallowed.length ) {
+			issues.push( 'extlink-disallowed' );
+		}
+
+		if ( elements.extlinks.unreliable.length ) {
+			issues.push( 'extlink-unreliable' );
+		}
+
+	}
 
 	const contentLen = countText.length - ( countText.match( /\p{L}/i ) ? countText.match( /\p{L}/i ).length : 0 ) * 0.5;
 	if ( contentLen === 0 ) {
@@ -193,21 +235,13 @@ export async function autoReview( wikitext: string, $parseHTML: JQuery<HTMLEleme
 		issues.push( 'bad-indents' );
 	}
 
-	return {
-		issues,
-		elements
-	};
-}
-
-// eslint-disable-next-line max-len
-export function autoReviewExtends( page: MwnPage, wikitext: string, issues: string[], { user, creator }: { user?: string, creator?: string } = {} ): void {
 	let title = page.getMainText();
 
 	if ( title === user ) {
 		issues.push( 'same-name' );
 	} else if ( title === creator ) {
 		issues.push( 'same-name-creator' );
-	} else if ( user && creator ) {
+	} else {
 		if ( page.namespace === 2 ) {
 			const split = title.split( '/' );
 			split.shift();
@@ -219,9 +253,9 @@ export function autoReviewExtends( page: MwnPage, wikitext: string, issues: stri
 			title = split.join( '/' );
 		}
 
-		if ( title.includes( user ) || user.includes( title ) ) {
+		if ( title.includes( user ) || user && user.includes( title ) ) {
 			issues.push( 'same-name' );
-		} else if ( title.includes( creator ) || creator.includes( title ) ) {
+		} else if ( title.includes( creator ) || creator && creator.includes( title ) ) {
 			issues.push( 'same-name-creator' );
 		}
 	}
@@ -238,6 +272,11 @@ export function autoReviewExtends( page: MwnPage, wikitext: string, issues: stri
 	if ( /AFC.*(?:[测測]試|沙盒)/i.exec( title ) || /{{(?:Template:)?Afctest(?:\||}})/i.exec( wikitext ) ) {
 		issues.push( 'afc-test' );
 	}
+
+	return {
+		issues,
+		elements
+	};
 }
 
 export function getIssusData( key: string, notice?: boolean ): string {

@@ -5,19 +5,25 @@
 import winston = require( 'winston' );
 import { Manager } from 'init';
 import * as moduleTransport from 'modules/transport';
+import { addCommand } from 'lib/message';
+import { Context } from 'lib/handlers/Context';
 
-if ( Manager.global.isEnable( 'transport' ) ) {
+const ircHandler = Manager.handlers.get( 'IRC' );
+
+if ( ircHandler && Manager.global.isEnable( 'transport' ) ) {
 	const options = Manager.config.irccommand;
 
 	const prefix = options.prefix || '';
 	const echo = options.echo || true;
-	const ircHandler = Manager.handlers.get( 'IRC' );
 
-	moduleTransport.addCommand( `/${ prefix }command`, function ( context: moduleTransport.BridgeMsg ) {
+	addCommand( `${ prefix }command`, async function ( context: Context ) {
 		if ( !context.isPrivate ) {
-			if ( context.param ) {
+			moduleTransport.prepareBridgeMsg( context );
+			if ( context.param && context.extra?.mapto?.length ) {
 				if ( echo ) {
-					context.reply( context.param );
+					context.reply( context.param, {
+						noPrefix: true
+					} );
 				}
 
 				let sentCount = 0;
@@ -37,6 +43,5 @@ if ( Manager.global.isEnable( 'transport' ) ) {
 				context.reply( `用法: /${ prefix }command <命令>` );
 			}
 		}
-		return Promise.resolve();
 	}, options );
 }

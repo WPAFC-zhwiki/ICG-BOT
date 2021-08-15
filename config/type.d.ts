@@ -499,7 +499,7 @@ export interface ConfigTS {
 		 * 請注意 mwn 僅支援 Oauth 1.0 ，若是申請成 Oauth 2.0 將會無法使用！
 		 */
 		mwn: MwnLoginNone | MwnLoginBotPassword | MwnLoginOAuth;
-	}
+	};
 }
 
 type TransportServemediaBase = {

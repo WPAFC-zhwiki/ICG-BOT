@@ -1,7 +1,7 @@
 /* eslint-disable no-jquery/no-class-state */
 import Discord from 'discord.js';
 
-import { mwbot, $, recentChange, AFCPage, autoReview, autoReviewExtends, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'modules/afc/util';
+import { mwbot, $, recentChange, namespaceData, AFCPage, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'modules/afc/util';
 import { MwnPage } from 'mwn';
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 import winston from 'winston';
@@ -84,12 +84,14 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 		let tMsg: string = htmllink( `User:${ user }`, user );
 		const dMsg: Discord.MessageEmbed = new Discord.MessageEmbed();
 
+		dMsg.setTimestamp( event.timestamp * 1000 );
+
 		const wikitext: string = afcpage.text;
 		const html: string = await mwbot.parseTitle( title, {
 			uselang: 'zh-hant'
 		} );
-		const $parseHTML = $( $.parseHTML( html ) );
-		const $submissionbox = $parseHTML.find( '.afc-submission-pending' ).length ?
+		const $parseHTML: JQuery<JQuery.Node[]> = $( $.parseHTML( html ) );
+		const $submissionbox: JQuery<HTMLElement> = $parseHTML.find( '.afc-submission-pending' ).length ?
 			$parseHTML.find( '.afc-submission-pending' ).first() :
 			$parseHTML.find( '.afc-submission' ).first();
 
@@ -105,8 +107,40 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 			}
 		}
 
+		const pagelink = htmllink( title );
+
+		if ( !$submissionbox.length && /已添加至分类/.exec( event.comment ) ) {
+			send( {
+				dMsg: new Discord.MessageEmbed( {
+					timestamp: new Date(),
+					description: `未預料的錯誤：${ turndown( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
+				} ),
+				tMsg: `未預料的錯誤：${ pagelink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`,
+				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
+			} );
+		} else if ( !$parseHTML.find( '.afc-submission-pending' ).length && /已添加至分类/.exec( event.comment ) ) {
+			send( {
+				dMsg: new Discord.MessageEmbed( {
+					timestamp: new Date(),
+					description: `未預料的錯誤：${ turndown( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
+				} ),
+				tMsg: `未預料的錯誤：${ pagelink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`,
+				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
+			} );
+		} else if ( $parseHTML.find( '.afc-submission-pending' ).length && /已从分类中移除/.exec( event.comment ) ) {
+			const $pendings = $parseHTML.find( '.afc-submission-pending' );
+			send( {
+				dMsg: new Discord.MessageEmbed( {
+					timestamp: new Date(),
+					description: `未預料的錯誤：${ turndown( pagelink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。`
+				} ),
+				tMsg: `未預料的錯誤：${ pagelink }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。`,
+				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。`
+			} );
+		}
+
 		if ( !$submissionbox.length && page.namespace === 0 && user !== creator && AFCPage.isReviewer( user ) ) {
-			tMsg += `已接受${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ htmllink( title ) }`;
+			tMsg += `已接受${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ pagelink }`;
 			let tpClass: string;
 			try {
 				const talkPage = await mwbot.read( page.getTalkPage() );
@@ -154,20 +188,20 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 					wpReason: '由[[Wikipedia:建立條目|建立條目精靈]]建立但錯誤放置在主名字空間且未符合條目收錄要求的草稿'
 				} );
 				const moveurl = `https://zh.wikipedia.org/wiki/Special:MovePage?${ movequery.toString() }`;
-				tMsg += `在條目命名空間建立了草稿${ htmllink( title ) }（<a href="${ moveurl }">移動到草稿命名空間</a>）`;
+				tMsg += `在條目命名空間建立了草稿${ pagelink }（<a href="${ moveurl }">移動到草稿命名空間</a>）`;
 				dMsg
-					.setDescription( `${ mdlink( `User:${ user }`, user ) }在條目命名空間建立了草稿${ mdlink( title ) }` )
+					.setDescription( `${ mdlink( `User:${ user }`, user ) }在條目命名空間建立了草稿${ turndown( pagelink ) }` )
 					.setFooter( [ `[移動到草稿命名空間](${ moveurl })` ] );
 
 				winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: create in ns0` );
 			} else {
-				tMsg += `移除了在條目命名空間的草稿${ htmllink( title ) }中的AFC模板。`;
+				tMsg += `移除了在條目命名空間的草稿${ pagelink }中的AFC模板。`;
 				dMsg.setDescription( turndown( tMsg ) );
 				winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & in ns0` );
 			}
 			dMsg.setColor( 'ORANGE' );
 		} else if ( !$submissionbox.length ) {
-			tMsg += `移除了${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ htmllink( title ) }的AFC模板。`;
+			tMsg += `移除了在${ namespaceData[ page.namespace ] }命名空間${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ pagelink }的AFC模板。`;
 			dMsg
 				.setColor( 'ORANGE' )
 				.setDescription( turndown( tMsg ) );
@@ -181,11 +215,9 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 			if ( creator !== user ) {
 				tMsg += `${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }建立的`;
 			}
-			tMsg += `草稿${ htmllink( title ) }。`;
+			tMsg += `草稿${ pagelink }。`;
 
-			const { issues } = await autoReview( wikitext, $parseHTML );
-
-			autoReviewExtends( page, wikitext, issues, { user, creator } );
+			const { issues } = await autoReview( page, wikitext, $parseHTML, { user, creator } );
 
 			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: submit, issues: ${ issues.join( ', ' ) }` );
 
@@ -217,7 +249,7 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 			} else {
 				tMsg += `建立者${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的`;
 			}
-			tMsg += `草稿${ htmllink( title ) }標記為`;
+			tMsg += `草稿${ pagelink }標記為`;
 			if ( $submissionbox.hasClass( 'afc-submission-rejected' ) ) {
 				tMsg += '拒絕再次提交的草稿';
 			} else {

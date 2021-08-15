@@ -14,7 +14,8 @@ declare class HttpsProxyAgent extends Https.Agent {
 	createConnection( opts: {
 		host: string;
 		port: number;
-	}, callback: ( error: false | Error, sockets: Tls.TLSSocket | null ) => void ): void;
+	// eslint-disable-next-line max-len
+	}, callback:( ( error: false, sockets: Tls.TLSSocket ) => void ) | ( ( error: Error, sockets: null ) => void ) ): void;
 
 	// Almost verbatim copy of http.Agent.addRequest
 	// HttpsProxyAgent.prototype.addRequest = function(req, host, port, localAddress) // node v0.10.x

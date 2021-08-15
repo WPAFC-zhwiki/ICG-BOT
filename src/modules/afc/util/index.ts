@@ -126,7 +126,6 @@ export function recentChange( filter: ( data: RecentChangeStreamEvent ) => boole
 
 EventStream.onmessage = function ( { data } ) {
 	const event: RecentChangeStreamEvent = JSON.parse( data );
-
 	EventStreamManager.forEach( function ( [ filter, action ] ) {
 		if ( filter( event ) ) {
 			try {

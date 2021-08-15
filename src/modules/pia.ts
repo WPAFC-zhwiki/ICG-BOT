@@ -10,7 +10,9 @@
  * 於是，中文維基百科其他幾個花式 ping 也成為了機器人的指令。
  */
 import { Manager } from 'init';
+import delay from 'lib/delay';
 import { Context } from 'lib/handlers/Context';
+import { addCommand } from 'lib/message';
 import * as moduleTransport from 'modules/transport';
 
 const piaMap = new Map<string, string>( [
@@ -27,24 +29,23 @@ const piaMap = new Map<string, string>( [
 ] );
 
 async function pia( context: Context ) {
-	const command = context.command;
-	const action = piaMap.get( command.replace( '!', '' ) );
+	await delay( 1000 );
 
-	moduleTransport.reply( context, `${ action }${ context.param ? ` ${ context.param }` : '' }`, {
-		isNotice: true
+	const command = context.command;
+	const action = piaMap.get( command );
+
+	context.reply( `${ action }${ context.param ? ` ${ context.param }` : '' }`, {
+		withNick: true
 	} );
+
+	if ( Manager.global.isEnable( 'transport' ) ) {
+		moduleTransport.send( new moduleTransport.BridgeMsg( context, {
+			text: `${ action }${ context.param ? ` ${ context.param }` : '' }`,
+			isNotice: true
+		} ), Manager.global.bot );
+	}
 }
 
-if ( Manager.global.isEnable( 'transport' ) ) {
-	for ( const command of piaMap.keys() ) {
-		moduleTransport.addCommand( `!${ command }`, pia );
-	}
-} else {
-	// 在完全不开启互联的情况下也能使用
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	for ( const [ _type, handler ] of Manager.handlers ) {
-		for ( const command of piaMap.keys() ) {
-			handler.addCommand( `!${ command }`, pia );
-		}
-	}
+for ( const command of piaMap.keys() ) {
+	addCommand( command, pia );
 }

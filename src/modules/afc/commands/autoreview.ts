@@ -1,6 +1,6 @@
 import Discord = require( 'discord.js' );
 
-import { mwbot, $, autoReview, autoReviewExtends, getIssusData, encodeURI, turndown, htmlToIRC, setCommand } from '../util';
+import { mwbot, $, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, setCommand } from '../util';
 import { MwnPage } from 'mwn';
 import winston from 'winston';
 
@@ -12,8 +12,42 @@ function mdlink( title: string, text?: string ) {
 	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
+function processArgs( args: string[] ) {
+	const output: Record<string, string> = {};
+	let str = args.join( ' ' );
+	const exRegExp = /(?:--|—)([^\s]+)=("[^"]?"|'[^']?'|[^\s]*)/g;
+	if ( exRegExp.test( str ) ) {
+		str.match( exRegExp ).forEach( function ( v: string ) {
+			const match = v.match( new RegExp( exRegExp.source ) );
+			if ( match[ 2 ].match( /^['"]/ ) ) {
+				match[ 2 ] = match[ 2 ].substring( 1, match[ 2 ].length - 1 );
+			}
+			output[ match[ 1 ] ] = match[ 2 ];
+		} );
+	}
+	str = str.replace( exRegExp, '' );
+	return {
+		output,
+		args: str.split( ' ' )
+	};
+}
+
 setCommand( 'autoreview', async function ( args, reply ) {
+	const pArg = processArgs( args );
+
+	args = pArg.args;
+
+	const sendToSubmitter = Object.prototype.hasOwnProperty.call( pArg.output, 'fwd' ) ? false : ( function () {
+		const val = pArg.output.fwd;
+		if ( val === '' || ![ 'n', 'no', 'false', '否', '非', '不', '0' ].includes( val ) ) {
+			return true;
+		}
+		return false;
+	}() );
+
 	let title = args.join( ' ' ).split( '#' )[ 0 ];
+
+	title = title.substring( 0, 1 ).toUpperCase() + title.substring( 1, title.length );
 
 	if ( !args.length || !title.length ) {
 		reply( {
@@ -88,13 +122,31 @@ setCommand( 'autoreview', async function ( args, reply ) {
 	const html: string = await mwbot.parseTitle( title, {
 		uselang: 'zh-hant'
 	} );
-	const $parseHTML: JQuery<Node[]> = $( $.parseHTML( html ) );
+	const $parseHTML: JQuery<JQuery.Node[]> = $( $.parseHTML( html ) );
 
-	const { issues } = await autoReview( wikitext, $parseHTML );
+	const { issues } = await autoReview( page, wikitext, $parseHTML );
 
-	autoReviewExtends( page, wikitext, issues );
+	if ( sendToSubmitter ) {
+		if ( !$parseHTML.find( '.afc-submission' ).length ) {
+			reply( {
+				tMsg: '轉傳錯誤：目標頁面不是建立條目草稿。',
+				dMsg: new Discord.MessageEmbed( {
+					description: '轉傳錯誤：目標頁面不是建立條目草稿。'
+				} ),
+				iMsg: '轉傳錯誤：目標頁面不是建立條目草稿。'
+			} );
+		} else {
+			reply( {
+				tMsg: '警告：已忽略未實作功能 <code>foward to user talk</code>',
+				dMsg: new Discord.MessageEmbed( {
+					description: '警告：已忽略未實作功能 `foward to user talk`'
+				} ),
+				iMsg: '警告：已忽略未實作功能 `foward to user talk`'
+			} );
+		}
+	}
 
-	winston.debug( `[afc/commands/autoreview] title: ${ title }, rdrFrom: ${ rdrFrom }, issues: ${ issues.join( ', ' ) }` );
+	winston.debug( `[afc/commands/autoreview] title: ${ title }, rdrFrom: ${ rdrFrom }, issues: ${ issues.join( ', ' ) }, sendToSubmitter: ${ sendToSubmitter }` );
 
 	let output = `系統剛剛自動審閱了頁面${ htmllink( title ) }${ redirect ? `（重新導向自${ htmllink( rdrFrom ) }）` : '' }`;
 

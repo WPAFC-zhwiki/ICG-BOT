@@ -51,7 +51,6 @@ module.exports = class HttpsProxyAgent extends Https.Agent {
 	}
 
 	// Almost verbatim copy of http.Agent.addRequest
-	// HttpsProxyAgent.prototype.addRequest = function(req, host, port, localAddress) // node v0.10.x
 	addRequest( req, options ) {
 		let name = options.host + ':' + options.port;
 		if ( options.path ) {
@@ -65,7 +64,7 @@ module.exports = class HttpsProxyAgent extends Https.Agent {
 		if ( this.sockets[ name ].length < this.maxSockets ) {
 			// if we are under maxSockets create a new one.
 			this.createSocket( name, options.host,
-				options.port, options.path, req, function ( socket ) { // node 0.12.x
+				options.port, options.path, req, function ( socket ) {
 					req.onSocket( socket );
 				}
 			);

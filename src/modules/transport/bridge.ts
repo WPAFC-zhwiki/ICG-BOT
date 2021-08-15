@@ -11,7 +11,7 @@ function checkEnable(): void {
 }
 
 // eslint-disable-next-line max-len
-export type processor = ( msg: BridgeMsg, { noPrefix, isNotice }: { noPrefix: boolean, isNotice: boolean } ) => Promise<void>;
+export type processor = ( msg: BridgeMsg, { withNick, isNotice }: { withNick: boolean, isNotice: boolean } ) => Promise<void>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type hook = ( ...args: any[] ) => Promise<any>;
@@ -49,9 +49,16 @@ function getBridgeMsg<T = unknown>( msg: BridgeMsg<T> | Context<T> ): BridgeMsg<
 	}
 }
 
-export function prepareBridgeMsg( msg: BridgeMsg ): Promise<void> {
+export function prepareBridgeMsg( msg: BridgeMsg ): Promise<void>;
+export function prepareBridgeMsg( msg: Context ): void;
+export function prepareBridgeMsg( msg: Context ): Promise<void> | void {
+	if ( Object.prototype.hasOwnProperty.call( msg.extra, 'mapto' ) ) {
+		return Promise.resolve();
+	}
+
 	// 檢查是否有傳送目標
-	const alltargets = map[ BridgeMsg.parseUID( msg.to_uid ).uid ];
+	const to_uid = BridgeMsg.getUIDFromContext( msg, msg.to );
+	const alltargets = map[ to_uid ];
 	const targets = [];
 	for ( const t in alltargets ) {
 		if ( !alltargets[ t ].disabled ) {
@@ -62,8 +69,8 @@ export function prepareBridgeMsg( msg: BridgeMsg ): Promise<void> {
 	// 向 msg 中加入附加訊息
 	msg.extra.clients = targets.length + 1;
 	msg.extra.mapto = targets;
-	if ( aliases[ msg.to_uid ] ) {
-		msg.extra.clientName = aliases[ msg.to_uid ];
+	if ( aliases[ to_uid ] ) {
+		msg.extra.clientName = aliases[ to_uid ];
 	} else {
 		msg.extra.clientName = {
 			shortname: msg.handler.id,
@@ -71,7 +78,9 @@ export function prepareBridgeMsg( msg: BridgeMsg ): Promise<void> {
 		};
 	}
 
-	return emitHook( 'bridge.send', msg );
+	if ( msg instanceof BridgeMsg ) {
+		return emitHook( 'bridge.send', msg );
+	}
 }
 
 // eslint-disable-next-line no-shadow
@@ -122,7 +131,7 @@ export async function emitHook<V extends keyof hooks>( event: V, ...args: EventA
 }
 
 function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
-	const noPrefix = !!msg.extra.noPrefix;
+	const withNick = !!msg.extra.withNick;
 	const isNotice = !!msg.extra.isNotice;
 	const currMsgId = msg.msgId;
 
@@ -140,25 +149,27 @@ function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
 		const new_uid = BridgeMsg.parseUID( t );
 		const client = new_uid.client;
 
+		const msgid = `#${ msg2.msgId } (from: #${ currMsgId })`;
+
 		if ( isbridge ) {
 			promises.push( emitHook( 'bridge.receive', msg2 ).then( function () {
 				// eslint-disable-next-line no-shadow
 				const processor = processors.get( client );
 				if ( processor ) {
-					winston.debug( `[transport/bridge] <BotTransport> #${ currMsgId } ---> ${ new_uid.uid }` );
-					return processor( msg2, { noPrefix, isNotice } );
+					winston.debug( `[transport/bridge] <BotTransport> ${ msgid } ---> ${ new_uid.uid }` );
+					return processor( msg2, { withNick, isNotice } );
 				} else {
-					winston.debug( `[transport/bridge] <BotTransport> #${ currMsgId } -X-> ${ new_uid.uid }: No processor` );
+					winston.debug( `[transport/bridge] <BotTransport> ${ msgid } -X-> ${ new_uid.uid }: No processor` );
 				}
 			} ) );
 		} else {
 			// eslint-disable-next-line no-shadow
 			const processor = processors.get( client );
 			if ( processor ) {
-				winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } ---> ${ new_uid.uid }` );
-				promises.push( processor( msg2, { noPrefix, isNotice } ) );
+				winston.debug( `[transport/bridge] <BotSend> ${ msgid } ---> ${ new_uid.uid }` );
+				promises.push( processor( msg2, { withNick, isNotice } ) );
 			} else {
-				winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } -X-> ${ new_uid.uid }: No processor` );
+				winston.debug( `[transport/bridge] <BotSend> ${ msgid } -X-> ${ new_uid.uid }: No processor` );
 			}
 		}
 	}
@@ -166,20 +177,35 @@ function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
 	return promises;
 }
 
-export async function send( m: BridgeMsg | Context ): Promise<boolean> {
+export async function send( m: BridgeMsg | Context, bot?: symbol ): Promise<boolean> {
 	checkEnable();
 
 	const msg: BridgeMsg = getBridgeMsg( m );
 
 	const currMsgId: number = msg.msgId;
-	winston.debug( `[transport/bridge] <UserSend> #${ currMsgId } ${ msg.from_uid } ---> ${ msg.to_uid }: ${ msg.text }` );
-	const extraJson: string = JSON.stringify( msg.extra );
-	if ( extraJson !== 'null' && extraJson !== '{}' ) {
-		winston.debug( `[transport/bridge] <UserSend> #${ currMsgId } extra: ${ extraJson }` );
-	}
 
-	if ( String( msg.from_uid ).match( /undefined|null/ ) || String( msg.to_uid ).match( /undefined|null/ ) ) {
-		throw new TypeError( `Can't not send Msg #${ currMsgId } where target is null or undefined.` );
+	let isbridge: boolean;
+
+	if ( bot === Manager.global.bot ) {
+		delete msg.extra.username; // 刪掉讓日誌變混亂的username
+
+		isbridge = false;
+		winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } ---> ${ msg.to_uid }: ${ msg.text }` );
+		const extraJson: string = JSON.stringify( msg.extra );
+		if ( extraJson !== 'null' && extraJson !== '{}' ) {
+			winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } extra: ${ extraJson }` );
+		}
+	} else {
+		isbridge = true;
+		winston.debug( `[transport/bridge] <UserSend> #${ currMsgId } ${ msg.from_uid } ---> ${ msg.to_uid }: ${ msg.text }` );
+		const extraJson: string = JSON.stringify( msg.extra );
+		if ( extraJson !== 'null' && extraJson !== '{}' ) {
+			winston.debug( `[transport/bridge] <UserSend> #${ currMsgId } extra: ${ extraJson }` );
+		}
+
+		if ( String( msg.from_uid ).match( /undefined|null/ ) || String( msg.to_uid ).match( /undefined|null/ ) ) {
+			throw new TypeError( `Can't not send Msg #${ currMsgId } where target is null or undefined.` );
+		}
 	}
 
 	try {
@@ -190,7 +216,7 @@ export async function send( m: BridgeMsg | Context ): Promise<boolean> {
 
 	let allresolved = false;
 
-	const promises = sendMessage( msg, true );
+	const promises = sendMessage( msg, isbridge );
 
 	try {
 		await Promise.all( promises );
@@ -206,32 +232,4 @@ export async function send( m: BridgeMsg | Context ): Promise<boolean> {
 		winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } has no targets. Ignored.` );
 	}
 	return await Promise.resolve( allresolved );
-}
-
-export function reply( context: BridgeMsg | Context, text: string, { isNotice, noPrefix }: {
-	isNotice?: boolean;
-	noPrefix?: boolean;
-} = {} ): void {
-	isNotice = !!isNotice;
-	noPrefix = !!noPrefix;
-
-	winston.debug( `[transport/bridge] <CommandReply> #${ context.msgId }: ${ text }` );
-
-	context.handler.reply( context, text );
-
-	const msg2 = new BridgeMsg( context, {
-		text: text,
-		rawFrom: context.from,
-		rawTo: context.to,
-		isNotice: isNotice,
-		noPrefix: noPrefix
-	} );
-
-	winston.debug( `[transport/bridge] <CommandReplyTransport> #${ context.msgId } ---> #${ msg2.msgId }: ${ text }` );
-
-	Manager.global.ifEnable( 'transport', function () {
-		Promise.all( sendMessage( msg2 ) ).catch( function ( e ) {
-			winston.error( '[transport/bridge] <BotSend> Rejected: ', e );
-		} );
-	} );
 }

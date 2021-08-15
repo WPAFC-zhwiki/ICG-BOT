@@ -7,13 +7,14 @@ moduleAlias.addPath( __dirname );
 
 import winston = require( 'winston' );
 
-import { Manager } from './init';
+import { Manager } from 'init';
+import 'lib/message';
 
 /**
  * 載入擴充套件
  */
 winston.info( '' );
-winston.info( 'Loading plugins...' );
+winston.info( 'Loading modules...' );
 for ( const module of Manager.config.modules ) {
 	try {
 		winston.info( `Loading module: ${ module }` );
@@ -24,5 +25,5 @@ for ( const module of Manager.config.modules ) {
 }
 
 if ( !Manager.config.modules || Manager.config.modules.length === 0 ) {
-	winston.info( 'No plugins loaded.' );
+	winston.info( 'No modules loaded.' );
 }

@@ -7,6 +7,8 @@ import format from 'string-format';
 import { Context } from '../../../lib/handlers/Context';
 import { TelegrafContext as TContext } from 'telegraf/typings/context';
 import jQuery from '../../../lib/jquery';
+import msgManage from 'lib/message/msgManage';
+import winston from 'winston';
 
 function htmlEscape( str: string ): string {
 	return jQuery( '<div>' ).text( str ).html();
@@ -47,8 +49,7 @@ function parseForwardBot( username: string, text: string ) {
 	return { realNick, realText };
 }
 
-// 將訊息加工好並發送給其他群組
-tgHandler.on( 'text', function ( context: Context ) {
+msgManage.on( 'telegram', async function ( _from, _to, _text, context ) {
 	const extra = context.extra;
 	if ( context.text.match( /^\/([A-Za-z0-9_@]+)(\s+(.*)|\s*)$/u ) && !options.forwardCommands ) {
 		return;
@@ -67,9 +68,11 @@ tgHandler.on( 'text', function ( context: Context ) {
 		}
 	}
 
-	bridge.send( context ).catch( function ( err ) {
-		throw err;
-	} );
+	try {
+		await bridge.send( context );
+	} catch ( e ) {
+		winston.error( e.trace );
+	}
 } );
 
 tgHandler.on( 'richmessage', ( context: Context ) => {
@@ -177,8 +180,8 @@ tgHandler.on( 'leave', ( group: number, from: {
 } );
 
 // 收到了來自其他群組的訊息
-export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPrefix: boolean, isNotice: boolean } = {
-	noPrefix: false,
+export default async function ( msg: BridgeMsg, { withNick, isNotice }: { withNick: boolean, isNotice: boolean } = {
+	withNick: true,
 	isNotice: false
 } ): Promise<void> {
 	// 元信息，用于自定义样式
@@ -223,7 +226,7 @@ export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPref
 		template = messageStyle[ styleMode ].reply;
 	} else if ( msg.extra.forward ) {
 		template = messageStyle[ styleMode ].forward;
-	} else if ( noPrefix ) {
+	} else if ( !withNick ) {
 		template = '{text}';
 	} else {
 		template = messageStyle[ styleMode ].message;

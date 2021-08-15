@@ -148,9 +148,11 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 			}
 
 			// 檢查是不是命令
-			for ( const [ cmd, callback ] of that._commands ) {
-				if ( plainText.startsWith( cmd ) ) {
-					let param = plainText.trim().substring( cmd.length );
+			if ( plainText.startsWith( '!' ) ) {
+				const cmd = plainText.substring( 1, plainText.match( ' ' ).index );
+				if ( that._commands.has( cmd ) ) {
+					const callback = that._commands.get( cmd );
+					let param = plainText.trim().substring( cmd.length + 1 );
 					if ( param === '' || param.startsWith( ' ' ) ) {
 						param = param.trim();
 
@@ -255,16 +257,16 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 
 	public async reply( context: Context, message: string, options: {
 		isPrivate?: boolean;
-		noPrefix?: boolean;
+		withNick?: boolean;
 		isAction?: boolean;
 	} = {} ): Promise<void> {
 		if ( context.isPrivate ) {
 			await this.say( String( context.from ), message, options );
 		} else {
-			if ( options.noPrefix ) {
-				await this.say( String( context.to ), `${ message }`, options );
+			if ( options.withNick ) {
+				return await this.say( String( context.to ), `${ context.nick }: ${ message }`, options );
 			} else {
-				await this.say( String( context.to ), `${ context.nick }: ${ message }`, options );
+				return await this.say( String( context.to ), `${ message }`, options );
 			}
 		}
 	}

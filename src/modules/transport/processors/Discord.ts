@@ -1,11 +1,10 @@
-import LRU from 'lru-cache';
 import format from 'string-format';
 import winston = require( 'winston' );
-import Discord = require( 'discord.js' );
 import { Manager } from '../../../init';
 import * as bridge from '../bridge';
 import { ConfigTS } from '../../../../config/type';
 import { BridgeMsg } from '../BridgeMsg';
+import msgManage from 'lib/message/msgManage';
 
 function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );
@@ -14,11 +13,6 @@ function truncate( str: string, maxLen = 20 ) {
 	}
 	return str;
 }
-
-const userInfo = new LRU<string, Discord.User>( {
-	max: 500,
-	maxAge: 3600000
-} );
 
 const config: ConfigTS[ 'transport' ] = Manager.config.transport;
 const discordHandler = Manager.handlers.get( 'Discord' );
@@ -45,18 +39,7 @@ function parseForwardBot( username: string, text: string ) {
  * 傳話
  */
 
-// 將訊息加工好並發送給其他群組
-discordHandler.on( 'text', ( context ) => {
-	async function send() {
-		try {
-			return bridge.send( context );
-		} catch ( e ) {
-			winston.error( e.trace );
-		}
-	}
-
-	userInfo.set( String( context.from ), context._rawdata.author );
-
+msgManage.on( 'discord', async function ( _from, _to, _text, context ) {
 	const extra = context.extra;
 
 	// 檢查是不是在回覆自己
@@ -68,101 +51,16 @@ discordHandler.on( 'text', ( context ) => {
 		}
 	}
 
-	if ( /<a?:\w+:\d*?>/g.test( context.text ) ) {
-		// 處理自定義表情符號
-		const emojis = [];
-		const animated = [];
-
-		context.text = context.text.replace( /<:(\w+):(\d*?)>/g, ( _, name, id ) => {
-			if ( id && !emojis.filter( ( v ) => v.id === id ).length ) {
-				emojis.push( { name: name, id: id } );
-			}
-			return `<emoji: ${ name }>`;
-		} );
-		context.text = context.text.replace( /<a:(\w+):(\d*?)>/g, ( _, name, id ) => {
-			if ( id && !animated.filter( ( v ) => v.id === id ).length ) {
-				animated.push( { name: name, id: id } );
-			}
-			return `<emoji: ${ name }>`;
-		} );
-
-		if ( !context.extra.files ) {
-			context.extra.files = [];
-		}
-		if ( discordHandler.relayEmoji ) {
-			for ( const emoji of emojis ) {
-				const url = `https://cdn.discordapp.com/emojis/${ emoji.id }.png`;
-				const proxyURL = `https://media.discordapp.net/emojis/${ emoji.id }.png`;
-				context.extra.files.push( {
-					client: 'Discord',
-					type: 'photo',
-					id: emoji.id,
-					size: 262144,
-					url: discordHandler.useProxyURL ? proxyURL : url
-				} );
-			}
-			for ( const emoji of animated ) {
-				const url = `https://cdn.discordapp.com/emojis/${ emoji.id }.gif`;
-				const proxyURL = `https://media.discordapp.net/emojis/${ emoji.id }.gif`;
-				context.extra.files.push( {
-					client: 'Discord',
-					type: 'photo',
-					id: emoji.id,
-					size: 262144,
-					url: discordHandler.useProxyURL ? proxyURL : url
-				} );
-			}
-		}
-		if ( !context.extra.files.length ) {
-			delete context.extra.files;
-		}
-	}
-
-	if ( /<@!?\d*?>/u.test( context.text ) ) {
-		// 處理 at
-		let ats: string[] = [];
-		const promises = [];
-
-		context.text.replace( /<@!?(\d*?)>/gu, function ( _: string, id: string ) {
-			ats.push( id );
-			return '';
-		} );
-		ats = [ ...new Set( ats ) ];
-
-		for ( const at of ats ) {
-			if ( userInfo.has( at ) ) {
-				promises.push( Promise.resolve( userInfo.get( at ) ) );
-			} else {
-				promises.push( discordHandler.fetchUser( at ).catch( function ( e: Error ) {
-					winston.error( e.stack );
-				} ) );
-			}
-		}
-
-		Promise.all<Discord.User>( promises ).then( ( infos ) => {
-			for ( const info of infos ) {
-				if ( info ) {
-					if ( !userInfo.has( info.id ) ) {
-						userInfo.set( info.id, info );
-					}
-
-					context.text = context.text.replace(
-						new RegExp( `<@!?${ info.id }>`, 'gu' ),
-						info.bot ? `<@bot ${ discordHandler.getNick( info ) }>` : `@${ discordHandler.getNick( info ) }`
-					);
-				}
-			}
-		} ).catch( ( e ) => winston.error( e.trace ) ).then( function () {
-			send();
-		} );
-	} else {
-		send();
+	try {
+		await bridge.send( context );
+	} catch ( e ) {
+		winston.error( e.trace );
 	}
 } );
 
 // 收到了來自其他群組的訊息
-export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPrefix: boolean, isNotice: boolean } = {
-	noPrefix: false,
+export default async function ( msg: BridgeMsg, { withNick, isNotice }: { withNick: boolean, isNotice: boolean } = {
+	withNick: true,
 	isNotice: false
 } ): Promise<void> {
 	// 元信息，用于自定义样式
@@ -207,7 +105,7 @@ export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPref
 		template = messageStyle[ styleMode ].reply;
 	} else if ( msg.extra.forward ) {
 		template = messageStyle[ styleMode ].forward;
-	} else if ( noPrefix ) {
+	} else if ( !withNick ) {
 		template = '{text}';
 	} else {
 		template = messageStyle[ styleMode ].message;

@@ -5,11 +5,14 @@
 import winston = require( 'winston' );
 import { Manager } from 'init';
 import * as moduleTransport from 'modules/transport';
+import { Context } from 'lib/handlers/Context';
+import { addCommand } from 'lib/message';
 
 const ircHandler = Manager.handlers.get( 'IRC' );
 
-function getChans( context: moduleTransport.BridgeMsg ) {
+function getChans( context: Context ) {
 	const r: string[] = [];
+	moduleTransport.prepareBridgeMsg( context );
 	for ( const c of context.extra.mapto ) {
 		const client = moduleTransport.BridgeMsg.parseUID( c );
 		if ( client.client === 'IRC' ) {
@@ -19,9 +22,9 @@ function getChans( context: moduleTransport.BridgeMsg ) {
 	return r;
 }
 
-async function processWhois( context: moduleTransport.BridgeMsg ) {
+async function processWhois( context: Context ) {
 	if ( context.param ) {
-		ircHandler.whois( context.param ).then( ( info ) => {
+		ircHandler.whois( context.param ).then( function ( info ) {
 			let output: string[] = [ `${ info.nick }: Unknown nick` ];
 
 			if ( info.user ) {
@@ -44,7 +47,7 @@ async function processWhois( context: moduleTransport.BridgeMsg ) {
 	}
 }
 
-async function processNames( context: moduleTransport.BridgeMsg ) {
+async function processNames( context: Context ) {
 	const chans = getChans( context );
 
 	for ( const chan of chans ) {
@@ -78,7 +81,7 @@ async function processNames( context: moduleTransport.BridgeMsg ) {
 	}
 }
 
-async function processTopic( context: moduleTransport.BridgeMsg ) {
+async function processTopic( context: Context ) {
 	const chans = getChans( context );
 	for ( const chan of chans ) {
 		const topic: string = ircHandler.chans[ chan ].topic;
@@ -93,10 +96,10 @@ async function processTopic( context: moduleTransport.BridgeMsg ) {
 	}
 }
 
-if ( Manager.global.isEnable( 'transport' ) && ircHandler ) {
-	const prefix = Manager.config.ircquery.prefix || '';
+if ( ircHandler && Manager.global.isEnable( 'transport' ) ) {
+	const prefix = Manager.config.ircquery?.prefix || '';
 
-	moduleTransport.addCommand( `/${ prefix }topic`, processTopic, Manager.config.ircquery );
-	moduleTransport.addCommand( `/${ prefix }names`, processNames, Manager.config.ircquery );
-	moduleTransport.addCommand( `/${ prefix }whois`, processWhois, Manager.config.ircquery );
+	addCommand( `${ prefix }topic`, processTopic, Manager.config.ircquery );
+	addCommand( `${ prefix }names`, processNames, Manager.config.ircquery );
+	addCommand( `${ prefix }whois`, processWhois, Manager.config.ircquery );
 }

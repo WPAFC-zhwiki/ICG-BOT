@@ -5,7 +5,7 @@ import { Client as DiscordClient } from 'discord.js';
 import { Client as IRCClient } from 'irc-upd';
 import { Context } from 'lib/handlers/Context';
 
-export type Command = ( context: Context, cmd: string, param: string ) => void;
+export type Command<rawdata = unknown> = ( context: Context<rawdata>, cmd: string, param: string ) => void;
 
 export type Telegraf = TelegrafClient<TContext>;
 export type Telegram = Telegraf['telegram'];

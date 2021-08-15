@@ -5,7 +5,7 @@ import { MessageHandler } from '../../lib/handlers/MessageHandler';
 let clientFullNames = {};
 
 type BridgeMsgOptin<rawdata = unknown> = optin<rawdata> & {
-	noPrefix?: boolean;
+	withNick?: boolean;
 	isNotice?: boolean;
 	from_uid?: string;
 	to_uid?: string;
@@ -19,12 +19,12 @@ export class BridgeMsg<rawdata = unknown> extends Context<rawdata> {
 		return this._isNotice;
 	}
 
-	private _noPrefix = false;
-	get noPrefix(): boolean {
-		return this._noPrefix;
+	private _withNick = false;
+	get withNick(): boolean {
+		return this._withNick;
 	}
-	set noPrefix( f: boolean ) {
-		this._noPrefix = !!f;
+	set withNick( f: boolean ) {
+		this._withNick = !!f;
 	}
 
 	readonly rawFrom: string;
@@ -74,7 +74,7 @@ export class BridgeMsg<rawdata = unknown> extends Context<rawdata> {
 	}
 
 	extra: extra & {
-		noPrefix?: boolean;
+		withNick?: boolean;
 		isNotice?: boolean;
 	};
 
@@ -97,12 +97,12 @@ export class BridgeMsg<rawdata = unknown> extends Context<rawdata> {
 		this.from_uid = Context.getArgument( overrides.from_uid, this.rawFrom );
 		this.to_uid = Context.getArgument( overrides.to_uid, this.rawTo );
 
-		this._noPrefix = !!that.noPrefix;
-		this._isNotice = !!that.isNotice;
+		this._withNick = !!that.withNick || true;
+		this._isNotice = !!that.isNotice || false;
 
 		Object.assign( this.extra, {
-			noPrefix: !!that.noPrefix,
-			isNotice: !!that.isNotice
+			withNick: !!that.withNick || true,
+			isNotice: !!that.isNotice || false
 		} );
 	}
 
@@ -145,19 +145,5 @@ export class BridgeMsg<rawdata = unknown> extends Context<rawdata> {
 		}
 
 		return `${ context.handler.type.toLowerCase() }/${ id }`;
-	}
-
-	static getSimpleContext( context: Context | BridgeMsg ): {
-		from: string;
-		to: string;
-		isPrivate: boolean;
-		handler: MessageHandler;
-	} {
-		return {
-			from: context.from,
-			to: context.to,
-			isPrivate: context.isPrivate,
-			handler: context.handler
-		};
 	}
 }

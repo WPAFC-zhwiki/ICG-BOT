@@ -5,6 +5,8 @@ import { Manager } from '../../../init';
 import * as bridge from '../bridge';
 import { ConfigTS } from '../../../../config/type';
 import { IRCRawMessage } from '../../../lib/handlers/IRCMessageHandler';
+import msgManage from 'lib/message/msgManage';
+import winston = require( 'winston' );
 
 function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );
@@ -41,10 +43,12 @@ if ( colorize.enabled && colorize.linesplit ) {
  * 傳話
  */
 
-// 將訊息加工好並發送給其他群組
-ircHandler.on( 'text', function ( context ) {
-	// eslint-disable-next-line @typescript-eslint/no-empty-function
-	bridge.send( context ).catch( function () {} );
+msgManage.on( 'irc', async function ( _from, _to, _text, context ) {
+	try {
+		await bridge.send( context );
+	} catch ( e ) {
+		winston.error( e.trace );
+	}
 } );
 
 /*
@@ -190,8 +194,8 @@ ircHandler.on( 'kill', ( nick, reason, channels, message ) => {
 } );
 
 // 收到了來自其他群組的訊息
-export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPrefix: boolean, isNotice: boolean } = {
-	noPrefix: false,
+export default async function ( msg: BridgeMsg, { withNick, isNotice }: { withNick: boolean, isNotice: boolean } = {
+	withNick: true,
 	isNotice: false
 } ): Promise<void> {
 	// 元信息，用于自定义样式
@@ -236,7 +240,7 @@ export default async function ( msg: BridgeMsg, { noPrefix, isNotice }: { noPref
 		template = messageStyle[ styleMode ].reply;
 	} else if ( msg.extra.forward ) {
 		template = messageStyle[ styleMode ].forward;
-	} else if ( noPrefix ) {
+	} else if ( !withNick ) {
 		template = '{text}';
 	} else {
 		template = messageStyle[ styleMode ].message;
