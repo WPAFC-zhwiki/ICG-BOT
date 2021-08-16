@@ -15,8 +15,8 @@ type BridgeMsgOptin<rawdata extends rawmsg> = optin<rawdata> & {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class BridgeMsg<rawdata extends rawmsg = any> extends Context<rawdata> {
-	public isNotice: boolean;
-	public withNick: boolean;
+	public isNotice = false;
+	public withNick = true;
 
 	readonly rawFrom: string;
 	readonly rawTo: string;

@@ -1,6 +1,6 @@
 import winston from 'winston';
 import { Manager } from '../../init';
-import { Context } from '../../lib/handlers/Context';
+import { Context, rawmsg } from '../../lib/handlers/Context';
 import { BridgeMsg } from './BridgeMsg';
 import { EventArgument } from 'lib/event';
 
@@ -41,7 +41,7 @@ export function setAliases( a: Record<string, alias> ): void {
 	Object.assign( aliases, a );
 }
 
-function getBridgeMsg<T = unknown>( msg: BridgeMsg<T> | Context<T> ): BridgeMsg<T> {
+function getBridgeMsg<T extends rawmsg>( msg: BridgeMsg<T> | Context<T> ): BridgeMsg<T> {
 	if ( msg instanceof BridgeMsg ) {
 		return msg;
 	} else {
@@ -131,8 +131,8 @@ export async function emitHook<V extends keyof hooks>( event: V, ...args: EventA
 }
 
 function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
-	const withNick = !!msg.extra.withNick;
-	const isNotice = !!msg.extra.isNotice;
+	const withNick = !!msg.withNick;
+	const isNotice = !!msg.isNotice;
 	const currMsgId = msg.msgId;
 
 	// 全部訊息已傳送 resolve( true )，部分訊息已傳送 resolve( false )；
