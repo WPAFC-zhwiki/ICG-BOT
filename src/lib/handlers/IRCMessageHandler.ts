@@ -149,7 +149,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 
 			// 檢查是不是命令
 			if ( plainText.startsWith( '!' ) ) {
-				const cmd = plainText.substring( 1, plainText.match( ' ' ).index );
+				const cmd = plainText.substring( 1, plainText.match( ' ' ) ? plainText.match( ' ' ).index : plainText.length );
 				if ( that._commands.has( cmd ) ) {
 					const callback = that._commands.get( cmd );
 					let param = plainText.trim().substring( cmd.length + 1 );

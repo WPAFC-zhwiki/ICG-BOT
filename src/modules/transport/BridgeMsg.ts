@@ -1,10 +1,10 @@
-import { ExtendsMap, handlers } from '../../init';
-import { Context, extra, optin } from '../../lib/handlers/Context';
-import { MessageHandler } from '../../lib/handlers/MessageHandler';
+import { ExtendsMap, handlers } from 'init';
+import { Context, rawmsg, extra, optin } from 'lib/handlers/Context';
+import { MessageHandler } from 'lib/handlers/MessageHandler';
 
 let clientFullNames = {};
 
-type BridgeMsgOptin<rawdata = unknown> = optin<rawdata> & {
+type BridgeMsgOptin<rawdata extends rawmsg> = optin<rawdata> & {
 	withNick?: boolean;
 	isNotice?: boolean;
 	from_uid?: string;
@@ -13,19 +13,10 @@ type BridgeMsgOptin<rawdata = unknown> = optin<rawdata> & {
 	rawTo?: string;
 }
 
-export class BridgeMsg<rawdata = unknown> extends Context<rawdata> {
-	private _isNotice: boolean;
-	get isNotice(): boolean {
-		return this._isNotice;
-	}
-
-	private _withNick = false;
-	get withNick(): boolean {
-		return this._withNick;
-	}
-	set withNick( f: boolean ) {
-		this._withNick = !!f;
-	}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class BridgeMsg<rawdata extends rawmsg = any> extends Context<rawdata> {
+	public isNotice: boolean;
+	public withNick: boolean;
 
 	readonly rawFrom: string;
 	readonly rawTo: string;
@@ -84,8 +75,6 @@ export class BridgeMsg<rawdata = unknown> extends Context<rawdata> {
 
 		const that = Object.assign( {}, context, overrides );
 
-		this._isNotice = false;
-
 		this._from_client = this._to_client = this.handler.type;
 
 		this.__from = String( context.from || this._from || super._from );
@@ -97,13 +86,13 @@ export class BridgeMsg<rawdata = unknown> extends Context<rawdata> {
 		this.from_uid = Context.getArgument( overrides.from_uid, this.rawFrom );
 		this.to_uid = Context.getArgument( overrides.to_uid, this.rawTo );
 
-		this._withNick = !!that.withNick || true;
-		this._isNotice = !!that.isNotice || false;
+		if ( Object.prototype.hasOwnProperty.call( that, 'withNick' ) ) {
+			this.extra.withNick = this.withNick = !!that.withNick || true;
+		}
 
-		Object.assign( this.extra, {
-			withNick: !!that.withNick || true,
-			isNotice: !!that.isNotice || false
-		} );
+		if ( Object.prototype.hasOwnProperty.call( that, 'isNotice' ) ) {
+			this.extra.isNotice = this.isNotice = !!that.isNotice || true;
+		}
 	}
 
 	// eslint-disable-next-line no-shadow

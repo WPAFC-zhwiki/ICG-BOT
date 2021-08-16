@@ -117,8 +117,7 @@ export function htmlToIRC( text: string ): string {
 
 	$ele.find( 'a' ).each( function ( _i, a ) {
 		const $a: JQuery<HTMLAnchorElement> = $( a );
-		// TODO: zhwp.org 憑證過期，先改成IP
-		const href = decodeURI( $a.attr( 'href' ) ).replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'http://52.52.154.135/' );
+		const href = decodeURI( $a.attr( 'href' ) ).replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
 
 		$a.html( ` ${ $a.html() } &lt;${ htmlExcape( href ) }&gt;` );
 	} );

@@ -28,9 +28,7 @@ const piaMap = new Map<string, string>( [
 	[ 'ping', 'pong' ]
 ] );
 
-async function pia( context: Context ) {
-	await delay( 1000 );
-
+addCommand( 'ping', async function pia( context: Context ) {
 	const command = context.command;
 	const action = piaMap.get( command );
 
@@ -39,13 +37,11 @@ async function pia( context: Context ) {
 	} );
 
 	if ( Manager.global.isEnable( 'transport' ) ) {
+		await delay( 1000 );
+
 		moduleTransport.send( new moduleTransport.BridgeMsg( context, {
 			text: `${ action }${ context.param ? ` ${ context.param }` : '' }`,
 			isNotice: true
 		} ), Manager.global.bot );
 	}
-}
-
-for ( const command of piaMap.keys() ) {
-	addCommand( command, pia );
-}
+} );

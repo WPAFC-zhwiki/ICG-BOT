@@ -136,7 +136,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 
 			// 檢查是不是命令
 			if ( rawdata.content.startsWith( '!' ) || rawdata.content.startsWith( '/' ) ) {
-				const cmd = rawdata.content.substring( 1, rawdata.content.match( ' ' ).index );
+				const cmd = rawdata.content.substring( 1, rawdata.content.match( ' ' ) ? rawdata.content.match( ' ' ).index : rawdata.content.length );
 				if ( that._commands.has( cmd ) ) {
 					const callback = that._commands.get( cmd );
 					let param = rawdata.content.trim().substring( cmd.length + 1 );

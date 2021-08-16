@@ -1,6 +1,11 @@
 import { MessageHandler } from 'lib/handlers/MessageHandler';
+import { IMessage } from 'irc-upd';
+import { TelegrafContext as TContext } from 'telegraf/typings/context';
+import { Message as DMessage } from 'discord.js';
 
 let msgId = 0;
+
+export type rawmsg = TContext | IMessage | DMessage;
 
 export type file = {
 	/**
@@ -66,7 +71,7 @@ export type extra = {
 	isAction?: boolean;
 };
 
-export type optin<rawdata = unknown> = {
+export type optin<rawdata extends rawmsg> = {
 	from?: string | number;
 	to?: string | number;
 	nick?: string;
@@ -136,7 +141,8 @@ function getMsgId(): number {
  * }
  * ```
  */
-export class Context<rawdata = unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class Context<rawdata extends rawmsg = any> {
 	protected _from: string = null;
 	get from(): string {
 		return this._from;
