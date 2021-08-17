@@ -2,7 +2,6 @@ import { $, encodeURI } from './index';
 import { MwnPage } from 'mwn';
 
 import issuesData from './issuesData.json';
-import issuesDataExtends from './issuesDataExtends.json';
 
 export type elementsTS = {
 	intLinks: RegExpMatchArray;
@@ -286,8 +285,6 @@ export function getIssusData( key: string, notice?: boolean ): string {
 		} else {
 			return issuesData[ key ].long;
 		}
-	} else if ( issuesDataExtends[ key ] && notice ) {
-		return `${ issuesDataExtends[ key ] } (${ key })`;
 	} else {
 		if ( notice ) {
 			return `⧼${ key }⧽ (${ key })`;

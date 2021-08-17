@@ -28,20 +28,29 @@ const piaMap = new Map<string, string>( [
 	[ 'ping', 'pong' ]
 ] );
 
-addCommand( 'ping', async function pia( context: Context ) {
-	const command = context.command;
-	const action = piaMap.get( command );
+function buildPia( action: string ) {
+	return async function pia( context: Context ) {
+		let param: string = context.param;
 
-	context.reply( `${ action }${ context.param ? ` ${ context.param }` : '' }`, {
-		withNick: true
-	} );
+		if ( !param && context.extra.reply ) {
+			param = context.extra.reply.nick;
+		}
 
-	if ( Manager.global.isEnable( 'transport' ) ) {
-		await delay( 1000 );
+		context.reply( `${ action }${ param ? ` ${ param }` : '' }`, {
+			withNick: true
+		} );
 
-		moduleTransport.send( new moduleTransport.BridgeMsg( context, {
-			text: `${ action }${ context.param ? ` ${ context.param }` : '' }`,
-			isNotice: true
-		} ), Manager.global.bot );
-	}
-} );
+		if ( Manager.global.isEnable( 'transport' ) ) {
+			await delay( 1000 );
+
+			moduleTransport.send( new moduleTransport.BridgeMsg( context, {
+				text: `${ action }${ param ? ` ${ param }` : '' }`,
+				isNotice: true
+			} ), Manager.global.bot );
+		}
+	};
+}
+
+for ( const [ cmd, action ] of piaMap ) {
+	addCommand( cmd, buildPia( action ) );
+}

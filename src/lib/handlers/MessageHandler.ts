@@ -3,9 +3,10 @@ export { Events } from '../event';
 import { Telegraf as TelegrafClient, Context as TContext } from 'telegraf';
 import { Client as DiscordClient } from 'discord.js';
 import { Client as IRCClient } from 'irc-upd';
-import { Context } from 'lib/handlers/Context';
+import { Context, rawmsg } from 'lib/handlers/Context';
 
-export type Command<rawdata = unknown> = ( context: Context<rawdata>, cmd: string, param: string ) => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Command<rawdata extends rawmsg = any> = ( context: Context<rawdata>, cmd: string, param: string ) => void;
 
 export type Telegraf = TelegrafClient<TContext>;
 export type Telegram = Telegraf['telegram'];

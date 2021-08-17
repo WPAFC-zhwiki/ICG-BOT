@@ -34,8 +34,8 @@ function getReason( $e: JQuery, title: string ) {
 		.split( /\r•/g )
 		.map( function ( x ) {
 			return x.trim()
-				.replace( /此條目/g, '草稿' )
 				.replace( /條目/g, '草稿' )
+				.replace( /[本此]草稿/g, '草稿' )
 				.replace( /\n/g, '' )
 				.replace( /\r/g, '\n' )
 				.replace( /\n• (?:$|\n)/g, '' );
