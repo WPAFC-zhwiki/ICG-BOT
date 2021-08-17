@@ -1,11 +1,11 @@
 import color = require( 'irc-colors' );
 import format from 'string-format';
-import { BridgeMsg } from '../BridgeMsg';
-import { Manager } from '../../../init';
-import * as bridge from '../bridge';
-import { ConfigTS } from '../../../../config/type';
-import { IRCRawMessage } from '../../../lib/handlers/IRCMessageHandler';
+import { BridgeMsg } from 'modules/transport/BridgeMsg';
+import { Manager } from 'init';
+import * as bridge from 'modules/transport/bridge';
+import { ConfigTS } from 'config';
 import msgManage from 'lib/message/msgManage';
+import irc from 'irc-upd';
 import winston = require( 'winston' );
 
 function truncate( str: string, maxLen = 20 ) {
@@ -146,7 +146,7 @@ ircHandler.on( 'nick', function ( oldnick, newnick, _channels, rawdata ) {
 } );
 
 const leaveHandler = function ( nick: string, chans: string[],
-	action: string, reason: string, rawdata: IRCRawMessage ): void {
+	action: string, reason: string, rawdata: irc.IMessage ): void {
 	let message: string;
 	if ( reason ) {
 		message = `${ nick } 已${ action } (${ reason })`;

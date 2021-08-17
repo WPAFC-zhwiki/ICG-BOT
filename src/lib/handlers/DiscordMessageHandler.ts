@@ -1,9 +1,12 @@
-import { Events, MessageHandler } from 'lib/handlers/MessageHandler';
+import { MessageHandler } from 'lib/handlers/MessageHandler';
 import { Context } from 'lib/handlers/Context';
+import { Events } from 'lib/event';
+
 import Discord from 'discord.js';
-import winston from 'winston';
+
 import { getFriendlySize } from '../util';
 
+import winston = require( 'winston' );
 import { ConfigTS } from 'config';
 
 interface DiscordEvents extends Events {
@@ -48,7 +51,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		this._me = client.user;
 
 		client.on( 'ready', () => {
-			winston.info( 'DiscordBot is ready.' );
+			winston.info( `DiscordBot is ready, login as: ${ client.user.tag }(${ client.user.id })` );
 		} );
 
 		client.on( 'error', ( message ) => {

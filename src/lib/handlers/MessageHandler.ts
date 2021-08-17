@@ -1,5 +1,4 @@
-import EventEmitter, { Events } from '../event';
-export { Events } from '../event';
+import EventEmitter, { Events } from 'lib/event';
 import { Telegraf as TelegrafClient, Context as TContext } from 'telegraf';
 import { Client as DiscordClient } from 'discord.js';
 import { Client as IRCClient } from 'irc-upd';

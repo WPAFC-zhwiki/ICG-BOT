@@ -11,8 +11,6 @@ export interface EventEmitterOptions {
 type Event = ( ...args: any ) => void;
 export type Events = Record<string | symbol, Event>;
 
-export type EventArgument<T> = T extends ( ...args: infer P ) => void ? P : any[];
-
 declare class EventEmitter<events extends Events = Events> extends InternalEventEmitter {
 	addListener<V extends keyof events>( event: V, listener: events[ V ] ): this;
 	on<V extends keyof events>( event: V, listener: events[ V ] ): this;
@@ -22,7 +20,7 @@ declare class EventEmitter<events extends Events = Events> extends InternalEvent
 	removeAllListeners<V extends keyof events>( event?: V ): this;
 	listeners<V extends keyof events>( event: V ): events[ V ][];
 	rawListeners<V extends keyof events>( event: V ): events[ V ][];
-	emit<V extends keyof events>( event: V, ...args: EventArgument<events[ V ]> ): boolean;
+	emit<V extends keyof events>( event: V, ...args: Parameters<events[ V ]> ): boolean;
 	listenerCount<V extends keyof events>( event: V ): number;
 }
 

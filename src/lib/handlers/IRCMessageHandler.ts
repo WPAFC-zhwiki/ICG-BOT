@@ -1,13 +1,15 @@
-import { Events, MessageHandler } from 'lib/handlers/MessageHandler';
+import { MessageHandler } from 'lib/handlers/MessageHandler';
 import { Context } from 'lib/handlers/Context';
+import { Events } from 'lib/event';
+
 import irc = require( 'irc-upd' );
 import color = require( 'irc-colors' );
-import winston = require( 'winston' );
+
 import lodash from 'lodash';
 
+import winston = require( 'winston' );
 import { ConfigTS } from 'config';
-
-export type IRCRawMessage = irc.IMessage;
+import delay from 'lib/delay';
 
 interface IRCEvents extends Events {
 	command( context: Context<irc.IMessage>, comand: string, param: string ): void;
@@ -77,8 +79,12 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 			autoConnect: false
 		} );
 
-		client.on( 'registered', function () {
-			winston.info( 'IRCBot has been registered.' );
+		client.on( 'registered', async function () {
+			winston.info( 'IRCBot has been registered' );
+			while ( client.nick === client.hostMask ) {
+				await delay( 100 );
+			}
+			winston.info( `IRCBot is ready, login as: ${ client.nick }!${ client.hostMask }.` );
 		} );
 
 		client.on( 'join', function ( channel, nick ) {

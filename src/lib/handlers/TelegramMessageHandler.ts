@@ -1,5 +1,6 @@
-import { Events, MessageHandler, Command } from 'lib/handlers/MessageHandler';
+import { MessageHandler, Command } from 'lib/handlers/MessageHandler';
 import { Context } from 'lib/handlers/Context';
+import { Events } from 'lib/event';
 
 import https from 'https';
 import winston from 'winston';
@@ -124,7 +125,13 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			}
 		} );
 
-		client.catch( ( err: Error ) => {
+		client.telegram.getMe().then( function ( me ) {
+			that._username = me.username;
+			that._me = me;
+			winston.info( `TelegramBot is ready, login as: ${ me.first_name }${ me.last_name ? ` ${ me.last_name }` : '' }@${ me.username }(${ me.id })` );
+		} );
+
+		client.catch( function ( err: Error ) {
 			winston.error( `TelegramBot error: ${ err.message }`, err );
 		} );
 
@@ -181,11 +188,6 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		const that = this;
-
-		client.telegram.getMe().then( function ( me ) {
-			that._username = me.username;
-			that._me = me;
-		} );
 
 		client.on( 'message', async function ( ctx, next ) {
 			if ( that._enabled && ctx.message && ctx.chat ) {

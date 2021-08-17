@@ -2,7 +2,6 @@ import winston from 'winston';
 import { Manager } from '../../init';
 import { Context, rawmsg } from '../../lib/handlers/Context';
 import { BridgeMsg } from './BridgeMsg';
-import { EventArgument } from 'lib/event';
 
 function checkEnable(): void {
 	if ( !Manager.global.isEnable( 'transport' ) ) {
@@ -118,7 +117,7 @@ export function deleteHook( func: hook ): void {
 	}
 }
 
-export async function emitHook<V extends keyof hooks>( event: V, ...args: EventArgument<hooks[V]> ): Promise<void> {
+export async function emitHook<V extends keyof hooks>( event: V, ...args: Parameters<hooks[V]> ): Promise<void> {
 	checkEnable();
 
 	if ( hooks[ event ] ) {
