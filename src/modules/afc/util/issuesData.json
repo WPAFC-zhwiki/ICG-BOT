@@ -4,19 +4,19 @@
 		"long": "內容只包括外部链接、参见、图书参考、分类、模板、跨语言链接的条目（[[WP:D|消歧義頁]]、[[WP:R|重定向]]、[[WP:SRD|軟重定向]]除外）。"
 	},
 	"substub": {
-		"short": "[小小作品](https://zhwp.org/WP:SUBSTUB)，內容少於50字元",
+		"short": "<a href=\"https://zh.wikipedia.org/wiki/WP:SUBSTUB\">小小作品</a>，內容少於50字元",
 		"long": "'''內容過於短小，屬於[[WP:SUBSTUB|小小作品]]類別的草稿。'''小小作品可被[[WP:AFD|提請刪除]]，因此本專題不會接受小小作品的草稿，請擴充內容後再遞交。"
 	},
 	"stub": {
-		"short": "[小作品](https://zhwp.org/WP:STUB)",
+		"short": "<a href=\"https://zh.wikipedia.org/wiki/WP:STUB\">小作品</a>",
 		"long": "'''內容短小，屬於[[WP:STUB|小作品]]類別的草稿。'''建議補充更多的資訊，擴充內容後再遞交。謹記內容必須符合[[WP:NOR|非原創研究]]、[[WP:V|可供查證]]等方針，在擴充內容的同時要提供相應的[[WP:RS|可靠來源]]。"
 	},
 	"lengthy": {
-		"short": "[內容過長](https://zhwp.org/WP:LENGTH)",
+		"short": "<a href=\"https://zh.wikipedia.org/wiki/WP:LENGTH\">內容過長</a>",
 		"long": "'''[[WP:LENGTH|內容過長]]'''，草稿內容可能需要分拆。"
 	},
 	"wikify": {
-		"short": "欠缺[維基化](https://zhwp.org/WP:WIKIFY)",
+		"short": "欠缺<a href=\"https://zh.wikipedia.org/wiki/WP:WIKIFY\">維基化</a>",
 		"long": "'''草稿缺乏[[WP:WIKIFY|維基化]]。'''請加入適量的格式，例如條目名稱首次出現時加粗、補充[[Help:链接|內部連結]]等。"
 	},
 	"unreferenced": {
@@ -24,7 +24,7 @@
 		"long": "'''草稿沒有附上任何[[WP:SOURCE|來源]]，或沒有使用[[H:FOOT|文內引註]]而使來源仍然不明。'''請補充適當的[[WP:RS|可靠來源]]，以讓內容符合[[WP:V|可供查證]]方針。"
 	},
 	"ref-improve": {
-		"short": "缺少來源（總長度/200）",
+		"short": "缺少來源（總長度/300）",
 		"long": "'''草稿可能缺少[[WP:SOURCE|來源]]。'''請補充適當的[[WP:RS|可靠來源]]，以讓內容符合[[WP:V|可供查證]]方針。"
 	},
 	"ref-disallowed": {
@@ -41,10 +41,10 @@
 	},
 	"uncategorized": {
 		"short": "沒有加入分類",
-		"long": "'''草稿缺乏[[WP:CAT|分類]]。'''請注意在草稿中加入分類時，<nowiki>[[</nowiki>Category:分类<nowiki>]]</nowiki>应当以<nowiki>[[:</nowiki>Category:分类<nowiki>]]</nowiki>（Category前加半角冒号）取代，或使用<nowiki></nowiki>包裹。"
+		"long": "'''草稿缺乏[[WP:CAT|分類]]。'''請注意在草稿中加入分類時，'''<nowiki>[[Category:分类]]</nowiki>'''应当以'''<nowiki>[[:Category:分类]]</nowiki>'''（Category前加半角冒号）取代。"
 	},
 	"over-emphasize": {
-		"short": "[過度使用強調格式](https://zhwp.org/MOS:OEM)",
+		"short": "<a href=\"https://zh.wikipedia.org/wiki/MOS:OEM\">過度使用強調格式</a>",
 		"long": "'''草稿[[MOS:OEM|過度使用強調格式]]（包括但不限於粗體、斜體、粗方括號等）。'''請清理草稿的格式，只在有明確需要的情況下使用強調格式，不要濫用格式來強調內容。"
 	},
 	"bad-indents": {
@@ -65,6 +65,10 @@
 	},
 	"default-wikitext": {
 		"short": "頁面尚有預設內容",
+		"long": ""
+	},
+	"no-extlink": {
+		"short": "頁面未包含任何外部連結",
 		"long": ""
 	}
 }

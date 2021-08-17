@@ -549,7 +549,7 @@ export class AFCPage {
 		// eslint-disable-next-line no-shadow
 		function convertExternalLinksToWikilinks( text: string ) {
 			const linkRegex =
-			/\[{1,2}(?:https?:)?\/\/(?:(?:zh.wikipedia.org|zhwp.org)\/(?:wiki|zh|zh-hans|zh-hant|zh-cn|zh-my|zh-sg|zh-tw|zh-hk|zh-mo)|zhwp.org)\/([^\s|\][]+)(?:\s|\|)?((?:\[\[[^[\]]*\]\]|[^\][])*)\]{1,2}/ig;
+			/\[{1,2}(?:https?:)?\/\/(?:(?:zh\.wikipedia\.org|zhwp\.org)\/(?:wiki|zh|zh-hans|zh-hant|zh-cn|zh-my|zh-sg|zh-tw|zh-hk|zh-mo)|zhwp\.org)\/([^\s|\][]+)(?:\s|\|)?((?:\[\[[^[\]]*\]\]|[^\][])*)\]{1,2}/ig;
 			let linkMatch = linkRegex.exec( text );
 			let title: string;
 			let displayTitle: string;
