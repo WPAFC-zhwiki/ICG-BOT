@@ -234,42 +234,42 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 		issues.push( 'bad-indents' );
 	}
 
-	let title = page.getMainText();
+	if ( $parseHTML.find( '.afc-submission' ) ) {
+		let title = page.getMainText();
 
-	if ( title === user ) {
-		issues.push( 'same-name' );
-	} else if ( title === creator ) {
-		issues.push( 'same-name-creator' );
-	} else {
-		if ( page.namespace === 2 ) {
-			const split = title.split( '/' );
-			split.shift();
-
-			if ( !split.length ) {
-				return;
-			}
-
-			title = split.join( '/' );
-		}
-
-		if ( title.includes( user ) || user && user.includes( title ) ) {
+		if ( title === user ) {
 			issues.push( 'same-name' );
-		} else if ( title.includes( creator ) || creator && creator.includes( title ) ) {
+		} else if ( title === creator ) {
 			issues.push( 'same-name-creator' );
+		} else {
+			if ( page.namespace === 2 ) {
+				const split = title.split( '/' );
+				split.shift();
+
+				if ( split.length ) {
+					title = split.join( '/' );
+
+					if ( title.includes( user ) || user && user.includes( title ) ) {
+						issues.push( 'same-name' );
+					} else if ( title.includes( creator ) || creator && creator.includes( title ) ) {
+						issues.push( 'same-name-creator' );
+					}
+				}
+			}
 		}
-	}
 
-	const defaults = [
-		'\'\'\'此处改为条目主题\'\'\'(?:是一个)?',
-		'==\\s*章节标题\\s*=='
-	];
-	const regexp = new RegExp( `(${ defaults.join( '|' ) })` );
-	if ( regexp.exec( wikitext ) ) {
-		issues.push( 'default-wikitext' );
-	}
+		const defaults = [
+			'\'\'\'此处改为条目主题\'\'\'(?:是一个)?',
+			'==\\s*章节标题\\s*=='
+		];
+		const regexp = new RegExp( `(${ defaults.join( '|' ) })` );
+		if ( regexp.exec( wikitext ) ) {
+			issues.push( 'default-wikitext' );
+		}
 
-	if ( /AFC.*(?:[测測]試|沙盒)/i.exec( title ) || /{{(?:Template:)?Afctest(?:\||}})/i.exec( wikitext ) ) {
-		issues.push( 'afc-test' );
+		if ( /AFC.*(?:[测測]試|沙盒)/i.exec( title ) || /{{(?:Template:)?Afctest(?:\||}})/i.exec( wikitext ) ) {
+			issues.push( 'afc-test' );
+		}
 	}
 
 	return {
