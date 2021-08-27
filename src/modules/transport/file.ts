@@ -10,15 +10,21 @@ import fs from 'fs';
 import path from 'path';
 import request from 'request';
 import sharp from 'sharp';
+
 import winston from 'winston';
-import { Manager } from '../../init';
-import * as bridge from './bridge';
-import { ConfigTS } from '../../../config/type';
-import { BridgeMsg } from './BridgeMsg';
-import { file as fileTS } from '../../lib/handlers/Context';
-import { version, repository } from '../../../package.json';
+
+import { Manager } from 'src/init';
+import * as bridge from 'src/modules/transport/bridge';
+import { ConfigTS, version, repository } from 'src/config';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
+import { file as fileTS } from 'src/lib/handlers/Context';
 
 const servemedia: ConfigTS[ 'transport' ][ 'servemedia' ] = Manager.config.transport.servemedia;
+
+type File = {
+    type: string;
+    url: string;
+};
 
 const USERAGENT = `AFC-ICG-BOT/${ version } (${ repository.replace( /^git\+/, '' ) })`;
 
@@ -30,7 +36,7 @@ const USERAGENT = `AFC-ICG-BOT/${ version } (${ repository.replace( /^git\+/, ''
  * @return {string} 新文件名
  */
 function generateFileName( url: string, name: string ): string {
-	let extName = path.extname( name || '' );
+	let extName: string = path.extname( name || '' );
 	if ( extName === '' ) {
 		extName = path.extname( url || '' );
 	}
@@ -68,7 +74,7 @@ function convertFileType( type: string ): string {
  * @return {fs.ReadStream}
  */
 function getFileStream( file: fileTS ): fs.ReadStream | request.Request | sharp.Sharp {
-	const filePath = file.url || file.path;
+	const filePath: string = file.url || file.path;
 	let fileStream: fs.ReadStream | request.Request | sharp.Sharp;
 
 	if ( file.url ) {
@@ -112,7 +118,7 @@ function pipeFileStream( file: fileTS, pipe: fs.WriteStream | request.Request ):
 /*
  * 儲存至本機快取
  */
-async function uploadToCache( file: fileTS ) {
+async function uploadToCache( file: fileTS ): Promise<string> {
 	const targetName = generateFileName( file.url || file.path, file.id );
 	const targetPath = path.join( servemedia.cachePath, targetName );
 	const writeStream = fs.createWriteStream( targetPath ).on( 'error', ( e ) => {
@@ -125,7 +131,7 @@ async function uploadToCache( file: fileTS ) {
 /*
  * 上传到各种图床
  */
-function uploadToHost( host: string, file: fileTS ) {
+function uploadToHost( host: string, file: fileTS ): Promise<string> {
 	return new Promise( function ( resolve, reject ) {
 		const requestOptions: request.Options = {
 			timeout: servemedia.timeout || 3000,
@@ -155,7 +161,7 @@ function uploadToHost( host: string, file: fileTS ) {
 				switch ( host ) {
 					case 'vim-cn':
 					case 'vimcn':
-						requestOptions.url = 'https://img.vim-cn.com/';
+						requestOptions.url = 'https://pb.nichi.co/';
 						requestOptions.formData = {
 							name: {
 								value: pendingFile,
@@ -221,7 +227,7 @@ function uploadToHost( host: string, file: fileTS ) {
 						switch ( host ) {
 							case 'vim-cn':
 							case 'vimcn':
-								resolve( body.trim().replace( 'http://', 'https://' ) );
+								resolve( body.trim() );
 								break;
 							case 'uguu':
 							case 'Uguu':
@@ -253,9 +259,9 @@ function uploadToHost( host: string, file: fileTS ) {
 /*
  * 上傳到自行架設的 linx 圖床上面
  */
-function uploadToLinx( file: fileTS ) {
-	return new Promise( function ( resolve, reject ) {
-		const name = generateFileName( file.url || file.path, file.id );
+function uploadToLinx( file: fileTS ): Promise<string> {
+	return new Promise<string>( function ( resolve, reject ) {
+		const name: string = generateFileName( file.url || file.path, file.id );
 
 		pipeFileStream( file, request.put( {
 			url: servemedia.linxApiUrl + name,
@@ -279,9 +285,9 @@ function uploadToLinx( file: fileTS ) {
 /*
  * 決定檔案去向
  */
-const uploadFile = async ( file: fileTS ) => {
-	let url: unknown;
-	const fileType = convertFileType( file.type );
+async function uploadFile( file: fileTS ): Promise<File | null> {
+	let url: string;
+	const fileType: string = convertFileType( file.type );
 
 	switch ( servemedia.type ) {
 		case 'vim-cn':
@@ -317,19 +323,19 @@ const uploadFile = async ( file: fileTS ) => {
 	} else {
 		return null;
 	}
-};
+}
 
 /*
  * 判斷訊息來源，將訊息中的每個檔案交給對應函式處理
  */
 const fileUploader = {
 	handlers: Manager.handlers,
-	process: async function ( context: BridgeMsg ) {
+	process: async function ( context: BridgeMsg ): Promise<File[]> {
 		// 上传文件
 		// p4: dont bother with files from somewhere without bridges in config
 		if ( context.extra.clients > 1 && context.extra.files && servemedia.type && servemedia.type !== 'none' ) {
-			const promises = [];
-			const fileCount = context.extra.files.length;
+			const promises: Promise<{ type: string; url: string; }>[] = [];
+			const fileCount: number = context.extra.files.length;
 
 			// 将聊天消息附带文件上传到服务器
 			for ( const [ index, file ] of context.extra.files.entries() ) {
@@ -341,8 +347,10 @@ const fileUploader = {
 				}
 			}
 
-			// 整理上传到服务器之后到URL
-			const uploads = ( await Promise.all( promises ) ).filter( ( x ) => x );
+			// 整0上传到服务器之后到URL
+			const uploads: File[] = ( await Promise.all( promises ) ).filter( function ( x: File ): File {
+				return x;
+			} );
 			for ( const [ index, upload ] of uploads.entries() ) {
 				winston.debug( `[file] <FileUploader> #${ context.msgId } File ${ index + 1 }/${ uploads.length } (${ upload.type }): ${ upload.url }` );
 			}

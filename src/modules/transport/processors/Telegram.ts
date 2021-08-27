@@ -1,13 +1,13 @@
 import path from 'path';
-import { Manager } from '../../../init';
-import * as bridge from '../bridge';
-import { ConfigTS } from '../../../../config/type';
-import { BridgeMsg } from '../BridgeMsg';
+import { Manager } from 'src/init';
+import * as bridge from 'src/modules/transport/bridge';
+import { ConfigTS } from 'src/config';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 import format from 'string-format';
-import { Context } from '../../../lib/handlers/Context';
-import { TelegrafContext as TContext } from 'telegraf/typings/context';
-import jQuery from '../../../lib/jquery';
-import msgManage from 'lib/message/msgManage';
+import { Context } from 'src/lib/handlers/Context';
+import { Context as TContext } from 'telegraf';
+import jQuery from 'src/lib/jquery';
+import msgManage from 'src/lib/message/msgManage';
 import winston from 'winston';
 
 function htmlEscape( str: string ): string {
@@ -71,7 +71,7 @@ msgManage.on( 'telegram', async function ( _from, _to, _text, context ) {
 	try {
 		await bridge.send( context );
 	} catch ( e ) {
-		winston.error( e.trace );
+		winston.error( e instanceof Error ? e.stack : e );
 	}
 } );
 
@@ -93,13 +93,13 @@ tgHandler.on( 'richmessage', ( context: Context ) => {
 
 // Pinned message
 tgHandler.on( 'pin', ( info: {
-    from: {
-        id: number;
-        nick: string;
-        username?: string;
-    };
-    to: number;
-    text: string;
+	from: {
+		id: number;
+		nick: string;
+		username?: string;
+	};
+	to: number;
+	text: string;
 }, ctx: TContext ) => {
 	if ( options.notify.pin ) {
 		bridge.send( new BridgeMsg( {
@@ -118,13 +118,13 @@ tgHandler.on( 'pin', ( info: {
 
 // 加入與離開
 tgHandler.on( 'join', ( group: number, from: {
-    id: number;
-    nick: string;
-    username?: string;
+	id: number;
+	nick: string;
+	username?: string;
 }, target: {
-    id: number;
-    nick: string;
-    username?: string;
+	id: number;
+	nick: string;
+	username?: string;
 }, ctx: TContext ) => {
 	let text: string;
 	if ( from.id === target.id ) {
@@ -149,13 +149,13 @@ tgHandler.on( 'join', ( group: number, from: {
 } );
 
 tgHandler.on( 'leave', ( group: number, from: {
-    id: number;
-    nick: string;
-    username?: string;
+	id: number;
+	nick: string;
+	username?: string;
 }, target: {
-    id: number;
-    nick: string;
-    username?: string;
+	id: number;
+	nick: string;
+	username?: string;
 }, ctx: TContext ) => {
 	let text: string;
 	if ( from.id === target.id ) {

@@ -1,6 +1,6 @@
 import Discord = require( 'discord.js' );
 
-import { mwbot, $, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, setCommand } from 'modules/afc/util';
+import { mwbot, $, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, setCommand } from 'src/modules/afc/util';
 import { MwnPage } from 'mwn';
 import winston from 'winston';
 

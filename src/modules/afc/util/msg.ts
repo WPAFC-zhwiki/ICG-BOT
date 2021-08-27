@@ -1,12 +1,12 @@
 /* eslint-disable no-unused-expressions */
-import { Manager } from 'init';
-import * as moduleTransport from 'modules/transport';
+import { Manager } from 'src/init';
+import * as moduleTransport from 'src/modules/transport';
 
 import Discord from 'discord.js';
 
-import { IRCBold, $, decodeURI } from './index';
-import { parseUID, getUIDFromContext, addCommand } from 'lib/message';
-import { Context } from 'lib/handlers/Context';
+import { IRCBold, $, decodeURI } from 'src/modules/afc/util/index';
+import { parseUID, getUIDFromContext, addCommand } from 'src/lib/message';
+import { Context } from 'src/lib/handlers/Context';
 
 const dc = Manager.handlers.get( 'Discord' );
 const tg = Manager.handlers.get( 'Telegram' );

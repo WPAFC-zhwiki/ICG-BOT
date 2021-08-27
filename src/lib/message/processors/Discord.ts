@@ -1,9 +1,11 @@
+import { Manager } from 'src/init';
+import { Context } from 'src/lib/handlers/Context';
+
 import LRU from 'lru-cache';
 import winston = require( 'winston' );
 import Discord = require( 'discord.js' );
-import { Manager } from 'init';
-import { Context } from 'lib/handlers/Context';
-import msgManage from 'lib/message/msgManage';
+
+import msgManage from 'src/lib/message/msgManage';
 
 const userInfo = new LRU<string, Discord.User>( {
 	max: 500,
@@ -12,22 +14,31 @@ const userInfo = new LRU<string, Discord.User>( {
 
 const discordHandler = Manager.handlers.get( 'Discord' );
 
+type Emoji = {
+	name: string;
+	id: string;
+};
+
 discordHandler.on( 'text', function ( context: Context<Discord.Message> ) {
 	userInfo.set( String( context.from ), context._rawdata.author );
 
 	if ( /<a?:\w+:\d*?>/g.test( context.text ) ) {
 		// 處理自定義表情符號
-		const emojis = [];
-		const animated = [];
+		const emojis: Emoji[] = [];
+		const animated: Emoji[] = [];
 
-		context.text = context.text.replace( /<:(\w+):(\d*?)>/g, ( _, name, id ) => {
-			if ( id && !emojis.filter( ( v ) => v.id === id ).length ) {
+		context.text = context.text.replace( /<:(\w+):(\d*?)>/g, function ( _: string, name: string, id: string ): string {
+			if ( id && !emojis.filter( function ( v ) {
+				return v.id === id;
+			} ).length ) {
 				emojis.push( { name: name, id: id } );
 			}
 			return `<emoji: ${ name }>`;
 		} );
-		context.text = context.text.replace( /<a:(\w+):(\d*?)>/g, ( _, name, id ) => {
-			if ( id && !animated.filter( ( v ) => v.id === id ).length ) {
+		context.text = context.text.replace( /<a:(\w+):(\d*?)>/g, function ( _: string, name: string, id: string ): string {
+			if ( id && !animated.filter( function ( v ) {
+				return v.id === id;
+			} ).length ) {
 				animated.push( { name: name, id: id } );
 			}
 			return `<emoji: ${ name }>`;
@@ -101,8 +112,10 @@ discordHandler.on( 'text', function ( context: Context<Discord.Message> ) {
 			}
 		} ).catch( ( e ) => winston.error( e.trace ) ).then( function () {
 			msgManage.emit( 'discord', context.from, context.to, context.text, context );
+			msgManage.emit( 'text', 'Discord', context.from, context.to, context.text, context );
 		} );
 	} else {
 		msgManage.emit( 'discord', context.from, context.to, context.text, context );
+		msgManage.emit( 'text', 'Discord', context.from, context.to, context.text, context );
 	}
 } );

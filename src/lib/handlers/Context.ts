@@ -1,6 +1,6 @@
-import { MessageHandler } from 'lib/handlers/MessageHandler';
+import { MessageHandler } from 'src/lib/handlers/MessageHandler';
 import { IMessage } from 'irc-upd';
-import { TelegrafContext as TContext } from 'telegraf/typings/context';
+import { Context as TContext } from 'telegraf';
 import { Message as DMessage } from 'discord.js';
 
 let msgId = 0;
@@ -58,7 +58,7 @@ export type extra = {
 	 */
 	uploads?: {
 		url: string;
-		type: 'photo' | 'audio' | 'file'
+		type: string;
 	}[];
 
 	isImage?: boolean;
@@ -71,7 +71,7 @@ export type extra = {
 	isAction?: boolean;
 };
 
-export type optin<rawdata extends rawmsg> = {
+export type ContextOptin<rawdata extends rawmsg> = {
 	from?: string | number;
 	to?: string | number;
 	nick?: string;
@@ -184,7 +184,8 @@ export class Context<rawdata extends rawmsg = any> {
 		return undefined;
 	}
 
-	public constructor( options: Context<rawdata> | optin<rawdata> = {}, overrides: optin<rawdata> = {} ) {
+	// eslint-disable-next-line max-len
+	public constructor( options: Context<rawdata> | ContextOptin<rawdata> = {}, overrides: ContextOptin<rawdata> = {} ) {
 		// TODO 雖然這樣很醜陋，不過暫時先這樣了
 		this._from = String( Context.getArgument( overrides.from, options.from, null ) );
 		this._to = String( Context.getArgument( overrides.to, options.to, null ) );

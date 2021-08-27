@@ -3,10 +3,10 @@
  */
 
 import winston = require( 'winston' );
-import { Manager } from 'init';
-import * as moduleTransport from 'modules/transport';
-import { Context } from 'lib/handlers/Context';
-import { addCommand } from 'lib/message';
+import { Manager } from 'src/init';
+import * as moduleTransport from 'src/modules/transport';
+import { Context } from 'src/lib/handlers/Context';
+import { addCommand, parseUID } from 'src/lib/message';
 
 const ircHandler = Manager.handlers.get( 'IRC' );
 
@@ -14,7 +14,7 @@ function getChans( context: Context ) {
 	const r: string[] = [];
 	moduleTransport.prepareBridgeMsg( context );
 	for ( const c of context.extra.mapto ) {
-		const client = moduleTransport.BridgeMsg.parseUID( c );
+		const client = parseUID( c );
 		if ( client.client === 'IRC' ) {
 			r.push( client.id );
 		}

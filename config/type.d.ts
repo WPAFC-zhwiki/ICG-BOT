@@ -1,3 +1,5 @@
+import { MwnOptions } from 'mwn';
+
 type IRCColor = 'white' | 'black' | 'navy' | 'green' | 'red' | 'brown' | 'purple' | 'olive' |
 	'yellow' | 'lightgreen' | 'teal' | 'cyan' | 'blue' | 'pink' | 'gray' | 'silver';
 
@@ -451,7 +453,7 @@ export interface ConfigTS {
 		/**
 		 * 如果使用，命令會變成 /(prefix)topic、/(prefix)names 等
 		 */
-		prefix: 'irc';
+		prefix: string;
 	};
 
 	wikilinky?: {
@@ -502,7 +504,7 @@ export interface ConfigTS {
 	};
 }
 
-type TransportServemediaBase = {
+interface TransportServemediaBase {
 	/**
 	 * 檔案處理方式
 	 */
@@ -565,30 +567,30 @@ type TransportServemediaBase = {
 	 * 存取外部圖床時的 User-Agent，如留空則使用預設的 AFC-ICG-BOT/版本號
 	 */
 	userAgent: string;
-};
+}
 
-type TransportServemediaNone = TransportServemediaBase & {
+interface TransportServemediaNone extends TransportServemediaBase {
 	/**
 	 * 檔案處理方式
 	 */
 	type?: '' | 'none';
-};
+}
 
-type TransportServemediaVimCn = TransportServemediaBase & {
+interface TransportServemediaVimCn extends TransportServemediaBase {
 	/**
 	 * 檔案處理方式
 	 */
 	type: 'vim-cn';
-};
+}
 
-type TransportServemediaSmMs = TransportServemediaBase & {
+interface TransportServemediaSmMs extends TransportServemediaBase {
 	/**
 	 * 檔案處理方式
 	 */
 	type: 'sm.ms';
-};
+}
 
-type TransportServemediaSelf = TransportServemediaBase & {
+interface TransportServemediaSelf extends TransportServemediaBase {
 	/**
 	 * 檔案處理方式
 	 */
@@ -603,9 +605,9 @@ type TransportServemediaSelf = TransportServemediaBase & {
 	 * URL 的字首，通常需要以斜線結尾
 	 */
 	serveUrl: string;
-};
+}
 
-type TransportServemediaLinx = TransportServemediaBase & {
+interface TransportServemediaLinx extends TransportServemediaBase {
 	/**
 	 * 檔案處理方式
 	 */
@@ -615,9 +617,9 @@ type TransportServemediaLinx = TransportServemediaBase & {
 	 * linx API 位址（例如 https://www.xxx.com/upload/），通常以斜線結尾
 	 */
 	linxApiUrl: string;
-};
+}
 
-type TransportServemediaUguu = TransportServemediaBase & {
+interface TransportServemediaUguu extends TransportServemediaBase {
 	/**
 	 * 檔案處理方式
 	 */
@@ -627,9 +629,9 @@ type TransportServemediaUguu = TransportServemediaBase & {
 	 * 請以 /api.php?d=upload-tool 結尾
 	 */
 	uguuApiUrl: string;
-};
+}
 
-type TransportServemediaImgur = TransportServemediaBase & {
+interface TransportServemediaImgur extends TransportServemediaBase {
 	/**
 	 * 檔案處理方式
 	 */
@@ -646,45 +648,24 @@ type TransportServemediaImgur = TransportServemediaBase & {
 		 */
 		clientId: string;
 	};
-};
+}
 
-type MwnLoginBase = {
-	/**
-	 * 以 /api.php 結尾
-	 */
-	apiUrl: string;
-
+interface MwnLoginBase extends MwnOptions {
 	type?: '' | 'none' | 'botpassword' | 'oauth';
+}
 
-	username?: string;
-	password?: string;
-
-	OAuthCredentials?: {
-		consumerToken: string;
-		consumerSecret: string;
-		accessToken: string;
-		accessSecret: string;
-	};
-
-	// 使用者代理，如留空則使用預設的 AFC-ICG-BOT/版本號
-	userAgent: string;
-
-	// 參見 https://www.mediawiki.org/wiki/API:Main_page
-	defaultParams?: import( 'mwn' ).ApiParams;
-};
-
-type MwnLoginNone = MwnLoginBase & {
+interface MwnLoginNone extends MwnLoginBase {
 	type: '' | 'none';
-};
+}
 
-type MwnLoginBotPassword = MwnLoginBase & {
+interface MwnLoginBotPassword extends MwnLoginBase {
 	type: 'botpassword',
 
 	username: string;
 	password: string;
-};
+}
 
-type MwnLoginOAuth = MwnLoginBase & {
+interface MwnLoginOAuth extends MwnLoginBase {
 	type: 'oauth';
 
 	OAuthCredentials: {
@@ -693,4 +674,4 @@ type MwnLoginOAuth = MwnLoginBase & {
 		accessToken: string;
 		accessSecret: string;
 	};
-};
+}

@@ -1,5 +1,5 @@
-import { mwbot, $ } from './index';
-import { isReviewer } from './reviewer';
+import { mwbot, $ } from 'src/modules/afc/util/index';
+import { isReviewer } from 'src/modules/afc/util/reviewer';
 
 import { ApiPage, ApiRevision, MwnPage } from 'mwn';
 import type { ApiQueryRevisionsParams } from 'mwn/build/api_params';
@@ -468,7 +468,7 @@ export class AFCPage {
 			match = categoryRegex.exec( this._text );
 		}
 
-		this._text = this._text.replace( /\[\[:?(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):([^[\]]+)\]\]/gi, '' );
+		this._text = this._text.replace( /\[\[:?(?:Cat|Category|分[类類]):([^[\]]+)\]\]/gi, '' );
 
 		this._removeExcessNewlines();
 	}
@@ -512,6 +512,9 @@ export class AFCPage {
 				/\{\{(userspacedraft|userspace draft|user sandbox|用戶沙盒|用户沙盒|draft copyvio|七日草稿|7D draft|Draft|草稿|Please leave this line alone \(sandbox heading\))(?:\{\{[^{}]*\}\}|[^}{])*\}\}/ig,
 				''
 			)
+
+			// 把分類當成模板來加？
+			.replace( /\{\{:?(?:Cat|Category|分[类類]):([^{}]+)\}\}/gi, '[[:Category:$1]]' )
 
 			// 移除掉不知道為甚麼沒移除的預設內容
 			.replace( /'''此处改为条目主题'''(?:是一个)?/, '' )

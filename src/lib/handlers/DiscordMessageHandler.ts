@@ -1,15 +1,15 @@
-import { MessageHandler } from 'lib/handlers/MessageHandler';
-import { Context } from 'lib/handlers/Context';
-import { Events } from 'lib/event';
+import { MessageHandler } from 'src/lib/handlers/MessageHandler';
+import { Context } from 'src/lib/handlers/Context';
+import { Events } from 'src/lib/event';
 
 import Discord from 'discord.js';
 
-import { getFriendlySize } from '../util';
+import { getFriendlySize } from 'src/lib/util';
 
 import winston = require( 'winston' );
-import { ConfigTS } from 'config';
+import { ConfigTS } from 'src/config';
 
-interface DiscordEvents extends Events {
+export interface DiscordEvents {
 	command( context: Context<Discord.Message>, comand: string, param: string ): void;
 	text( context: Context<Discord.Message> ): void;
 	ready( client: Discord.Client ): void;
@@ -20,11 +20,11 @@ export type DiscordSendMessage = string | string[] | Discord.MessageEmbed | Disc
 /**
  * 使用通用介面處理 Discord 訊息
  */
-export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
+export class DiscordMessageHandler extends MessageHandler<DiscordEvents & Events> {
 	private readonly _token: string;
 	protected readonly _client: Discord.Client;
-	protected readonly _type = 'Discord';
-	protected readonly _id = 'D';
+	protected readonly _type: 'Discord' = 'Discord';
+	protected readonly _id: 'D' = 'D';
 
 	private readonly _nickStyle: 'nickname' | 'username' | 'fullname' | 'firstname';
 	public readonly useProxyURL: boolean = false;

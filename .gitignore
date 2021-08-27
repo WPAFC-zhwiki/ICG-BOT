@@ -12,9 +12,10 @@ node_modules
 .npm
 
 # config
-config/config.ts
+config/*
+!config/config.example.ts 
+!config/type.d.ts
 
 # built
 build/
 bin/
-config/config.js

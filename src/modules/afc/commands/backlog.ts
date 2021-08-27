@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { getBacklogInfo, setCommand } from 'modules/afc/util';
+import { getBacklogInfo, setCommand } from 'src/modules/afc/util';
 
 setCommand( 'backlog', async function ( _args, reply ) {
 	try {

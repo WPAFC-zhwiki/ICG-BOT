@@ -1,6 +1,6 @@
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 import winston from 'winston';
-import { mwbot, recentChange } from './index';
+import { mwbot, recentChange } from 'src/modules/afc/util/index';
 
 let caches: string[] = [];
 

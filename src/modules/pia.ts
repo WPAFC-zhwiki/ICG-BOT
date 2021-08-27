@@ -9,11 +9,11 @@
  * 後來，中文維基百科也增加了這幾個指令的模板，例如 [{{pia}}](https://zh.wikipedia.org/wiki/Template:Pia)。
  * 於是，中文維基百科其他幾個花式 ping 也成為了機器人的指令。
  */
-import { Manager } from 'init';
-import delay from 'lib/delay';
-import { Context } from 'lib/handlers/Context';
-import { addCommand } from 'lib/message';
-import * as moduleTransport from 'modules/transport';
+import { Manager } from 'src/init';
+import delay from 'src/lib/delay';
+import { Context } from 'src/lib/handlers/Context';
+import { addCommand } from 'src/lib/message';
+import * as moduleTransport from 'src/modules/transport';
 
 const piaMap = new Map<string, string>( [
 	[ 'pia', '(╯°Д°)╯︵ ~~~~~┻━┻' ],

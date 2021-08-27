@@ -1,7 +1,7 @@
-import { $, encodeURI } from './index';
+import { $, encodeURI } from 'src/modules/afc/util/index';
 import { MwnPage } from 'mwn';
 
-import issuesData from './issuesData.json';
+import issuesData from 'src/modules/afc/util/issuesData.json';
 
 export type elementsTS = {
 	intLinks: RegExpMatchArray;

@@ -1,7 +1,7 @@
 import winston from 'winston';
-import { Manager } from '../../init';
-import { Context, rawmsg } from '../../lib/handlers/Context';
-import { BridgeMsg } from './BridgeMsg';
+import { Manager } from 'src/init';
+import { Context, rawmsg } from 'src/lib/handlers/Context';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
 function checkEnable(): void {
 	if ( !Manager.global.isEnable( 'transport' ) ) {

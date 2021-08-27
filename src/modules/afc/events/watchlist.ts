@@ -1,7 +1,7 @@
 /* eslint-disable no-jquery/no-class-state */
 import Discord from 'discord.js';
 
-import { mwbot, $, recentChange, AFCPage, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'modules/afc/util';
+import { mwbot, $, recentChange, AFCPage, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
 import { MwnPage } from 'mwn';
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 import winston from 'winston';

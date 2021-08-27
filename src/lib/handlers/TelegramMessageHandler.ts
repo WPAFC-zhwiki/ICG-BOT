@@ -1,6 +1,6 @@
-import { MessageHandler, Command } from 'lib/handlers/MessageHandler';
-import { Context } from 'lib/handlers/Context';
-import { Events } from 'lib/event';
+import { MessageHandler, Command } from 'src/lib/handlers/MessageHandler';
+import { Context } from 'src/lib/handlers/Context';
+import { Events } from 'src/lib/event';
 
 import https from 'https';
 import winston from 'winston';
@@ -10,12 +10,12 @@ import * as Tls from 'tls';
 import { Telegraf, Context as TContext, Telegram } from 'telegraf';
 import * as TT from 'telegraf/typings/telegram-types';
 
-import { getFriendlySize, getFriendlyLocation, copyObject } from 'lib/util';
-import HttpsProxyAgent from 'lib/proxy.js';
+import { getFriendlySize, getFriendlyLocation, copyObject } from 'src/lib/util';
+import HttpsProxyAgent from 'src/lib/proxy.js';
 
-import { ConfigTS } from 'config';
+import { ConfigTS } from 'src/config';
 
-interface TelegramEvents extends Events {
+export interface TelegramEvents {
 	command( context: Context<TContext>, comand: string, param: string ): void;
 	text( context: Context<TContext> ): void;
 	pin( info: {
@@ -48,17 +48,17 @@ interface TelegramEvents extends Events {
 	richmessage( context: Context ): void;
 }
 
-type SendMessageOpipons = TT.ExtraSendMessage & TT.ExtraReplyMessage & {
+interface SendMessageOpipons extends TT.ExtraSendMessage, TT.ExtraReplyMessage {
 	withNick?: boolean
-};
+}
 
 /**
  * 使用通用介面處理 Telegram 訊息
  */
-export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
+export class TelegramMessageHandler extends MessageHandler<TelegramEvents & Events> {
 	protected readonly _client: Telegraf<TContext>;
-	protected readonly _type = 'Telegram';
-	protected readonly _id = 'T';
+	protected readonly _type: 'Telegram' = 'Telegram';
+	protected readonly _id: 'T' = 'T';
 
 	private readonly _start: {
 		mode: 'webhook',
@@ -151,7 +151,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			}
 
 			// 启动Webhook服务器
-			let tlsOptions = null;
+			let tlsOptions: Tls.TlsOptions = null;
 			if ( webhookConfig.ssl && webhookConfig.ssl.certPath ) {
 				tlsOptions = {
 					key: fs.readFileSync( webhookConfig.ssl.keyPath ),
@@ -187,7 +187,22 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		this._nickStyle = tgOptions.nickStyle || 'username';
 
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const that = this;
+		const that: this = this;
+
+		async function setFile( context: Context,
+			msg: ( TT.PhotoSize | TT.Sticker | TT.Audio | TT.Voice | TT.Video | TT.Document ) & {
+				mime_type?: string;
+			},
+			type: string ): Promise<void> {
+			context.extra.files = [ {
+				client: 'Telegram',
+				url: await that.getFileLink( msg.file_id ),
+				type: type,
+				id: msg.file_id,
+				size: msg.file_size,
+				mime_type: msg.mime_type
+			} ];
+		}
 
 		client.on( 'message', async function ( ctx, next ) {
 			if ( that._enabled && ctx.message && ctx.chat ) {
@@ -209,19 +224,19 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 				} );
 
 				if ( ctx.message.reply_to_message ) {
-					const reply = ctx.message.reply_to_message;
+					const reply: Partial<TT.Message> & TT.ReplyMessage = ctx.message.reply_to_message;
 					const replyTo = that._getNick( reply.from );
-					const replyMessage = that._convertToText( Object.assign( reply ) );
+					const replyMessage = that._convertToText( reply );
 
 					context.extra.reply = {
 						nick: replyTo,
 						username: reply.from.username,
 						message: replyMessage,
-						isText: Object.assign( reply ).text && true
+						isText: reply.text && true
 					};
 				} else if ( ctx.message.forward_from ) {
-					const fwd = ctx.message.forward_from;
-					const fwdFrom = that._getNick( fwd );
+					const fwd: TT.User = ctx.message.forward_from;
+					const fwdFrom: string = that._getNick( fwd );
 
 					context.extra.forward = {
 						nick: fwdFrom,
@@ -257,34 +272,13 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 					that.emit( 'text', context );
 				} else {
-					const message = ctx.message;
-					const setFile = async ( msg:
-						TT.PhotoSize & {
-							mime_type?: string
-						} |
-						TT.Sticker & {
-							mime_type?: string
-						} |
-						TT.Audio |
-						TT.Voice |
-						TT.Video |
-						TT.Document,
-					type: string ) => {
-						context.extra.files = [ {
-							client: 'Telegram',
-							url: await that.getFileLink( msg.file_id ),
-							type: type,
-							id: msg.file_id,
-							size: msg.file_size,
-							mime_type: msg.mime_type
-						} ];
-					};
+					const message: TT.Message = ctx.message;
 
 					if ( message.photo ) {
 						let sz = 0;
 						for ( const p of message.photo ) {
 							if ( p.file_size > sz ) {
-								await setFile( p, 'photo' );
+								await setFile( context, p, 'photo' );
 								context.text = `<photo: ${ p.width }x${ p.height }, ${ getFriendlySize( p.file_size ) }>`;
 								sz = p.file_size;
 							}
@@ -297,20 +291,20 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						context.extra.imageCaption = message.caption;
 					} else if ( message.sticker ) {
 						context.text = `${ message.sticker.emoji }<Sticker>`;
-						await setFile( message.sticker, 'sticker' );
+						await setFile( context, message.sticker, 'sticker' );
 						context.extra.isImage = true;
 					} else if ( message.audio ) {
 						context.text = `<Audio: ${ message.audio.duration }", ${ getFriendlySize( message.audio.file_size ) }>`;
-						await setFile( message.audio, 'audio' );
+						await setFile( context, message.audio, 'audio' );
 					} else if ( message.voice ) {
 						context.text = `<Voice: ${ message.voice.duration }", ${ getFriendlySize( message.voice.file_size ) }>`;
-						await setFile( message.voice, 'voice' );
+						await setFile( context, message.voice, 'voice' );
 					} else if ( message.video ) {
 						context.text = `<Video: ${ message.video.width }x${ message.video.height }, ${ message.video.duration }", ${ getFriendlySize( message.video.file_size ) }>`;
-						await setFile( message.video, 'video' );
+						await setFile( context, message.video, 'video' );
 					} else if ( message.document ) {
 						context.text = `<File: ${ message.document.file_name }, ${ getFriendlySize( message.document.file_size ) }>`;
-						await setFile( message.document, 'document' );
+						await setFile( context, message.document, 'document' );
 					} else if ( message.contact ) {
 						context.text = `<Contact: ${ message.contact.first_name }, ${ message.contact.phone_number }>`;
 					} else if ( message.location ) {
@@ -319,19 +313,15 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						context.text = `<Venue: ${ message.venue.title }, ${ message.venue.address }, ${ getFriendlyLocation(
 							message.venue.location.latitude, message.venue.location.longitude ) }>`;
 					} else if ( message.pinned_message ) {
-						if ( message.from.id === message.pinned_message.from.id ) {
-							that.emit( 'pin', {
-								from: {
-									id: message.from.id,
-									nick: that._getNick( message.from ),
-									username: message.from.username
-								},
-								to: ctx.chat.id,
-								text: that._convertToText( Object.assign( message.pinned_message ) )
-							}, ctx );
-						} else {
-							context.text = `<Pinned Message: ${ that._convertToText( Object.assign( message.pinned_message ) ) }>`;
-						}
+						that.emit( 'pin', {
+							from: {
+								id: message.from.id,
+								nick: that._getNick( message.from ),
+								username: message.from.username
+							},
+							to: ctx.chat.id,
+							text: that._convertToText( message.pinned_message )
+						}, ctx );
 					} else if ( message.left_chat_member ) {
 						that.emit( 'leave', ctx.chat.id, {
 							id: message.from.id,
@@ -365,9 +355,9 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 	private _getNick( user: TT.User ): string {
 		if ( user ) {
-			const username = ( user.username || '' ).trim();
-			const firstname = ( user.first_name || '' ).trim() || ( user.last_name || '' ).trim();
-			const fullname = `${ user.first_name || '' } ${ user.last_name || '' }`.trim();
+			const username: string = ( user.username || '' ).trim();
+			const firstname: string = ( user.first_name || '' ).trim() || ( user.last_name || '' ).trim();
+			const fullname: string = `${ user.first_name || '' } ${ user.last_name || '' }`.trim();
 
 			if ( this._nickStyle === 'fullname' ) {
 				return fullname || username;
@@ -381,22 +371,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		}
 	}
 
-	private _convertToText( message: ( TT.Message | TT.ReplyMessage ) & {
-		audio?: TT.Audio;
-		photo?: TT.PhotoSize[];
-		document?: TT.Document;
-		game?: TT.Game;
-		sticker?: TT.Sticker;
-		video?: TT.Video;
-		voice?: TT.Voice;
-		contact?: TT.Contact;
-		location?: TT.Location;
-		venue?: TT.Venue;
-		pinned_message?: TT.ReplyMessage;
-		new_chat_members?: TT.User;
-		left_chat_member?: TT.User;
-		text?: string;
-	} ) {
+	private _convertToText( message: Partial<TT.Message> ) {
 		if ( message.audio ) {
 			return '<Audio>';
 		} else if ( message.photo ) {
@@ -478,24 +453,23 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		return this.say( target, message, options2 );
 	}
 
-	public get sendPhoto(): Telegram[ 'sendPhoto' ] {
-		return this._client.telegram.sendPhoto.bind( this._client.telegram );
+	public sendPhoto( ...args: Parameters<Telegram[ 'sendPhoto' ]> ): Promise<TT.MessagePhoto> {
+		return this._client.telegram.sendPhoto( ...args );
 	}
 
-	public get sendAudio(): Telegram[ 'sendAudio' ] {
-		return this._client.telegram.sendAudio.bind( this._client.telegram );
+	public sendAudio( ...args: Parameters<Telegram[ 'sendAudio' ]> ): Promise<TT.MessageAudio> {
+		return this._client.telegram.sendAudio( ...args );
+	}
+	public sendVideo( ...args: Parameters<Telegram[ 'sendVideo' ]> ): Promise<TT.MessageVideo> {
+		return this._client.telegram.sendVideo( ...args );
 	}
 
-	public get sendVideo(): Telegram[ 'sendVideo' ] {
-		return this._client.telegram.sendVideo.bind( this._client.telegram );
+	public sendAnimation( ...args: Parameters<Telegram[ 'sendAnimation' ]> ): Promise<TT.MessageAnimation> {
+		return this._client.telegram.sendAnimation( ...args );
 	}
 
-	public get sendAnimation(): Telegram[ 'sendAnimation' ] {
-		return this._client.telegram.sendAnimation.bind( this._client.telegram );
-	}
-
-	public get sendDocument(): Telegram[ 'sendDocument' ] {
-		return this._client.telegram.sendDocument.bind( this._client.telegram );
+	public sendDocument( ...args: Parameters<Telegram[ 'sendDocument' ]> ): Promise<TT.MessageDocument> {
+		return this._client.telegram.sendDocument( ...args );
 	}
 
 	private async _reply( method: string, context: Context<TContext>,

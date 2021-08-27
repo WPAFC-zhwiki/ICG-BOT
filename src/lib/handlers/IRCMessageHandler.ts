@@ -1,6 +1,6 @@
-import { MessageHandler } from 'lib/handlers/MessageHandler';
-import { Context } from 'lib/handlers/Context';
-import { Events } from 'lib/event';
+import { MessageHandler } from 'src/lib/handlers/MessageHandler';
+import { Context } from 'src/lib/handlers/Context';
+import { Events } from 'src/lib/event';
 
 import irc = require( 'irc-upd' );
 import color = require( 'irc-colors' );
@@ -8,10 +8,10 @@ import color = require( 'irc-colors' );
 import lodash from 'lodash';
 
 import winston = require( 'winston' );
-import { ConfigTS } from 'config';
-import delay from 'lib/delay';
+import { ConfigTS } from 'src/config';
+import delay from 'src/lib/delay';
 
-interface IRCEvents extends Events {
+export interface IRCEvents {
 	command( context: Context<irc.IMessage>, comand: string, param: string ): void;
 	text( context: Context<irc.IMessage> ): void;
 	join( channel: string, nick: string, message: irc.IMessage ): void;
@@ -34,10 +34,10 @@ type Me = {
 /**
  * 使用通用接口处理 IRC 消息
  */
-export class IRCMessageHandler extends MessageHandler<IRCEvents> {
+export class IRCMessageHandler extends MessageHandler<IRCEvents & Events> {
 	protected readonly _client: irc.Client;
-	protected readonly _type = 'IRC';
-	protected readonly _id = 'I';
+	protected readonly _type: 'IRC' = 'IRC';
+	protected readonly _id: 'I' = 'I';
 
 	private _maxLines: number;
 

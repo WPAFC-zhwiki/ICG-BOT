@@ -1,10 +1,11 @@
-import { ExtendsMap, handlers } from 'init';
-import { Context, rawmsg, extra, optin } from 'lib/handlers/Context';
-import { MessageHandler } from 'lib/handlers/MessageHandler';
+import { ExtendsMap, handlers } from 'src/init';
+import { Context, rawmsg, extra, ContextOptin } from 'src/lib/handlers/Context';
+import { MessageHandler } from 'src/lib/handlers/MessageHandler';
+import { getUIDFromContext, parseUID } from 'src/lib/message';
 
-let clientFullNames = {};
+let clientFullNames: Record<string, string> = {};
 
-type BridgeMsgOptin<rawdata extends rawmsg> = optin<rawdata> & {
+interface BridgeMsgOptin<rawdata extends rawmsg> extends ContextOptin<rawdata> {
 	withNick?: boolean;
 	isNotice?: boolean;
 	from_uid?: string;
@@ -105,34 +106,7 @@ export class BridgeMsg<rawdata extends rawmsg = any> extends Context<rawdata> {
 		}
 	}
 
-	static parseUID( u: string ): {
-		client: string,
-		id: string,
-		uid: string
-	} {
-		let client: string = null, id: string = null, uid: string = null;
-		if ( u ) {
-			const s = u.toString();
-			const i = s.indexOf( '/' );
+	static parseUID = parseUID;
 
-			if ( i !== -1 ) {
-				client = s.substr( 0, i ).toLowerCase();
-				if ( clientFullNames[ client ] ) {
-					client = clientFullNames[ client ];
-				}
-
-				id = s.substr( i + 1 );
-				uid = `${ client.toLowerCase() }/${ id }`;
-			}
-		}
-		return { client, id, uid };
-	}
-
-	static getUIDFromContext( context: Context | BridgeMsg, id: string | number ): string | null {
-		if ( !context.handler ) {
-			return null;
-		}
-
-		return `${ context.handler.type.toLowerCase() }/${ id }`;
-	}
+	static getUIDFromContext = getUIDFromContext;
 }

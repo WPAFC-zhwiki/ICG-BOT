@@ -3,10 +3,10 @@
  */
 
 import winston = require( 'winston' );
-import { Manager } from 'init';
-import * as moduleTransport from 'modules/transport';
-import { addCommand } from 'lib/message';
-import { Context } from 'lib/handlers/Context';
+import { Manager } from 'src/init';
+import * as moduleTransport from 'src/modules/transport';
+import { addCommand, parseUID } from 'src/lib/message';
+import { Context } from 'src/lib/handlers/Context';
 
 const ircHandler = Manager.handlers.get( 'IRC' );
 
@@ -28,7 +28,7 @@ if ( ircHandler && Manager.global.isEnable( 'transport' ) ) {
 
 				let sentCount = 0;
 				for ( const c of context.extra.mapto ) {
-					const client = moduleTransport.BridgeMsg.parseUID( c );
+					const client = parseUID( c );
 					if ( client.client === 'IRC' ) {
 						sentCount++;
 						ircHandler.say( client.id, context.param );

@@ -2,12 +2,12 @@
  * linky - 自動將聊天中的[[]]與{{}}換成 Wiki 系統的連結
  */
 
-import { Manager } from 'init';
-import * as moduleTransport from 'modules/transport';
+import { Manager } from 'src/init';
+import * as moduleTransport from 'src/modules/transport';
 
 import winston = require( 'winston' );
-import { Context } from 'lib/handlers/Context';
-import msgManage from 'lib/message/msgManage';
+import { Context } from 'src/lib/handlers/Context';
+import { msgManage, parseUID } from 'src/lib/message';
 
 const options = Manager.config.wikilinky;
 
@@ -23,14 +23,14 @@ const map: Record<string, string | false> & {
 };
 
 for ( const group in groups ) {
-	const client = moduleTransport.BridgeMsg.parseUID( group );
+	const client = parseUID( group );
 	if ( client.uid ) {
 		map[ client.uid ] = groups[ group ];
 	}
 }
 
 const ignores: string[] = ( options.ignores || [] ).map( function ( uid: string ) {
-	const u = moduleTransport.BridgeMsg.parseUID( uid );
+	const u = parseUID( uid );
 	return u.uid;
 } ).filter( function ( uid ) {
 	return uid;
@@ -175,8 +175,6 @@ async function processlinky( from: string, to: string, text: string, context: Co
 	}
 }
 
-Manager.handlers.forEach( function ( _handlers, name ) {
-	msgManage.on( name.toLocaleUpperCase(), function ( from, to, text, context ) {
-		processlinky( from, to, text, context );
-	} );
+msgManage.on( 'text', function ( _client, from, to, text, context ) {
+	processlinky( from, to, text, context );
 } );

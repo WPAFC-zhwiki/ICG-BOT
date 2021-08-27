@@ -1,10 +1,10 @@
 import format from 'string-format';
 import winston = require( 'winston' );
-import { Manager } from '../../../init';
-import * as bridge from '../bridge';
-import { ConfigTS } from '../../../../config/type';
-import { BridgeMsg } from '../BridgeMsg';
-import msgManage from 'lib/message/msgManage';
+import { Manager } from 'src/init';
+import * as bridge from 'src/modules/transport/bridge';
+import { ConfigTS } from 'src/config';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
+import msgManage from 'src/lib/message/msgManage';
 
 function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );
@@ -54,7 +54,7 @@ msgManage.on( 'discord', async function ( _from, _to, _text, context ) {
 	try {
 		await bridge.send( context );
 	} catch ( e ) {
-		winston.error( e.trace );
+		winston.error( e instanceof Error ? e.stack : e );
 	}
 } );
 

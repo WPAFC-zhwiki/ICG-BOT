@@ -2,6 +2,9 @@ const { exec } = require( 'child_process' );
 let path = require( 'path' );
 const fs = require( 'fs-extra' );
 
+/**
+ * @param {import('grunt')} grunt
+ */
 module.exports = function ( grunt ) {
 	grunt.task.registerTask( 'built', function () {
 		const done = this.async();
@@ -19,9 +22,9 @@ module.exports = function ( grunt ) {
 		const done = this.async();
 
 		try {
-			fs.removeSync( './build' );
-			fs.removeSync( './config/config.js' );
-			fs.removeSync( './bin' );
+			fs.removeSync( path.join( __dirname, 'build' ) );
+			fs.removeSync( path.join( __dirname, 'config/config.js' ) );
+			fs.removeSync( path.join( __dirname, 'bin' ) );
 		} catch ( e ) {
 			grunt.log.error( e );
 			done( false );

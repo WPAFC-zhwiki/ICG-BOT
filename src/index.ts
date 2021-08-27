@@ -1,14 +1,20 @@
+/* eslint quote-props: ["error", "always"] */
 /**
  * AFC-ICG-BOT
  * https://github.com/sunny00217wm/AFC-zhwiki-ICG-Bot
  */
 import moduleAlias from 'module-alias';
-moduleAlias.addPath( __dirname );
+import path = require( 'path' );
+moduleAlias.addAliases( {
+	'src': __dirname,
+	'config': path.join( __dirname, '../config' ),
+	'package.json': path.join( __dirname, '../package.json' )
+} );
 
 import winston = require( 'winston' );
 
-import { Manager } from 'init';
-import 'lib/message';
+import { Manager } from 'src/init';
+import 'src/lib/message';
 
 /**
  * 載入擴充套件
@@ -18,7 +24,7 @@ winston.info( 'Loading modules...' );
 for ( const module of Manager.config.modules ) {
 	try {
 		winston.info( `Loading module: ${ module }` );
-		require( `./modules/${ module }` );
+		require( `src/modules/${ module }` );
 	} catch ( ex ) {
 		winston.error( `Error while loading plugin ${ module }: `, ex );
 	}

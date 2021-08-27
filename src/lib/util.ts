@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { ConfigTS } from 'config';
+import { ConfigTS } from 'src/config';
 import lodash from 'lodash';
 
 // 检查已弃用设置

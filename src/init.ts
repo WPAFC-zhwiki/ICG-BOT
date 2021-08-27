@@ -1,12 +1,10 @@
 import winston = require( 'winston' );
 
-import { default as config } from 'config';
+import { default as config, version } from 'src/config';
 
-import { version } from '../package.json';
-
-import { Context } from 'lib/handlers/Context';
-import { MessageHandler } from 'lib/handlers/MessageHandler';
-import { ifEnable, isEnable } from 'modules/enable';
+import { Context } from 'src/lib/handlers/Context';
+import { MessageHandler } from 'src/lib/handlers/MessageHandler';
+import { ifEnable, isEnable } from 'src/modules/enable';
 
 export interface ExtendsMap<T extends string, S, M extends Record<T, S>> extends Map<T, S> {
 	get<K extends keyof M>( key: K ): M[ K ];
@@ -83,22 +81,22 @@ if ( config.logging && config.logging.logfile ) {
 }
 
 export type handlers = {
-	IRC: import( './lib/handlers/IRCMessageHandler' ).IRCMessageHandler;
-	Telegram: import( './lib/handlers/TelegramMessageHandler' ).TelegramMessageHandler;
-	Discord: import( './lib/handlers/DiscordMessageHandler' ).DiscordMessageHandler;
+	IRC: import( 'src/lib/handlers/IRCMessageHandler' ).IRCMessageHandler;
+	Telegram: import( 'src/lib/handlers/TelegramMessageHandler' ).TelegramMessageHandler;
+	Discord: import( 'src/lib/handlers/DiscordMessageHandler' ).DiscordMessageHandler;
 }
 
 type handlerClasses = {
 	IRC: {
-		object: typeof import( './lib/handlers/IRCMessageHandler' ).IRCMessageHandler;
+		object: typeof import( 'src/lib/handlers/IRCMessageHandler' ).IRCMessageHandler;
 		options: typeof config.IRC;
 	};
 	Telegram: {
-		object: typeof import( './lib/handlers/TelegramMessageHandler' ).TelegramMessageHandler;
+		object: typeof import( 'src/lib/handlers/TelegramMessageHandler' ).TelegramMessageHandler;
 		options: typeof config.Telegram;
 	};
 	Discord: {
-		object: typeof import( './lib/handlers/DiscordMessageHandler' ).DiscordMessageHandler;
+		object: typeof import( 'src/lib/handlers/DiscordMessageHandler' ).DiscordMessageHandler;
 		options: typeof config.Discord;
 	};
 }

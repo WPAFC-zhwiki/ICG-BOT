@@ -19,11 +19,14 @@
 		"strictNullChecks": false,
 		"target": "es2020",
 		"paths": {
-			"lib/*": [
-				"./lib/*"
+			"src/*": [
+				"./*"
 			],
-			"modules/*": [
-				"./modules/*"
+			"config/*": [
+				"../config/*"
+			],
+			"package.json": [
+				"../package.json"
 			]
 		}
 	},

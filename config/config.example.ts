@@ -1,4 +1,4 @@
-import { ConfigTS } from './type';
+import { ConfigTS } from 'config/type';
 
 /*
  * 機器人的設定檔

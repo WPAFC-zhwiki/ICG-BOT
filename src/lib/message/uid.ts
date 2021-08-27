@@ -1,5 +1,5 @@
-import { Manager } from 'init';
-import { Context } from 'lib/handlers/Context';
+import { Manager } from 'src/init';
+import { Context } from 'src/lib/handlers/Context';
 
 const clientFullNames = {};
 for ( const [ type, handler ] of Manager.handlers ) {
@@ -11,11 +11,15 @@ export function parseUID( u: string ): {
 	client: string,
 	id: string,
 	uid: string
+} | {
+	client: null,
+	id: null,
+	uid: null
 } {
 	let client: string = null, id: string = null, uid: string = null;
 	if ( u ) {
-		const s = u.toString();
-		const i = s.indexOf( '/' );
+		const s: string = u.toString();
+		const i: number = s.indexOf( '/' );
 
 		if ( i !== -1 ) {
 			client = s.substr( 0, i ).toLowerCase();

@@ -1,8 +1,8 @@
 import winston = require( 'winston' );
-import { Manager } from '../../init';
-import * as bridge from './bridge';
-import { ConfigTS } from '../../../config/type';
-import { BridgeMsg } from './BridgeMsg';
+import { Manager } from 'src/init';
+import * as bridge from 'src/modules/transport/bridge';
+import { ConfigTS } from 'src/config';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
 Manager.global.ifEnable( 'transport', function () {
 	bridge.addHook( 'bridge.send', function ( msg: BridgeMsg ) {

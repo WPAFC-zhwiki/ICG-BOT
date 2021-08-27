@@ -1,5 +1,5 @@
 import Discord = require( 'discord.js' );
-import { getBacklogInfo, encodeURI, setCommand } from 'modules/afc/util';
+import { getBacklogInfo, encodeURI, setCommand } from 'src/modules/afc/util';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;

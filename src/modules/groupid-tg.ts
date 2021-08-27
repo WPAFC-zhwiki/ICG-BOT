@@ -4,7 +4,7 @@
 
 import winston = require( 'winston' );
 
-import { addCommand } from 'lib/message';
+import { addCommand } from 'src/lib/message';
 
 addCommand( 'thisgroupid', function ( context ) {
 	if ( context.isPrivate ) {

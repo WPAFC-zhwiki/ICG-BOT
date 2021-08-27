@@ -1,7 +1,7 @@
 import winston = require( 'winston' );
-import { Manager } from '../../init';
-import * as bridge from './bridge';
-import { BridgeMsg } from './BridgeMsg';
+import { Manager } from 'src/init';
+import * as bridge from 'src/modules/transport/bridge';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
 type commandTS = {
 	options: {

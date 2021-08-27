@@ -1,5 +1,5 @@
 import Discord from 'discord.js';
-import { mwbot, $, recentChange, encodeURI, turndown, htmlToIRC, send } from 'modules/afc/util';
+import { mwbot, $, recentChange, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
 import winston from 'winston';
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 

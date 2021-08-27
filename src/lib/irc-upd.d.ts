@@ -6,7 +6,7 @@
 /// <reference types="node" />
 
 declare module 'irc-upd' {
-	import EventEmitter, { Events } from 'lib/event';
+	import EventEmitter, { Events } from 'src/lib/event';
 	import net = require( 'net' );
 	import tls = require( 'tls' );
 
@@ -63,6 +63,11 @@ declare module 'irc-upd' {
 		'message#'( nick: string, to: string, text: string, message: IMessage ): void;
 
 		/**
+		 * Same as the `message` event, but only emitted for the specified channel.
+		 */
+		[ key: `message#${ string }` ]: ( nick: string, to: string, text: string, message: IMessage ) => void;
+
+		/**
 		 * Emitted when a message is sent from the client.
 		 * The `to` parameter is the target of the message,
 		 * which can be either a nick (in a private message) or a channel (as in a message to that channel)
@@ -97,7 +102,12 @@ declare module 'irc-upd' {
 		 * request). The nicks object passed to the callback is keyed by nickname, and has values ‘’, ‘+’, or ‘@’
 		 * depending on the level of that nick in the channel.
 		 */
-		names( channel: string, nicks: string ): void;
+		names( channel: string, nicks: Record<string, '' | '+' | '@'> ): void;
+
+		/**
+		 * Same as the `names` event, but only emitted for the specified channel.
+		 */
+		[ key: `names#${ string }` ]: ( nicks: Record<string, '' | '+' | '@'> ) => void;
 
 		/**
 		 * Emitted when the server sends the channel topic after joining a channel,
@@ -111,9 +121,19 @@ declare module 'irc-upd' {
 		join( channel: string, nick: string, message: IMessage ): void;
 
 		/**
+		 * Same as the `join` event, but only emitted for the specified channel.
+		 */
+		[ key: `join#${ string }` ]: ( nick: string, message: IMessage ) => void;
+
+		/**
 		 * Emitted when a user parts a channel (including when the client itself parts a channel).
 		 */
 		part( channel: string, nick: string, reason: string, message: IMessage ): void;
+
+		/**
+		 * Same as the `part` event, but only emitted for the specified channel.
+		 */
+		[ key: `part#${ string }` ]: ( nick: string, reason: string, message: IMessage ) => void;
 
 		/**
 		 * Emitted when a user disconnects from the IRC server,
@@ -125,6 +145,11 @@ declare module 'irc-upd' {
 		 * Emitted when a user is kicked from a channel.
 		 */
 		kick( channel: string, nick: string, by: string, reason: string, message: IMessage ): void;
+
+		/**
+		 * Same as the `kick` event, but only emitted for the specified channel.
+		 */
+		[ key: `kick#${ string }` ]: ( nick: string, by: string, reason: string, message: IMessage ) => void;
 
 		/**
 		 * Emitted when a user is killed from the IRC server.
@@ -226,6 +251,12 @@ declare module 'irc-upd' {
 		 * are not emitted using this event: see `unhandled`.
 		 */
 		error( message: IMessage ): void;
+
+		/**
+		 * Emitted when the socket connection to the server emits an error event.
+		 * See [net.Socket’s](https://nodejs.org/api/net.html#net_event_error_1) error event for more information.
+		 */
+		netError( exception: Error ): void;
 
 		/**
 		 * Emitted whenever the server responds with a message the bot doesn’t recognize and doesn’t handle.

@@ -1,10 +1,10 @@
 import color = require( 'irc-colors' );
 import format from 'string-format';
-import { BridgeMsg } from 'modules/transport/BridgeMsg';
-import { Manager } from 'init';
-import * as bridge from 'modules/transport/bridge';
-import { ConfigTS } from 'config';
-import msgManage from 'lib/message/msgManage';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
+import { Manager } from 'src/init';
+import * as bridge from 'src/modules/transport/bridge';
+import { ConfigTS } from 'src/config';
+import msgManage from 'src/lib/message/msgManage';
 import irc from 'irc-upd';
 import winston = require( 'winston' );
 
@@ -47,7 +47,7 @@ msgManage.on( 'irc', async function ( _from, _to, _text, context ) {
 	try {
 		await bridge.send( context );
 	} catch ( e ) {
-		winston.error( e.trace );
+		winston.error( e instanceof Error ? e.stack : e );
 	}
 } );
 
@@ -262,8 +262,12 @@ export default async function ( msg: BridgeMsg, { withNick, isNotice }: { withNi
 			if ( colorize.nick ) {
 				if ( colorize.nick === 'colorful' ) {
 					// hash
-					const m = meta.nick.split( '' ).map( ( x: string ) => x.codePointAt( 0 ) ).reduce( ( x: number, y: number ) => x + y );
-					const n = colorize.nickcolors.length;
+					const m: number = meta.nick.split( '' ).map( function ( x: string ): number {
+						return x.codePointAt( 0 );
+					} ).reduce( function ( x: number, y: number ): number {
+						return x + y;
+					} );
+					const n: number = colorize.nickcolors.length;
 
 					meta.nick = color[ colorize.nickcolors[ m % n ] ]( meta.nick );
 				} else {

@@ -2,17 +2,17 @@
  * 互聯機器人
  */
 
-import { Manager } from 'init';
+import { Manager } from 'src/init';
 import winston = require( 'winston' );
 
-import { BridgeMsg } from './transport/BridgeMsg';
-export { BridgeMsg } from './transport/BridgeMsg';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
+export { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
-import * as bridge from './transport/bridge';
-export * from './transport/bridge';
-export * from './transport/command';
-import './transport/file';
-import './transport/paeeye';
+import * as bridge from 'src/modules/transport/bridge';
+export * from 'src/modules/transport/bridge';
+export * from 'src/modules/transport/command';
+import 'src/modules/transport/file';
+import 'src/modules/transport/paeeye';
 
 const options = Manager.config.transport;
 
@@ -21,29 +21,29 @@ BridgeMsg.setHandlers( Manager.handlers );
 export const handlers = Manager.handlers;
 
 /*
-      理清各群之間的關係：根據已知資料，建立一對一的關係（然後將 disable 的關係去除），便於查詢。例如：
+		理清各群之間的關係：根據已知資料，建立一對一的關係（然後將 disable 的關係去除），便於查詢。例如：
 
-        map: {
-            'irc/#channel1': {
-                'qq/123123123': {
-                    disabled: false,
-                },
-                'telegram/-123123123': {
-                    disabled: false,
-                }
-            },
-            'irc/#channel2': {
-                ...
-            },
-            'qq/123123123': {
-                'irc/#channel1': {
-                    disabled: false,
-                },
-                ...
-            },
-            ...
-        }
-     */
+		map: {
+			'irc/#channel1': {
+				'qq/123123123': {
+					disabled: false,
+				},
+				'telegram/-123123123': {
+					disabled: false,
+				}
+			},
+			'irc/#channel2': {
+				...
+			},
+			'qq/123123123': {
+				'irc/#channel1': {
+					disabled: false,
+				},
+				...
+			},
+			...
+		}
+	 */
 const map = bridge.map;
 
 Manager.global.ifEnable( 'transport', function () {
