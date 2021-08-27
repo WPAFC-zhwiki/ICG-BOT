@@ -51,11 +51,13 @@ process.on( 'uncaughtException', function ( err ) {
 
 process.on( 'rejectionHandled', function () {
 	// 忽略
-} );
+	} 
+);
 
 process.on( 'warning', ( warning ) => {
 	winston.warn( warning );
-} );
+	}
+);
 
 // 日志等级、文件设置
 if ( config.logging && config.logging.level ) {
@@ -71,12 +73,15 @@ if ( config.logging && config.logging.logfile ) {
 			logFormat(),
 			winston.format.timestamp( {
 				format: 'YYYY-MM-DD HH:mm:ss'
-			} ),
+				}	 
+			),
 			winston.format.printf( function ( info ) {
 				return `${ info.timestamp } [${ info.level }] ${ info.message }`;
-			} )
+				} 
+			)
 		)
-	} );
+	} 	
+);
 	winston.add( files );
 }
 
@@ -163,7 +168,7 @@ for ( const client of enabledClients ) {
 	Manager.handlerClasses.set( client, {
 		object: Handler,
 		options: options
-	} );
-
+	} 
+);
 	winston.info( `${ client } bot has started.` );
 }

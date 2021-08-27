@@ -9,7 +9,8 @@ moduleAlias.addAliases( {
 	'src': __dirname,
 	'config': path.join( __dirname, '../config' ),
 	'package.json': path.join( __dirname, '../package.json' )
-} );
+	} 
+);
 
 import winston = require( 'winston' );
 
