@@ -8,19 +8,15 @@ export type elementsTS = {
 	refs: {
 		all: {
 			wt: string[][];
-			$ele: JQuery<HTMLElement>
+			$ele: JQuery<HTMLElement>;
 		};
 		default: string[][];
 		$references: JQuery<HTMLElement>;
 		$disallowed: JQuery<HTMLElement>;
 		$unreliable: JQuery<HTMLElement>;
-	},
-	extlinks: {
-		all: string[];
-		disallowed: string[];
-		unreliable: string[];
-	},
-	cats: RegExpMatchArray
+	};
+	extlinks: string[];
+	cats: RegExpMatchArray;
 }
 
 // eslint-disable-next-line max-len
@@ -147,29 +143,12 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 				return !!$( ele ).html().match( /百家[号號]|baijiahao\.baidu\.com|bigexam\.hk|boxun\.com|bowenpress\.com|hkgpao.com|peopo\.org|qyer\.com|speakout\.hk|songshuhui\.net|youtube\.com|youtu\.be|acfun\.cn|bilibili\.com/ );
 			} )
 		},
-		extlinks: {
-			all: extlink,
-			disallowed: extlink.filter( function ( href ) {
-				return href.match( /baike\.baidu\.com|quora\.com|toutiao\.com|pincong\.rocks|zhihu\.com/ );
-			} ),
-			unreliable: extlink.filter( function ( href ) {
-				return href.match( /baijiahao\.baidu\.com|bigexam\.hk|boxun\.com|bowenpress\.com|hkgpao.com|peopo\.org|qyer\.com|speakout\.hk|songshuhui\.net|youtube\.com|youtu\.be|acfun\.cn|bilibili\.com/ );
-			} )
-		},
+		extlinks: extlink,
 		cats: wikitext.match( /\[\[(?:[Cc]at|[Cc]ategory|分[类類]):/gi ) || []
 	};
 
-	if ( !elements.extlinks.all.length ) {
+	if ( !elements.extlinks.length ) {
 		issues.push( 'no-extlink' );
-	} else {
-		if ( elements.extlinks.disallowed.length ) {
-			issues.push( 'extlink-disallowed' );
-		}
-
-		if ( elements.extlinks.unreliable.length ) {
-			issues.push( 'extlink-unreliable' );
-		}
-
 	}
 
 	const contentLen = countText.length - ( countText.match( /\p{L}/i ) ? countText.match( /\p{L}/i ).length : 0 ) * 0.5;
