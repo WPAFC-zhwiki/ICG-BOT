@@ -109,11 +109,4 @@ export class BridgeMsg<rawdata extends rawmsg = any> extends Context<rawdata> {
 	static parseUID = parseUID;
 
 	static getUIDFromContext = getUIDFromContext;
-
-	static getReplyFromContext<T extends rawmsg>( context: Context<T> | BridgeMsg<T> ): BridgeMsg<T | null> | null;
-	static getReplyFromContext( context: BridgeMsg ): BridgeMsg | null {
-		const replyContext = Context.getReplyFromContext( context );
-
-		return replyContext ? new BridgeMsg( replyContext ) : null;
-	}
 }
