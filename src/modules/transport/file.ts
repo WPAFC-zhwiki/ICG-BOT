@@ -334,7 +334,7 @@ const fileUploader = {
 		// 上传文件
 		// p4: dont bother with files from somewhere without bridges in config
 		if ( context.extra.clients > 1 && context.extra.files && servemedia.type && servemedia.type !== 'none' ) {
-			const promises: Promise<{ type: string; url: string; }>[] = [];
+			const promises: Promise<{ type: string; url: string; } | null>[] = [];
 			const fileCount: number = context.extra.files.length;
 
 			// 将聊天消息附带文件上传到服务器
@@ -343,11 +343,14 @@ const fileUploader = {
 					file.size && file.size > servemedia.sizeLimit * 1024 ) {
 					winston.debug( `[file] <FileUploader> #${ context.msgId } File ${ index + 1 }/${ fileCount }: Size limit exceeded. Ignore.` );
 				} else {
-					promises.push( uploadFile( file ) );
+					promises.push( uploadFile( file ).catch( function ( err ) {
+						winston.error( `[file] Error on processing files:  ${ err }` );
+						return null;
+					} ) );
 				}
 			}
 
-			// 整0上传到服务器之后到URL
+			// 整理上传到服务器之后到URL
 			const uploads: File[] = ( await Promise.all( promises ) ).filter( function ( x: File ): File {
 				return x;
 			} );
@@ -363,15 +366,6 @@ const fileUploader = {
 };
 Manager.global.ifEnable( 'transport', function () {
 	bridge.addHook( 'bridge.send', async ( msg: BridgeMsg ) => {
-		try {
-			msg.extra.uploads = await fileUploader.process( msg );
-		} catch ( e ) {
-			winston.error( 'Error on processing files: ', e );
-			bridge.send( new BridgeMsg( msg, {
-				text: 'File upload error',
-				isNotice: true,
-				extra: {}
-			} ) );
-		}
+		msg.extra.uploads = await fileUploader.process( msg );
 	} );
 } );

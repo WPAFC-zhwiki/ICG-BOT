@@ -1,5 +1,5 @@
 import { MessageHandler } from 'src/lib/handlers/MessageHandler';
-import { Context } from 'src/lib/handlers/Context';
+import { Context, ContextExtra as ContextExtra } from 'src/lib/handlers/Context';
 import { Events } from 'src/lib/event';
 
 import Discord from 'discord.js';
@@ -16,6 +16,7 @@ export interface DiscordEvents {
 }
 
 export type DiscordSendMessage = string | string[] | Discord.MessageEmbed | Discord.MessageAttachment
+	| Discord.MessageOptions & { split?: false };
 
 /**
  * 使用通用介面處理 Discord 訊息
@@ -78,23 +79,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents & Events
 			}
 
 			let text = rawdata.content;
-			const extra: {
-				files?: {
-					client: 'Discord',
-					type: string,
-					id: string,
-					size: number,
-					url: string
-				} [];
-				reply?: {
-					nick: string;
-					username: string;
-					discriminator: string;
-					message: string;
-					isText: boolean;
-					_rawdata: Discord.Message
-				}
-			} = {};
+			const extra: ContextExtra = {};
 
 			if ( rawdata.attachments && rawdata.attachments.size ) {
 				extra.files = [];
@@ -114,6 +99,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents & Events
 				if ( rawdata.channel.id === rawdata.reference.channelID ) {
 					const msg = await rawdata.channel.messages.fetch( rawdata.reference.messageID );
 					const reply = {
+						id: msg.author.id,
 						nick: that.getNick( msg.member || msg.author ),
 						username: msg.author.username,
 						discriminator: msg.author.discriminator,

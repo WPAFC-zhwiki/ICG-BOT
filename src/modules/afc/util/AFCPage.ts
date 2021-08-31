@@ -521,6 +521,18 @@ export class AFCPage {
 
 			.replace( /==\s*章节标题\s*==/, '' )
 
+			.replace( /<([A-Za-z]+)(\s+([^>]+))?>/g, function ( _all: string, tagName: string, args: string ) {
+				return `<${ tagName.toLowerCase() }${ args ? ` ${ args.trim() }` : '' }>`;
+			} )
+
+			.replace( /<\/([A-Za-z]+)(?:\s+[^>]+)?>/g, function ( _all: string, tagName: string ) {
+				return `</${ tagName.toLowerCase() }>`;
+			} )
+
+			.replace( /<\/?br\s*\/?>/g, '<br />' )
+
+			.replace( /<\/?hr\s*\/?>/g, '<hr />' )
+
 			// Remove html comments (<!--) that surround categories
 			.replace( /<!--\s*((?:\[\[:{0,1}(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):.*?\]\]\s*)+)-->/gi, '$1' )
 

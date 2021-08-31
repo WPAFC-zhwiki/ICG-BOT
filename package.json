@@ -1,6 +1,6 @@
 {
 	"name": "afc-icg-bot",
-	"version": "1.1.0",
+	"version": "1.1.1-rc1",
 	"description": "中文維基百科建立條目專題互聯群機器人",
 	"repository": "git+https://github.com/WPAFC-zhwiki/ICG-Bot",
 	"author": {
@@ -11,7 +11,7 @@
 		"start": "grunt clean && ts-node -r tsconfig-paths/register ./src/index.ts",
 		"test": "npm run lint && npm run build && npm build-start",
 		"build": "grunt",
-		"start-built": "grunt built && node bin/index",
+		"build-start": "grunt built && node bin/index",
 		"lint": "eslint src/*.ts src/**/*.ts",
 		"forever": "forever start -c bash -o logs/forever.log main.sh",
 		"forever-win": "forever start -c cmd -o logs/forever.log main.bat"
@@ -57,15 +57,15 @@
 		"@types/string-format": "^2.0.0",
 		"@types/turndown": "^5.0.1",
 		"@types/ws": "^7.4.7",
-		"@typescript-eslint/eslint-plugin": "^4.28.2",
-		"@typescript-eslint/parser": "^4.28.2",
+		"@typescript-eslint/eslint-plugin": "^4.29.3",
+		"@typescript-eslint/parser": "^4.29.3",
 		"eslint": "^7.30.0",
 		"eslint-config-wikimedia": "^0.20.0",
 		"eslint-import-resolver-typescript": "^2.4.0",
 		"eslint-plugin-import": "^2.23.4",
 		"ts-node": "^10.1.0",
 		"tsconfig-paths": "^3.10.1",
-		"tslib": "^1.14.1"
+		"tslib": "^2.3.1"
 	},
 	"engines": {
 		"node": ">=14.0.0",

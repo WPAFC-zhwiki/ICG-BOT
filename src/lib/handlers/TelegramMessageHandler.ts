@@ -232,7 +232,9 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents & Even
 						nick: replyTo,
 						username: reply.from.username,
 						message: replyMessage,
-						isText: reply.text && true
+						isText: reply.text && true,
+						id: String( reply.from.id ),
+						_rawdata: null
 					};
 				} else if ( ctx.message.forward_from ) {
 					const fwd: TT.User = ctx.message.forward_from;
@@ -421,7 +423,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents & Even
 		this.nickStyle = v;
 	}
 
-	public addCommand( command: string, func?: Command ): this {
+	public addCommand( command: string, func?: Command<TContext> ): this {
 		// 自動過濾掉 command 中的非法字元
 		const cmd = command.replace( /[^A-Za-z0-9_]/gu, '' );
 		return super.addCommand( cmd, func );
@@ -482,7 +484,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents & Even
 				const options2: SendMessageOpipons = copyObject( options || {} );
 				options2.reply_to_message_id = context._rawdata.message.message_id;
 				if ( options2.withNick ) {
-					return await this._say( method, String( context.to ), `${ context.nick }: ${ message }`, options2 );
+					return await this._say( method, context.to, `${ context.nick }: ${ message }`, options2 );
 				} else {
 					return await this._say( method, context.to, `${ message }`, options2 );
 				}

@@ -21,7 +21,7 @@ export type file = {
 	mime_type?: string;
 };
 
-export type extra = {
+export type ContextExtra = {
 	/**
 	 * 本次傳送有幾個群互聯？（由 bridge 發送）
 	 */
@@ -37,11 +37,13 @@ export type extra = {
 	mapto?: string[];
 
 	reply?: {
+		id: string;
 		nick: string;
-		username: string;
+		username?: string;
 		message: string;
-		isText: boolean;
+		isText?: boolean;
 		discriminator?: string;
+		_rawdata?: rawmsg;
 	};
 
 	forward?: {
@@ -77,7 +79,7 @@ export type ContextOptin<rawdata extends rawmsg> = {
 	nick?: string;
 	text?: string;
 	isPrivate?: boolean;
-	extra?: extra;
+	extra?: ContextExtra;
 	handler?: MessageHandler;
 	_rawdata?: rawdata;
 	command?: string;
@@ -167,7 +169,7 @@ export class Context<rawdata extends rawmsg = any> {
 
 	public readonly isbot: boolean = false;
 
-	public extra: extra = {};
+	public extra: ContextExtra = {};
 	public readonly handler: MessageHandler = null;
 	public _rawdata: rawdata = null;
 	public command = '';

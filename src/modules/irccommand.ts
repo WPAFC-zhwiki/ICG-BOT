@@ -4,7 +4,7 @@
 
 import winston = require( 'winston' );
 import { Manager } from 'src/init';
-import * as moduleTransport from 'src/modules/transport';
+import { prepareBridgeMsg } from 'src/modules/transport';
 import { addCommand, parseUID } from 'src/lib/message';
 import { Context } from 'src/lib/handlers/Context';
 
@@ -18,7 +18,7 @@ if ( ircHandler && Manager.global.isEnable( 'transport' ) ) {
 
 	addCommand( `${ prefix }command`, async function ( context: Context ) {
 		if ( !context.isPrivate ) {
-			moduleTransport.prepareBridgeMsg( context );
+			prepareBridgeMsg( context );
 			if ( context.param && context.extra?.mapto?.length ) {
 				if ( echo ) {
 					context.reply( context.param, {

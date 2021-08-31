@@ -6,7 +6,7 @@ import { Manager } from 'src/init';
 import winston = require( 'winston' );
 
 import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
-export { BridgeMsg } from 'src/modules/transport/BridgeMsg';
+export * from 'src/modules/transport/BridgeMsg';
 
 import * as bridge from 'src/modules/transport/bridge';
 export * from 'src/modules/transport/bridge';

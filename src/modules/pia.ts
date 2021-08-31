@@ -13,7 +13,7 @@ import { Manager } from 'src/init';
 import delay from 'src/lib/delay';
 import { Context } from 'src/lib/handlers/Context';
 import { addCommand } from 'src/lib/message';
-import * as moduleTransport from 'src/modules/transport';
+import { send, BridgeMsg } from 'src/modules/transport';
 
 const piaMap = new Map<string, string>( [
 	[ 'pia', '(╯°Д°)╯︵ ~~~~~┻━┻' ],
@@ -43,7 +43,7 @@ function buildPia( action: string ) {
 		if ( Manager.global.isEnable( 'transport' ) ) {
 			await delay( 1000 );
 
-			moduleTransport.send( new moduleTransport.BridgeMsg( context, {
+			send( new BridgeMsg( context, {
 				text: `${ action }${ param ? ` ${ param }` : '' }`,
 				isNotice: true
 			} ), Manager.global.bot );

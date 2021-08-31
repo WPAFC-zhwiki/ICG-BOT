@@ -3,11 +3,11 @@
  */
 
 import { Manager } from 'src/init';
-import * as moduleTransport from 'src/modules/transport';
+import { send, BridgeMsg } from 'src/modules/transport';
 
 import winston = require( 'winston' );
 import { Context } from 'src/lib/handlers/Context';
-import { msgManage, parseUID } from 'src/lib/message';
+import { getUIDFromContext, msgManage, parseUID } from 'src/lib/message';
 
 const options = Manager.config.wikilinky;
 
@@ -138,8 +138,8 @@ function linky( string: string, articlepath: string ) {
 
 async function processlinky( from: string, to: string, text: string, context: Context ) {
 	try {
-		const from_uid = moduleTransport.BridgeMsg.getUIDFromContext( context, from );
-		const to_uid = moduleTransport.BridgeMsg.getUIDFromContext( context, to );
+		const from_uid = getUIDFromContext( context, from );
+		const to_uid = getUIDFromContext( context, to );
 
 		if ( ignores.includes( from_uid ) ) {
 			return;
@@ -163,7 +163,7 @@ async function processlinky( from: string, to: string, text: string, context: Co
 						}, 1000 );
 					} ) );
 
-					moduleTransport.send( new moduleTransport.BridgeMsg( context, {
+					send( new BridgeMsg( context, {
 						text: links.join( '\n' ),
 						withNick: false
 					} ) );

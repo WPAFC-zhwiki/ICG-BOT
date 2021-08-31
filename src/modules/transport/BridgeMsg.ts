@@ -1,11 +1,11 @@
 import { ExtendsMap, handlers } from 'src/init';
-import { Context, rawmsg, extra, ContextOptin } from 'src/lib/handlers/Context';
+import { Context, rawmsg, ContextExtra, ContextOptin } from 'src/lib/handlers/Context';
 import { MessageHandler } from 'src/lib/handlers/MessageHandler';
 import { getUIDFromContext, parseUID } from 'src/lib/message';
 
 let clientFullNames: Record<string, string> = {};
 
-interface BridgeMsgOptin<rawdata extends rawmsg> extends ContextOptin<rawdata> {
+export interface BridgeMsgOptin<rawdata extends rawmsg> extends ContextOptin<rawdata> {
 	withNick?: boolean;
 	isNotice?: boolean;
 	from_uid?: string;
@@ -65,7 +65,7 @@ export class BridgeMsg<rawdata extends rawmsg = any> extends Context<rawdata> {
 		this._to_client = client;
 	}
 
-	extra: extra & {
+	extra: ContextExtra & {
 		withNick?: boolean;
 		isNotice?: boolean;
 	};
@@ -109,4 +109,11 @@ export class BridgeMsg<rawdata extends rawmsg = any> extends Context<rawdata> {
 	static parseUID = parseUID;
 
 	static getUIDFromContext = getUIDFromContext;
+
+	static getReplyFromContext<T extends rawmsg>( context: Context<T> | BridgeMsg<T> ): BridgeMsg<T | null> | null;
+	static getReplyFromContext( context: BridgeMsg ): BridgeMsg | null {
+		const replyContext = Context.getReplyFromContext( context );
+
+		return replyContext ? new BridgeMsg( replyContext ) : null;
+	}
 }
