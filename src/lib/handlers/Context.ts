@@ -71,6 +71,8 @@ export type ContextExtra = {
 	 * for irc
 	 */
 	isAction?: boolean;
+
+	discriminator?: string;
 };
 
 export type ContextOptin<rawdata extends rawmsg> = {
@@ -143,8 +145,7 @@ function getMsgId(): number {
  * }
  * ```
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class Context<rawdata extends rawmsg = any> {
+export class Context<R extends rawmsg = rawmsg> implements ContextOptin<R> {
 	protected _from: string = null;
 	get from(): string {
 		return this._from;
@@ -171,7 +172,7 @@ export class Context<rawdata extends rawmsg = any> {
 
 	public extra: ContextExtra = {};
 	public readonly handler: MessageHandler = null;
-	public _rawdata: rawdata = null;
+	public _rawdata: R = null;
 	public command = '';
 	public param = '';
 
@@ -186,8 +187,7 @@ export class Context<rawdata extends rawmsg = any> {
 		return undefined;
 	}
 
-	// eslint-disable-next-line max-len
-	public constructor( options: Context<rawdata> | ContextOptin<rawdata> = {}, overrides: ContextOptin<rawdata> = {} ) {
+	public constructor( options: Context<R> | ContextOptin<R> = {}, overrides: ContextOptin<R> = {} ) {
 		// TODO 雖然這樣很醜陋，不過暫時先這樣了
 		this._from = String( Context.getArgument( overrides.from, options.from, null ) );
 		this._to = String( Context.getArgument( overrides.to, options.to, null ) );

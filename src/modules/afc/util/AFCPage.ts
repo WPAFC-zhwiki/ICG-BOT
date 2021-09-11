@@ -324,7 +324,7 @@ export class AFCPage {
 	private _removeExcessNewlines(): void {
 		this._text = this._text
 			// Replace 4+ newlines with just three
-			.replace( /([\s\t]*[\r\n]){4,}/g, '\n\n\n' )
+			.replace( /([\s\t]*[\r\n]){3,}/g, '\n\n\n' )
 			// Remove initial request artifact
 			.replace( /=+([^=\n]+)=+[\t\n\s]*$/gi, function ( _all: string, title: string ) {
 				const regexp = /^(?:外部(?:[链鏈]接|[连連]結)|[参參]考(?:[资資]料|[来來]源|文[档檔献獻]))$/;
@@ -539,16 +539,16 @@ export class AFCPage {
 			// Remove spaces/commas between <ref> tags
 			.replace(
 				/\s*(<\/\s*ref\s*>)\s*[,]*\s*(<\s*ref\s*(name\s*=|group\s*=)*\s*[^/]*>)[ \t]*$/gim,
-				'$1$2'
+				'$1$2\n\n'
 			)
 
 			// Remove whitespace before <ref> tags
-			.replace( /[\s\t]*(<\s*ref\s*(name\s*=|group\s*=)*\s*.*[^/]+>)[\s\t]*$/gim, '$1' )
+			.replace( /[\s\t]*(<\s*ref\s*(name\s*=|group\s*=)*\s*.*[^/]+>)[\s\t]*$/gim, '$1\n\n' )
 
 			// Move punctuation before <ref> tags
 			.replace(
 				/\s*((<\s*ref\s*(name\s*=|group\s*=)*\s*.*[/]{1}>)|(<\s*ref\s*(name\s*=|group\s*=)*\s*[^/]*>(?:<[^<>\n]*>|[^<>\n])*<\/\s*ref\s*>))[\s\t]*([.。!！?？,，;；:：])+$/gim,
-				'$6$1'
+				'$6$1\n\n'
 			)
 
 			// Replace {{http://example.com/foo}} with "* http://example.com/foo" (common

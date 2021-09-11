@@ -44,8 +44,8 @@ function getReason( $e: JQuery, title: string ) {
 			return x.length && x !== '。';
 		} )
 		.map( function ( x ) {
-			if ( x.match( /「.*」/ ) ) {
-				return x.replace( /^([^「]*「[^」]*」[^。！？]*)([。！？]).*$/g, '$1$2' );
+			if ( x.match( /「.*」|【.*】/ ) ) {
+				return x.replace( /^([^「]*「[^」]*」|[^【]*【[^】]*】)([^。！？]*[。！？]).*$/g, '$1$2' );
 			} else {
 				return x.split( /[。！？]/g )[ 0 ] + '。';
 			}

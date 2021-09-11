@@ -79,7 +79,9 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents & Events
 			}
 
 			let text = rawdata.content;
-			const extra: ContextExtra = {};
+			const extra: ContextExtra = {
+				discriminator: rawdata.author.discriminator
+			};
 
 			if ( rawdata.attachments && rawdata.attachments.size ) {
 				extra.files = [];

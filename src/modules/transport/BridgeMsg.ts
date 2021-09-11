@@ -14,8 +14,7 @@ export interface BridgeMsgOptin<rawdata extends rawmsg> extends ContextOptin<raw
 	rawTo?: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class BridgeMsg<rawdata extends rawmsg = any> extends Context<rawdata> {
+export class BridgeMsg<R extends rawmsg = rawmsg> extends Context<R> implements BridgeMsgOptin<R> {
 	public isNotice = false;
 	public withNick = true;
 
@@ -70,8 +69,7 @@ export class BridgeMsg<rawdata extends rawmsg = any> extends Context<rawdata> {
 		isNotice?: boolean;
 	};
 
-	// eslint-disable-next-line max-len
-	constructor( context: BridgeMsg<rawdata> | Context<rawdata> | BridgeMsgOptin<rawdata>, overrides: BridgeMsgOptin<rawdata> = {} ) {
+	constructor( context: BridgeMsg<R> | Context<R> | BridgeMsgOptin<R>, overrides: BridgeMsgOptin<R> = {} ) {
 		super( context, overrides );
 
 		const that = Object.assign( {}, context, overrides );
@@ -109,4 +107,22 @@ export class BridgeMsg<rawdata extends rawmsg = any> extends Context<rawdata> {
 	static parseUID = parseUID;
 
 	static getUIDFromContext = getUIDFromContext;
+
+	static fromReply<T extends rawmsg>( context: Context<T>, config: BridgeMsgOptin<T> ): BridgeMsg<null>;
+	static fromReply( context: Context, config: BridgeMsgOptin<rawmsg> ): BridgeMsg {
+		const brigdmsg: BridgeMsg = new BridgeMsg( context, config );
+
+		brigdmsg.extra.reply = Object.assign( brigdmsg.extra.reply || {}, {
+			id: brigdmsg.from,
+			nick: brigdmsg.nick,
+			message: brigdmsg.text,
+			username: brigdmsg.extra.username,
+			isText: !brigdmsg.extra.isImage,
+			discriminator: brigdmsg.extra.discriminator,
+			_rawdata: brigdmsg._rawdata
+		} );
+		delete brigdmsg._rawdata;
+
+		return brigdmsg;
+	}
 }

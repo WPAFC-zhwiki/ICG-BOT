@@ -237,7 +237,7 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 			}
 		}
 
-		const defaults = [
+		const defaults: string[] = [
 			'\'\'\'此处改为条目主题\'\'\'(?:是一个)?',
 			'==\\s*章节标题\\s*=='
 		];
