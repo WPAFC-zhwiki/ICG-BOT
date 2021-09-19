@@ -267,7 +267,9 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 
 		// 檔案
 		if ( msg.extra.uploads ) {
-			output += msg.extra.uploads.map( ( u: { url: string; } ) => ` ${ u.url }` ).join();
+			output += msg.extra.uploads.map( function ( u: { url: string; } ) {
+				return ` ${ u.url }`;
+			} ).join();
 		}
 	}
 

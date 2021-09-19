@@ -69,6 +69,8 @@ export class BridgeMsg<R extends rawmsg = rawmsg> extends Context<R> implements 
 	constructor( context: BridgeMsg<R> | Context<R> | BridgeMsgOptin<R>, overrides: BridgeMsgOptin<R> = {} ) {
 		super( context, overrides );
 
+		const that = Object.assign( {}, context instanceof Context ? {} : context, overrides );
+
 		this._from_client = this._to_client = this.handler.type;
 
 		this.__from = String( context.from || this._from || super._from );
@@ -80,12 +82,12 @@ export class BridgeMsg<R extends rawmsg = rawmsg> extends Context<R> implements 
 		this.from_uid = Context.getArgument( overrides.from_uid, this.rawFrom );
 		this.to_uid = Context.getArgument( overrides.to_uid, this.rawTo );
 
-		if ( Object.prototype.hasOwnProperty.call( overrides, 'plainText' ) ) {
-			this.extra.plainText = !!overrides.plainText;
+		if ( Object.prototype.hasOwnProperty.call( that, 'plainText' ) ) {
+			this.extra.plainText = !!that.plainText;
 		}
 
-		if ( Object.prototype.hasOwnProperty.call( overrides, 'isNotice' ) ) {
-			this.extra.isNotice = !!overrides.isNotice;
+		if ( Object.prototype.hasOwnProperty.call( that, 'isNotice' ) ) {
+			this.extra.isNotice = !!that.isNotice;
 		}
 	}
 
