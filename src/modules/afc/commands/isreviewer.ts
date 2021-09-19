@@ -1,5 +1,6 @@
-import Discord from 'discord.js';
-import winston from 'winston';
+import Discord = require( 'discord.js' );
+import winston = require( 'winston' );
+
 import { rebuildReviewerCaches, hasReviewerCaches, isReviewer, encodeURI, turndown, htmlToIRC, setCommand } from 'src/modules/afc/util';
 
 function upperFirst( str: string ) {

@@ -1,6 +1,6 @@
-import { $, encodeURI } from 'src/modules/afc/util/index';
 import { MwnPage } from 'mwn';
 
+import { $, encodeURI } from 'src/modules/afc/util/index';
 import issuesData from 'src/modules/afc/util/issuesData.json';
 
 export type elementsTS = {

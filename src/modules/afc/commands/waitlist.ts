@@ -1,4 +1,5 @@
 import Discord = require( 'discord.js' );
+
 import { getBacklogInfo, encodeURI, setCommand } from 'src/modules/afc/util';
 
 function htmllink( title: string, text?: string ) {

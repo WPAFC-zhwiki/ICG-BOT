@@ -1,10 +1,11 @@
 import format from 'string-format';
 import winston = require( 'winston' );
+
 import { Manager } from 'src/init';
-import * as bridge from 'src/modules/transport/bridge';
 import { ConfigTS } from 'src/config';
-import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 import msgManage from 'src/lib/message/msgManage';
+import * as bridge from 'src/modules/transport/bridge';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
 function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );
@@ -52,17 +53,14 @@ msgManage.on( 'discord', async function ( _from, _to, _text, context ) {
 	}
 
 	try {
-		await bridge.send( context );
+		await bridge.transportMessage( context );
 	} catch ( e ) {
 		winston.error( e instanceof Error ? e.stack : e );
 	}
 } );
 
 // 收到了來自其他群組的訊息
-export default async function ( msg: BridgeMsg, { withNick, isNotice }: { withNick: boolean, isNotice: boolean } = {
-	withNick: true,
-	isNotice: false
-} ): Promise<void> {
+export default async function ( msg: BridgeMsg ): Promise<void> {
 	// 元信息，用于自定义样式
 	const meta: Record<string, string> = {
 		nick: msg.nick,
@@ -89,27 +87,7 @@ export default async function ( msg: BridgeMsg, { withNick, isNotice }: { withNi
 		meta.forward_user = msg.extra.forward.username;
 	}
 
-	// 自定义消息样式
-	let styleMode: 'simple' | 'complex' = 'simple';
-	const messageStyle = config.options.messageStyle;
-	if ( msg.extra.clients >= 3 && ( msg.extra.clientName.shortname || isNotice ) ) {
-		styleMode = 'complex';
-	}
-
-	let template: string;
-	if ( isNotice ) {
-		template = messageStyle[ styleMode ].notice;
-	} else if ( msg.extra.isAction ) {
-		template = messageStyle[ styleMode ].action;
-	} else if ( msg.extra.reply ) {
-		template = messageStyle[ styleMode ].reply;
-	} else if ( msg.extra.forward ) {
-		template = messageStyle[ styleMode ].forward;
-	} else if ( !withNick ) {
-		template = '{text}';
-	} else {
-		template = messageStyle[ styleMode ].message;
-	}
+	const template: string = bridge.getMessageStyle( msg );
 
 	const output = format( template, meta );
 	const attachFileUrls = ( msg.extra.uploads || [] ).map( ( u: { url: string; } ) => ` ${ u.url }` ).join( '' );

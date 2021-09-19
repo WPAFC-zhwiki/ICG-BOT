@@ -9,12 +9,13 @@
  * 後來，中文維基百科也增加了這幾個指令的模板，例如 [{{pia}}](https://zh.wikipedia.org/wiki/Template:Pia)。
  * 於是，中文維基百科其他幾個花式 ping 也成為了機器人的指令。
  */
+import { Context as TContext } from 'telegraf';
+
 import { Manager } from 'src/init';
-import delay from 'src/lib/delay';
 import { Context, rawmsg } from 'src/lib/handlers/Context';
 import { addCommand } from 'src/lib/message';
-import { send, BridgeMsg } from 'src/modules/transport';
-import { Context as TContext } from 'telegraf';
+import delay from 'src/lib/delay';
+import { transportMessage, BridgeMsg } from 'src/modules/transport';
 
 const tg = Manager.handlers.get( 'Telegram' );
 
@@ -39,9 +40,9 @@ addCommand( 'anyone', async function ( context: Context ) {
 	if ( Manager.global.isEnable( 'transport' ) ) {
 		await delay( 1000 );
 
-		send( new BridgeMsg( context, {
+		transportMessage( new BridgeMsg( context, {
 			text: '沒有人，你悲劇了。',
 			isNotice: true
-		} ), Manager.global.bot );
+		} ), true );
 	}
 } );

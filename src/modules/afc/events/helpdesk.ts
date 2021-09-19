@@ -1,7 +1,8 @@
-import Discord from 'discord.js';
-import { mwbot, $, recentChange, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
-import winston from 'winston';
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
+import Discord = require( 'discord.js' );
+import winston = require( 'winston' );
+
+import { mwbot, $, recentChange, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;

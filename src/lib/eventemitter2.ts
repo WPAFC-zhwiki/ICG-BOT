@@ -7,6 +7,8 @@
  * Copyright (c) 2013 hij1nx
  * Licensed under the MIT license.
  */
+import NodeJSEventEmitter from 'events';
+
 const hasOwnProperty = Object.hasOwnProperty;
 const defaultMaxListeners = 10;
 
@@ -46,17 +48,17 @@ export interface EventEmitterConfig {
 
 type Func = ( ...args: any[] ) => any;
 
+type EventName = string | symbol;
+
 export type Event = ( ...args: any[] ) => void;
 
-export type Events = Record<string|symbol, Event>;
+export type Events = Record<EventName, Event>;
 
 export interface ListenerFn extends Event {
 	listener?: Event;
 	_origin?: Event;
 	_async?: true;
 }
-
-type EventName = string | symbol;
 
 export interface EventAndListener {
     ( event: EventName, ...args: any[] ): void;
@@ -554,7 +556,7 @@ class Listener<E extends Events = Events, K extends keyof E = string | symbol> {
 	}
 }
 
-export default class EventEmitter<E extends Events = Events> implements Required<EventEmitterLike> {
+export default class EventEmitter<E extends Events = Events> implements Required<EventEmitterLike>, NodeJSEventEmitter {
 	protected _conf: EventEmitterConfig;
 
 	protected _events: Record<string|symbol, ListenerFn[] & {
@@ -740,7 +742,7 @@ export default class EventEmitter<E extends Events = Events> implements Required
 	public getMaxListeners(): number {
 		return this._maxListeners;
 	}
-	public setMaxListeners( n: number ): void {
+	public setMaxListeners( n: number ): this {
 		if ( n !== undefined ) {
 			this._maxListeners = n;
 			if ( !this._conf ) {
@@ -748,6 +750,8 @@ export default class EventEmitter<E extends Events = Events> implements Required
 			}
 			this._conf.maxListeners = n;
 		}
+
+		return this;
 	}
 
 	public get maxListeners(): number {
@@ -880,9 +884,9 @@ export default class EventEmitter<E extends Events = Events> implements Required
 
 	public emitAsync<K extends keyof E>( type: K, ...args: Parameters<E[ K ]> ): Promise<void[]>;
 	public emitAsync( type: EventName, ...args: any[] ): Promise<void[]>;
-	public emitAsync( ...args: any[] ): Promise<void[]> {
+	public async emitAsync( ...args: any[] ): Promise<( boolean|void )[]> {
 		if ( !this._events && !this._all ) {
-			return Promise.resolve( [] );
+			return [ false ];
 		}
 
 		if ( !this._events ) {
@@ -894,7 +898,7 @@ export default class EventEmitter<E extends Events = Events> implements Required
 
 		if ( type === 'newListener' && !this._newListener ) {
 			if ( !this._events.newListener ) {
-				return Promise.resolve( [] );
+				return [ false ];
 			}
 		}
 
@@ -924,9 +928,9 @@ export default class EventEmitter<E extends Events = Events> implements Required
 			}
 		} else if ( !this.ignoreErrors && !this._all && type === 'error' ) {
 			if ( args[ 1 ] instanceof Error ) {
-				return Promise.reject( args[ 1 ] ); // Unhandled 'error' event
+				throw args[ 1 ]; // Unhandled 'error' event
 			} else {
-				return Promise.reject( "Uncaught, unspecified 'error' event." );
+				throw new Error( 'Uncaught, unspecified \'error\' event.' );
 			}
 		}
 
@@ -955,6 +959,7 @@ export default class EventEmitter<E extends Events = Events> implements Required
 
 	public prependListener<K extends keyof E>( event: K, fn: E[ K ], options: OnOptions_Objectify ): Listener<E, K>;
 	public prependListener<K extends keyof E>( event: K, fn: E[ K ], options?: boolean | Partial<OnOptions> ): this;
+	public prependListener( event: EventName, fn: Event, options: OnOptions_Objectify ): this;
 	public prependListener( event: EventName, fn: Event, options?: boolean | Partial<OnOptions> ): this;
 	public prependListener( type: EventName, listener: Event, options?: boolean | Partial<OnOptions> ): this | Listener {
 		return this._on( type, listener, true, options );
@@ -1196,9 +1201,11 @@ export default class EventEmitter<E extends Events = Events> implements Required
 	}
 
 	public removeListener = this.off;
-	public removeEventListener = this.on;
+	public removeEventListener = this.off;
 
-	public removeAllListeners( type: EventName ): this {
+	public removeAllListeners( type: keyof E ): this;
+	public removeAllListeners( type?: EventName ): this;
+	public removeAllListeners( type?: EventName ): this {
 		if ( type === undefined ) {
 			if ( this._events ) {
 				this._init();
@@ -1210,6 +1217,8 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		return this;
 	}
 
+	public listeners<K extends keyof E>( type: K ): E[K][];
+	public listeners( type: EventName ): ListenerFn[];
 	public listeners( type: EventName ): ListenerFn[] {
 		const _events = this._events;
 		let keys: EventName[];
@@ -1245,6 +1254,14 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		}
 	}
 
+	public rawListeners<K extends keyof E>( type: K ): E[K][];
+	public rawListeners( type: EventName ): ListenerFn[];
+	public rawListeners( type: EventName ): ListenerFn[] {
+		return this.listeners( type ).map( function ( fn: ListenerFn ) {
+			return fn._origin || fn.listener || fn;
+		} );
+	}
+
 	public eventNames(): EventName[] {
 		const _events = this._events;
 		return _events ? Reflect.ownKeys( _events ) : [];
@@ -1254,7 +1271,9 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		return this.listeners( type ).length;
 	}
 
-	public hasListeners( type: string ): boolean {
+	public hasListeners( type?: keyof E ): boolean;
+	public hasListeners( type?: EventName ): boolean;
+	public hasListeners( type?: EventName ): boolean {
 		const _events = this._events;
 		const _all = this._all;
 
@@ -1270,7 +1289,7 @@ export default class EventEmitter<E extends Events = Events> implements Required
 	}
 
 	public waitFor<K extends keyof E>( event: K, options?: Partial<WaitForOptions> | number | Func ): CancelablePromise<Parameters<E[ K ]>>;
-	public waitFor( event: EventName, opt: Partial<WaitForOptions> | number | Func ): CancelablePromise<any>;
+	public waitFor( event: EventName, options: Partial<WaitForOptions> | number | Func ): CancelablePromise<any>;
 	public waitFor( event: EventName, opt: Partial<WaitForOptions> | number | Func ): CancelablePromise<any> {
 		const self = this;
 
@@ -1411,6 +1430,6 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		if ( typeof n !== 'number' || n < 0 || Number.isNaN( n ) ) {
 			throw new TypeError( 'n must be a non-negative number' );
 		}
-		EventEmitter.prototype.setMaxListeners( n );
+		EventEmitter.prototype._maxListeners = n;
 	}
 }

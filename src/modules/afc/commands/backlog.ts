@@ -1,4 +1,5 @@
-import winston from 'winston';
+import winston = require( 'winston' );
+
 import { getBacklogInfo, setCommand } from 'src/modules/afc/util';
 
 setCommand( 'backlog', async function ( _args, reply ) {

@@ -1,4 +1,5 @@
 import Discord = require( 'discord.js' );
+
 import { mwbot, $, IRCBold as iB } from 'src/modules/afc/util/index';
 
 type ApiPageInfo = {

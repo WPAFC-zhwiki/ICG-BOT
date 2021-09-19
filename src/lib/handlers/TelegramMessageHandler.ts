@@ -1,19 +1,16 @@
+import https from 'https';
+import * as fs from 'fs';
+import * as Tls from 'tls';
+import { Telegraf, Context as TContext, Telegram } from 'telegraf';
+import * as TT from 'telegraf/typings/telegram-types';
+import winston = require( 'winston' );
+
+import { ConfigTS } from 'src/config';
 import { MessageHandler, Command } from 'src/lib/handlers/MessageHandler';
 import { Context } from 'src/lib/handlers/Context';
 import { Events } from 'src/lib/event';
-
-import https from 'https';
-import winston from 'winston';
-import * as fs from 'fs';
-import * as Tls from 'tls';
-
-import { Telegraf, Context as TContext, Telegram } from 'telegraf';
-import * as TT from 'telegraf/typings/telegram-types';
-
 import { getFriendlySize, getFriendlyLocation, copyObject } from 'src/lib/util';
 import HttpsProxyAgent from 'src/lib/proxy.js';
-
-import { ConfigTS } from 'src/config';
 
 export interface TelegramEvents {
 	command( context: Context<TContext>, comand: string, param: string ): void;
@@ -48,7 +45,7 @@ export interface TelegramEvents {
 	richmessage( context: Context ): void;
 }
 
-interface SendMessageOpipons extends TT.ExtraSendMessage, TT.ExtraReplyMessage {
+export interface SendMessageOpipons extends TT.ExtraSendMessage, TT.ExtraReplyMessage {
 	withNick?: boolean
 }
 

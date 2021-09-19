@@ -3,11 +3,12 @@
  */
 
 import { Manager } from 'src/init';
-import { send, BridgeMsg } from 'src/modules/transport';
+import { transportMessage, BridgeMsg } from 'src/modules/transport';
 
 import winston = require( 'winston' );
 import { Context } from 'src/lib/handlers/Context';
 import { getUIDFromContext, msgManage, parseUID } from 'src/lib/message';
+import delay from 'src/lib/delay';
 
 const options = Manager.config.wikilinky;
 
@@ -157,16 +158,12 @@ async function processlinky( from: string, to: string, text: string, context: Co
 				} );
 				// 若互聯且在公開群組調用，則讓其他群也看到連結
 				if ( Manager.global.isEnable( 'transport' ) && !context.isPrivate ) {
-					await ( new Promise<void>( function ( resolve ) {
-						setTimeout( function () {
-							resolve();
-						}, 1000 );
-					} ) );
+					await delay( 1000 );
 
-					send( new BridgeMsg( context, {
+					transportMessage( BridgeMsg.botReply( context, {
 						text: links.join( '\n' ),
-						withNick: false
-					} ) );
+						plainText: true
+					} ), true );
 				}
 			}
 		}

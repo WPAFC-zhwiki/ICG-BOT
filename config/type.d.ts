@@ -309,7 +309,7 @@ export interface ConfigTS {
 					linesplit: IRCColor;
 
 					/**
-					 * 如果 nick 為 colorful，則從這些顏色中挑選。為了使顏色分布均勻，建議使顏色數量為素數
+					 * 如果 nick 為 colorful，則從這些顏色中挑選。為了使顏色分布均勻，建議使顏色數量為質數
 					 */
 					nickcolors: IRCColor[];
 				};

@@ -6,7 +6,7 @@ import { getUIDFromContext, parseUID } from 'src/lib/message';
 let clientFullNames: Record<string, string> = {};
 
 export interface BridgeMsgOptin<rawdata extends rawmsg> extends ContextOptin<rawdata> {
-	withNick?: boolean;
+	plainText?: boolean;
 	isNotice?: boolean;
 	from_uid?: string;
 	to_uid?: string;
@@ -15,9 +15,6 @@ export interface BridgeMsgOptin<rawdata extends rawmsg> extends ContextOptin<raw
 }
 
 export class BridgeMsg<R extends rawmsg = rawmsg> extends Context<R> implements BridgeMsgOptin<R> {
-	public isNotice = false;
-	public withNick = true;
-
 	readonly rawFrom: string;
 	readonly rawTo: string;
 
@@ -65,14 +62,12 @@ export class BridgeMsg<R extends rawmsg = rawmsg> extends Context<R> implements 
 	}
 
 	extra: ContextExtra & {
-		withNick?: boolean;
+		plainText?: boolean;
 		isNotice?: boolean;
 	};
 
 	constructor( context: BridgeMsg<R> | Context<R> | BridgeMsgOptin<R>, overrides: BridgeMsgOptin<R> = {} ) {
 		super( context, overrides );
-
-		const that = Object.assign( {}, context, overrides );
 
 		this._from_client = this._to_client = this.handler.type;
 
@@ -85,12 +80,12 @@ export class BridgeMsg<R extends rawmsg = rawmsg> extends Context<R> implements 
 		this.from_uid = Context.getArgument( overrides.from_uid, this.rawFrom );
 		this.to_uid = Context.getArgument( overrides.to_uid, this.rawTo );
 
-		if ( Object.prototype.hasOwnProperty.call( that, 'withNick' ) ) {
-			this.extra.withNick = this.withNick = !!that.withNick || true;
+		if ( Object.prototype.hasOwnProperty.call( overrides, 'plainText' ) ) {
+			this.extra.plainText = !!overrides.plainText;
 		}
 
-		if ( Object.prototype.hasOwnProperty.call( that, 'isNotice' ) ) {
-			this.extra.isNotice = this.isNotice = !!that.isNotice || true;
+		if ( Object.prototype.hasOwnProperty.call( overrides, 'isNotice' ) ) {
+			this.extra.isNotice = !!overrides.isNotice;
 		}
 	}
 
@@ -108,11 +103,11 @@ export class BridgeMsg<R extends rawmsg = rawmsg> extends Context<R> implements 
 
 	static getUIDFromContext = getUIDFromContext;
 
-	static fromReply<T extends rawmsg>( context: Context<T>, config: BridgeMsgOptin<T> ): BridgeMsg<null>;
-	static fromReply( context: Context, config: BridgeMsgOptin<rawmsg> ): BridgeMsg {
+	static botReply<T extends rawmsg>( context: Context<T>, config: BridgeMsgOptin<T> ): BridgeMsg<null>;
+	static botReply( context: Context, config: BridgeMsgOptin<rawmsg> ): BridgeMsg {
 		const brigdmsg: BridgeMsg = new BridgeMsg( context, config );
 
-		brigdmsg.extra.reply = Object.assign( brigdmsg.extra.reply || {}, {
+		brigdmsg.extra.reply = {
 			id: brigdmsg.from,
 			nick: brigdmsg.nick,
 			message: brigdmsg.text,
@@ -120,8 +115,12 @@ export class BridgeMsg<R extends rawmsg = rawmsg> extends Context<R> implements 
 			isText: !brigdmsg.extra.isImage,
 			discriminator: brigdmsg.extra.discriminator,
 			_rawdata: brigdmsg._rawdata
-		} );
+		};
 		delete brigdmsg._rawdata;
+
+		if ( brigdmsg.extra.discriminator ) {
+			brigdmsg.extra.reply.discriminator = brigdmsg.extra.discriminator;
+		}
 
 		return brigdmsg;
 	}

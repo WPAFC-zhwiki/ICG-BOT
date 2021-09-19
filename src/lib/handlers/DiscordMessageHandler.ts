@@ -1,13 +1,11 @@
+import Discord from 'discord.js';
+import winston = require( 'winston' );
+
+import { ConfigTS } from 'src/config';
 import { MessageHandler } from 'src/lib/handlers/MessageHandler';
 import { Context, ContextExtra as ContextExtra } from 'src/lib/handlers/Context';
 import { Events } from 'src/lib/event';
-
-import Discord from 'discord.js';
-
 import { getFriendlySize } from 'src/lib/util';
-
-import winston = require( 'winston' );
-import { ConfigTS } from 'src/config';
 
 export interface DiscordEvents {
 	command( context: Context<Discord.Message>, comand: string, param: string ): void;
@@ -47,15 +45,15 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents & Events
 
 		const discordOptions: ConfigTS[ 'Discord' ][ 'options' ] = config.options;
 
-		const client = new Discord.Client();
+		const client: Discord.Client = new Discord.Client();
 
 		this._me = client.user;
 
-		client.on( 'ready', () => {
+		client.on( 'ready', function (): void {
 			winston.info( `DiscordBot is ready, login as: ${ client.user.tag }(${ client.user.id })` );
 		} );
 
-		client.on( 'error', ( message ) => {
+		client.on( 'error', function ( message: Error ): void {
 			winston.error( `DiscordBot Error: ${ message.message }` );
 		} );
 
@@ -66,9 +64,9 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents & Events
 		this.relayEmoji = discordOptions.relayEmoji;
 
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const that = this;
+		const that: this = this;
 
-		const processMessage = async function ( rawdata: Discord.Message ): Promise<void> {
+		async function processMessage( rawdata: Discord.Message ): Promise<void> {
 			if (
 				!that._enabled ||
 				rawdata.author.id === client.user.id ||
@@ -148,7 +146,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents & Events
 			}
 
 			that.emit( 'text', context );
-		};
+		}
 
 		client.on( 'message', processMessage );
 

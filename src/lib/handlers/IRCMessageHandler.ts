@@ -1,14 +1,12 @@
+import lodash from 'lodash';
+import irc = require( 'irc-upd' );
+import color = require( 'irc-colors' );
+import winston = require( 'winston' );
+
+import { ConfigTS } from 'src/config';
 import { MessageHandler } from 'src/lib/handlers/MessageHandler';
 import { Context } from 'src/lib/handlers/Context';
 import { Events } from 'src/lib/event';
-
-import irc = require( 'irc-upd' );
-import color = require( 'irc-colors' );
-
-import lodash from 'lodash';
-
-import winston = require( 'winston' );
-import { ConfigTS } from 'src/config';
 import delay from 'src/lib/delay';
 
 export interface IRCEvents {
@@ -283,7 +281,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents & Events> {
 
 	public whois( nick: string ): Promise<irc.IWhoisData> {
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const that = this;
+		const that: this = this;
 		return new Promise( function ( resolve ) {
 			that._client.whois( nick, resolve );
 		} );
@@ -309,8 +307,8 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents & Events> {
 					break;
 				}
 			} else {
-				const code = ch.codePointAt( 0 );
-				const b = ( code <= 0x7F ) ? 1 : (
+				const code: number = ch.codePointAt( 0 );
+				const b: number = ( code <= 0x7F ) ? 1 : (
 					( code <= 0x7FF ) ? 2 : (
 						( code <= 0xFFFF ) ? 3 : (
 							( code <= 0x10FFFF ) ? 4 : 5

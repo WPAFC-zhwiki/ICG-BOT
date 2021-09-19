@@ -1,20 +1,4 @@
-import winston from 'winston';
-import { ConfigTS } from 'src/config';
 import lodash from 'lodash';
-
-// 检查已弃用设置
-export function checkDeprecatedConfig( object: ConfigTS, source: string, otherWarning = '' ): void {
-	let current = object;
-	const keys = source.split( '.' );
-	for ( const key of keys ) {
-		if ( current === null || current === undefined || current[ key ] === null || current[ key ] === undefined ) {
-			return;
-		} else {
-			current = current[ key ];
-		}
-	}
-	winston.warn( `* DEPRECATED: Config ${ source } is deprecated. ${ otherWarning }` );
-}
 
 export function getFriendlySize( size: number ): string {
 	if ( size <= 1126 ) {

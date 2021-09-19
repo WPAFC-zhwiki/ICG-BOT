@@ -1,14 +1,17 @@
 import path from 'path';
-import { Manager } from 'src/init';
-import * as bridge from 'src/modules/transport/bridge';
-import { ConfigTS } from 'src/config';
-import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 import format from 'string-format';
-import { Context } from 'src/lib/handlers/Context';
 import { Context as TContext } from 'telegraf';
+
+import winston = require( 'winston' );
+
+import { Manager } from 'src/init';
+import { ConfigTS } from 'src/config';
+import { Context } from 'src/lib/handlers/Context';
+import { SendMessageOpipons } from 'src/lib/handlers/TelegramMessageHandler';
 import jQuery from 'src/lib/jquery';
 import msgManage from 'src/lib/message/msgManage';
-import winston from 'winston';
+import * as bridge from 'src/modules/transport/bridge';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
 function htmlEscape( str: string ): string {
 	return jQuery( '<div>' ).text( str ).html();
@@ -69,7 +72,7 @@ msgManage.on( 'telegram', async function ( _from, _to, _text, context ) {
 	}
 
 	try {
-		await bridge.send( context );
+		await bridge.transportMessage( context );
 	} catch ( e ) {
 		winston.error( e instanceof Error ? e.stack : e );
 	}
@@ -86,7 +89,7 @@ tgHandler.on( 'richmessage', ( context: Context ) => {
 		}
 	}
 
-	bridge.send( context ).catch( function ( err ) {
+	bridge.transportMessage( context ).catch( function ( err ) {
 		throw err;
 	} );
 } );
@@ -102,7 +105,7 @@ tgHandler.on( 'pin', ( info: {
 	text: string;
 }, ctx: TContext ) => {
 	if ( options.notify.pin ) {
-		bridge.send( new BridgeMsg( {
+		bridge.transportMessage( new BridgeMsg( {
 			from: info.from.id,
 			to: info.to,
 			nick: info.from.nick,
@@ -134,7 +137,7 @@ tgHandler.on( 'join', ( group: number, from: {
 	}
 
 	if ( options.notify.join ) {
-		bridge.send( new BridgeMsg<TContext>( {
+		bridge.transportMessage( new BridgeMsg<TContext>( {
 			from: target.id,
 			to: group,
 			nick: target.nick,
@@ -165,7 +168,7 @@ tgHandler.on( 'leave', ( group: number, from: {
 	}
 
 	if ( options.notify.leave ) {
-		bridge.send( new BridgeMsg( {
+		bridge.transportMessage( new BridgeMsg( {
 			from: target.id,
 			to: group,
 			nick: target.nick,
@@ -180,10 +183,7 @@ tgHandler.on( 'leave', ( group: number, from: {
 } );
 
 // 收到了來自其他群組的訊息
-export default async function ( msg: BridgeMsg, { withNick, isNotice }: { withNick: boolean, isNotice: boolean } = {
-	withNick: true,
-	isNotice: false
-} ): Promise<void> {
+export default async function ( msg: BridgeMsg ): Promise<void> {
 	// 元信息，用于自定义样式
 	const meta: Record<string, string> = {
 		nick: `<b>${ htmlEscape( msg.nick ) }</b>`,
@@ -210,36 +210,14 @@ export default async function ( msg: BridgeMsg, { withNick, isNotice }: { withNi
 		meta.forward_user = msg.extra.forward.username;
 	}
 
-	// 自定义消息样式
-	let styleMode: 'simple' | 'complex' = 'simple';
-	const messageStyle = config.options.messageStyle;
-	if ( /* msg.extra.clients >= 3 && */( msg.extra.clientName.shortname || isNotice ) ) {
-		styleMode = 'complex';
-	}
-
-	let template: string;
-	if ( isNotice ) {
-		template = messageStyle[ styleMode ].notice;
-	} else if ( msg.extra.isAction ) {
-		template = messageStyle[ styleMode ].action;
-	} else if ( msg.extra.reply ) {
-		template = messageStyle[ styleMode ].reply;
-	} else if ( msg.extra.forward ) {
-		template = messageStyle[ styleMode ].forward;
-	} else if ( !withNick ) {
-		template = '{text}';
-	} else {
-		template = messageStyle[ styleMode ].message;
-	}
-
-	template = htmlEscape( template );
-	const output = format( template, meta );
-	const to = BridgeMsg.parseUID( msg.to_uid ).id;
+	const template: string = htmlEscape( bridge.getMessageStyle( msg ) );
+	const output: string = format( template, meta );
+	const to: string = BridgeMsg.parseUID( msg.to_uid ).id;
 	const newRawMsg = await tgHandler.sayWithHTML( to, output );
 
 	// 如果含有相片和音訊
 	if ( msg.extra.uploads ) {
-		const replyOption = {
+		const replyOption: SendMessageOpipons = {
 			reply_to_message_id: newRawMsg.message_id
 		};
 

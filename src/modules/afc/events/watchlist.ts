@@ -1,10 +1,10 @@
 /* eslint-disable no-jquery/no-class-state */
-import Discord from 'discord.js';
-
-import { mwbot, $, recentChange, AFCPage, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
+import Discord = require( 'discord.js' );
 import { MwnPage } from 'mwn';
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
-import winston from 'winston';
+import winston = require( 'winston' );
+
+import { mwbot, $, recentChange, AFCPage, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
 
 function getReason( $e: JQuery, title: string ) {
 	$e.find( 'a' ).each( function ( _i, a ) {
@@ -306,8 +306,8 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 		} );
 	} catch ( e ) {
 		winston.error( '[afc/event/watchlist] Recentchange Error:  (Throw by Async Function) ' + e );
-		if ( e instanceof Error ) {
-			console.log( e.stack );
+		if ( !( e instanceof Error ) ) {
+			console.log( e );
 		}
 	}
 } );

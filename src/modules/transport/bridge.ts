@@ -1,4 +1,5 @@
-import winston from 'winston';
+import winston = require( 'winston' );
+
 import { Manager } from 'src/init';
 import { Context, rawmsg } from 'src/lib/handlers/Context';
 import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
@@ -9,8 +10,7 @@ function checkEnable(): void {
 	}
 }
 
-// eslint-disable-next-line max-len
-export type processor = ( msg: BridgeMsg, { withNick, isNotice }: { withNick: boolean, isNotice: boolean } ) => Promise<void>;
+export type processor = ( msg: BridgeMsg ) => Promise<void>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type hook = ( ...args: any[] ) => Promise<any>;
@@ -82,6 +82,29 @@ export function prepareBridgeMsg( msg: Context ): Promise<void> | void {
 	}
 }
 
+export function getMessageStyle( msg: BridgeMsg ): string {
+	// 自定义消息样式
+	let styleMode: 'simple' | 'complex' = 'simple';
+	const messageStyle = Manager.config.transport.options.messageStyle;
+	if ( msg.extra.clients >= 3 && ( msg.extra.clientName.shortname || msg.extra.isNotice ) ) {
+		styleMode = 'complex';
+	}
+
+	if ( msg.extra.plainText ) {
+		return '{text}';
+	} else if ( msg.extra.isNotice ) {
+		return messageStyle[ styleMode ].notice;
+	} else if ( msg.extra.isAction ) {
+		return messageStyle[ styleMode ].action;
+	} else if ( msg.extra.reply ) {
+		return messageStyle[ styleMode ].reply;
+	} else if ( msg.extra.forward ) {
+		return messageStyle[ styleMode ].forward;
+	} else {
+		return messageStyle[ styleMode ].message;
+	}
+}
+
 // eslint-disable-next-line no-shadow
 export function addProcessor( type: string, processor: processor ): void {
 	processors.set( type, processor );
@@ -130,8 +153,6 @@ export async function emitHook<V extends keyof hooks>( event: V, ...args: Parame
 }
 
 function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
-	const withNick = !!msg.withNick;
-	const isNotice = !!msg.isNotice;
 	const currMsgId = msg.msgId;
 
 	// 全部訊息已傳送 resolve( true )，部分訊息已傳送 resolve( false )；
@@ -156,7 +177,7 @@ function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
 				const processor = processors.get( client );
 				if ( processor ) {
 					winston.debug( `[transport/bridge] <BotTransport> ${ msgid } ---> ${ new_uid.uid }` );
-					return processor( msg2, { withNick, isNotice } );
+					return processor( msg2 );
 				} else {
 					winston.debug( `[transport/bridge] <BotTransport> ${ msgid } -X-> ${ new_uid.uid }: No processor` );
 				}
@@ -166,7 +187,7 @@ function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
 			const processor = processors.get( client );
 			if ( processor ) {
 				winston.debug( `[transport/bridge] <BotSend> ${ msgid } ---> ${ new_uid.uid }` );
-				promises.push( processor( msg2, { withNick, isNotice } ) );
+				promises.push( processor( msg2 ) );
 			} else {
 				winston.debug( `[transport/bridge] <BotSend> ${ msgid } -X-> ${ new_uid.uid }: No processor` );
 			}
@@ -176,7 +197,7 @@ function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
 	return promises;
 }
 
-export async function send( m: BridgeMsg | Context, bot?: symbol ): Promise<boolean> {
+export async function transportMessage( m: BridgeMsg | Context, bot?: boolean ): Promise<boolean> {
 	checkEnable();
 
 	const msg: BridgeMsg = getBridgeMsg( m );
@@ -185,12 +206,14 @@ export async function send( m: BridgeMsg | Context, bot?: symbol ): Promise<bool
 
 	let isbridge: boolean;
 
-	if ( bot === Manager.global.bot ) {
+	if ( bot ) {
 		delete msg.extra.username; // 刪掉讓日誌變混亂的username
 
 		isbridge = false;
 		winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } ---> ${ msg.to_uid }: ${ msg.text }` );
-		const extraJson: string = JSON.stringify( msg.extra );
+		const extraJson: string = JSON.stringify( msg.extra, Object.keys( msg.extra ).filter( function ( key ) {
+			return key !== '_rawdata';
+		} ) );
 		if ( extraJson !== 'null' && extraJson !== '{}' ) {
 			winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } extra: ${ extraJson }` );
 		}

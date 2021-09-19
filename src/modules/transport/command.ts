@@ -1,4 +1,5 @@
 import winston = require( 'winston' );
+
 import { Manager } from 'src/init';
 import * as bridge from 'src/modules/transport/bridge';
 import { BridgeMsg } from 'src/modules/transport/BridgeMsg';

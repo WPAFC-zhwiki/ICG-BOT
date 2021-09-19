@@ -3,7 +3,7 @@ import { Manager } from 'src/init';
 import { version, repository } from 'src/config';
 
 import TurndownService from 'turndown';
-import winston from 'winston';
+import winston = require( 'winston' );
 import EventSource from 'eventsource';
 import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 

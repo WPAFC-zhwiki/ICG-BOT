@@ -1,8 +1,8 @@
+import { MwnPage } from 'mwn';
 import Discord = require( 'discord.js' );
+import winston = require( 'winston' );
 
 import { mwbot, $, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, setCommand } from 'src/modules/afc/util';
-import { MwnPage } from 'mwn';
-import winston from 'winston';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;

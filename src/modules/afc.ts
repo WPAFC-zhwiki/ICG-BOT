@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-
 import winston = require( 'winston' );
 
 winston.debug( '[afc] Loading commands:' );

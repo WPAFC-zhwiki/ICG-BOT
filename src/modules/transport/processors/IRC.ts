@@ -1,12 +1,13 @@
-import color = require( 'irc-colors' );
 import format from 'string-format';
-import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
+import irc from 'irc-upd';
+import color = require( 'irc-colors' );
+import winston = require( 'winston' );
+
 import { Manager } from 'src/init';
-import * as bridge from 'src/modules/transport/bridge';
 import { ConfigTS } from 'src/config';
 import msgManage from 'src/lib/message/msgManage';
-import irc from 'irc-upd';
-import winston = require( 'winston' );
+import * as bridge from 'src/modules/transport/bridge';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
 function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );
@@ -45,7 +46,7 @@ if ( colorize.enabled && colorize.linesplit ) {
 
 msgManage.on( 'irc', async function ( _from, _to, _text, context ) {
 	try {
-		await bridge.send( context );
+		await bridge.transportMessage( context );
 	} catch ( e ) {
 		winston.error( e instanceof Error ? e.stack : e );
 	}
@@ -63,7 +64,7 @@ ircHandler.on( 'topic', ( channel, topic, nick, message ) => {
 			text = `${ nick } 取消了頻道的Topic`;
 		}
 
-		bridge.send( new BridgeMsg( {
+		bridge.transportMessage( new BridgeMsg( {
 			from: channel.toLowerCase(),
 			to: channel.toLowerCase(),
 			nick: nick,
@@ -84,7 +85,7 @@ const userlist: Record<string, Record<string, number>> = {};
 
 ircHandler.on( 'join', async function ( channel, nick, message ) {
 	if ( options.notify.join && nick !== ircHandler.nick ) {
-		bridge.send( new BridgeMsg( {
+		bridge.transportMessage( new BridgeMsg( {
 			from: channel.toLowerCase(),
 			to: channel.toLowerCase(),
 			nick: nick,
@@ -110,11 +111,11 @@ ircHandler.on( 'text', function ( context ) {
 	userlist[ context.from ][ String( context.to ).toLowerCase() ] = new Date().getTime();
 } );
 
-const isActive = function ( nick: string | number, channel: string ) {
+function isActive( nick: string | number, channel: string ) {
 	const now = new Date().getTime();
 	return userlist[ nick ] && userlist[ nick ][ channel ] &&
 			awaySpan > 0 && ( now - userlist[ nick ][ channel ] <= awaySpan );
-};
+}
 
 ircHandler.on( 'nick', function ( oldnick, newnick, _channels, rawdata ) {
 	// 記錄使用者更名情況
@@ -131,7 +132,7 @@ ircHandler.on( 'nick', function ( oldnick, newnick, _channels, rawdata ) {
 		if ( ( options.notify.rename === 'all' ) ||
 			( options.notify.rename === 'onlyactive' && userlist[ newnick ] && userlist[ newnick ][ chan ] )
 		) {
-			bridge.send( new BridgeMsg( {
+			bridge.transportMessage( new BridgeMsg( {
 				from: chan,
 				to: chan,
 				nick: newnick,
@@ -145,7 +146,7 @@ ircHandler.on( 'nick', function ( oldnick, newnick, _channels, rawdata ) {
 	}
 } );
 
-const leaveHandler = function ( nick: string, chans: string[],
+function leaveHandler( nick: string, chans: string[],
 	action: string, reason: string, rawdata: irc.IMessage ): void {
 	let message: string;
 	if ( reason ) {
@@ -159,7 +160,7 @@ const leaveHandler = function ( nick: string, chans: string[],
 		if ( ( options.notify.leave === 'all' && nick !== ircHandler.nick ) ||
 			( options.notify.leave === 'onlyactive' && isActive( nick, chan ) )
 		) {
-			bridge.send( new BridgeMsg( {
+			bridge.transportMessage( new BridgeMsg( {
 				from: nick,
 				to: chan,
 				nick: nick,
@@ -175,7 +176,7 @@ const leaveHandler = function ( nick: string, chans: string[],
 			delete userlist[ nick ][ chan ];
 		}
 	} );
-};
+}
 
 ircHandler.on( 'quit', ( nick, reason, channels, message ) => {
 	leaveHandler( nick, channels, '離開IRC', reason, message );
@@ -194,10 +195,7 @@ ircHandler.on( 'kill', ( nick, reason, channels, message ) => {
 } );
 
 // 收到了來自其他群組的訊息
-export default async function ( msg: BridgeMsg, { withNick, isNotice }: { withNick: boolean, isNotice: boolean } = {
-	withNick: true,
-	isNotice: false
-} ): Promise<void> {
+export default async function ( msg: BridgeMsg ): Promise<void> {
 	// 元信息，用于自定义样式
 	const meta: Record<string, string> = {
 		nick: msg.nick,
@@ -224,27 +222,7 @@ export default async function ( msg: BridgeMsg, { withNick, isNotice }: { withNi
 		meta.forward_user = msg.extra.forward.username;
 	}
 
-	// 自定义消息样式
-	let styleMode: 'simple' | 'complex' = 'simple';
-	const messageStyle = config.options.messageStyle;
-	if ( msg.extra.clients >= 3 && ( msg.extra.clientName.shortname || isNotice ) ) {
-		styleMode = 'complex';
-	}
-
-	let template: string;
-	if ( isNotice ) {
-		template = messageStyle[ styleMode ].notice;
-	} else if ( msg.extra.isAction ) {
-		template = messageStyle[ styleMode ].action;
-	} else if ( msg.extra.reply ) {
-		template = messageStyle[ styleMode ].reply;
-	} else if ( msg.extra.forward ) {
-		template = messageStyle[ styleMode ].forward;
-	} else if ( !withNick ) {
-		template = '{text}';
-	} else {
-		template = messageStyle[ styleMode ].message;
-	}
+	const template: string = bridge.getMessageStyle( msg );
 
 	// 给消息上色
 	let output: string;

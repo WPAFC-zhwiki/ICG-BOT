@@ -1,10 +1,10 @@
+import { ApiPage, ApiRevision, MwnPage } from 'mwn';
+import { ApiQueryRevisionsParams } from 'mwn/build/api_params';
+import { MwnError } from 'mwn/build/error';
+import winston = require( 'winston' );
+
 import { mwbot, $ } from 'src/modules/afc/util/index';
 import { isReviewer } from 'src/modules/afc/util/reviewer';
-
-import { ApiPage, ApiRevision, MwnPage } from 'mwn';
-import type { ApiQueryRevisionsParams } from 'mwn/build/api_params';
-import { MwnError } from 'mwn/build/error';
-import winston from 'winston';
 
 async function revisionRequest( title: string, props: ApiQueryRevisionsParams[ 'rvprop' ],
 	limit: number, customOptions?: ApiQueryRevisionsParams ): Promise<ApiRevision[]> {
@@ -87,8 +87,8 @@ export class AFCPage {
 	}
 
 	private async _getPageText(): Promise<void> {
-		const history = await this._page.history( [ 'content', 'ids' ], 1 );
-		const rev = history[ 0 ];
+		const history: ApiRevision[] = await this._page.history( [ 'content', 'ids' ], 1 );
+		const rev: ApiRevision = history[ 0 ];
 		this._oldtext = this._text = rev.slots.main.content;
 		this._basetimestamp = rev.timestamp;
 		this._baserevid = rev.revid;

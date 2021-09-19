@@ -96,7 +96,9 @@ module.exports = class HttpsProxyAgent extends Https.Agent {
 
 		self.createConnection( options, function ( err, socket ) {
 			if ( err ) {
-				err.message += ' while connecting to HTTP(S) proxy server ' + self.proxyHost + ':' + self.proxyPort;
+				if ( err instanceof Error ) {
+					err.message += ' while connecting to HTTP(S) proxy server ' + self.proxyHost + ':' + self.proxyPort;
+				}
 
 				if ( req ) {
 					req.emit( 'error', err );
@@ -113,18 +115,18 @@ module.exports = class HttpsProxyAgent extends Https.Agent {
 
 			self.sockets[ name ].push( socket );
 
-			const onFree = function () {
+			function onFree() {
 				self.emit( 'free', socket, host, port, localAddress );
-			};
+			}
 
-			const onClose = function () {
+			function onClose() {
 			// this is the only place where sockets get removed from the Agent.
 			// if you want to remove a socket from the pool, just close it.
 			// all socket errors end in a close event anyway.
 				self.removeSocket( socket, name, host, port, localAddress );
-			};
+			}
 
-			const onRemove = function () {
+			function onRemove() {
 			// we need this function for cases like HTTP 'upgrade'
 			// (defined by WebSockets) where we need to remove a socket from the pool
 			// because it'll be locked up indefinitely
@@ -132,7 +134,7 @@ module.exports = class HttpsProxyAgent extends Https.Agent {
 				socket.removeListener( 'close', onClose );
 				socket.removeListener( 'free', onFree );
 				socket.removeListener( 'agentRemove', onRemove );
-			};
+			}
 
 			socket.on( 'free', onFree );
 			socket.on( 'close', onClose );

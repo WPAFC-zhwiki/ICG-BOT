@@ -11,13 +11,13 @@ import path from 'path';
 import request from 'request';
 import sharp from 'sharp';
 
-import winston from 'winston';
+import winston = require( 'winston' );
 
 import { Manager } from 'src/init';
-import * as bridge from 'src/modules/transport/bridge';
 import { ConfigTS, version, repository } from 'src/config';
-import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 import { file as fileTS } from 'src/lib/handlers/Context';
+import * as bridge from 'src/modules/transport/bridge';
+import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
 const servemedia: ConfigTS[ 'transport' ][ 'servemedia' ] = Manager.config.transport.servemedia;
 

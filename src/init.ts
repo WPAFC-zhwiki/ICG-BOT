@@ -101,8 +101,6 @@ type handlerClasses = {
 	};
 }
 
-const botSymbol: unique symbol = Symbol();
-
 // 所有擴充套件包括傳話機器人都只與該物件打交道
 export const Manager: {
 	handlers: ExtendsMap<string, MessageHandler, handlers>,
@@ -121,7 +119,6 @@ export const Manager: {
 		Message: typeof MessageHandler;
 		ifEnable: typeof ifEnable;
 		isEnable: typeof isEnable;
-		readonly bot: typeof botSymbol;
 	}
 } = {
 	handlers: new Map(),
@@ -131,8 +128,7 @@ export const Manager: {
 		Context,
 		Message: MessageHandler,
 		ifEnable,
-		isEnable,
-		bot: botSymbol
+		isEnable
 	}
 };
 

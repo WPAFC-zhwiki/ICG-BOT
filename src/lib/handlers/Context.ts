@@ -1,7 +1,8 @@
-import { MessageHandler } from 'src/lib/handlers/MessageHandler';
 import { IMessage } from 'irc-upd';
 import { Context as TContext } from 'telegraf';
 import { Message as DMessage } from 'discord.js';
+
+import { MessageHandler } from 'src/lib/handlers/MessageHandler';
 
 let msgId = 0;
 
