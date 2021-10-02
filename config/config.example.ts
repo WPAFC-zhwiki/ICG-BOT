@@ -127,34 +127,34 @@ const config: ConfigTS = {
 				'irc/#test',
 				'telegram/-12345678', // Telegram 群組號碼：可以先把 bot 拉到群組中，然後透過 /thisgroupid 來取得 id
 				'discord/12345678'
-				// 'discord/87654321'            // 如果有這種需求，亦可以連接
+				// 'discord/87654321'			// 如果有這種需求，亦可以連接
 			]
 			/*
-             如果需要，可以繼續加
-             [
-                'i/#test2',
-                't/@test2',
-                ...
-             ],
-             ...
-             */
+			 如果需要，可以繼續加
+			 [
+				'i/#test2',
+				't/@test2',
+				...
+			 ],
+			 ...
+			 */
 		],
 
 		/*
-        // 如果希望把同一軟體的多個群組連接到一起，可為不同的群組設定不同的別名，
-        // 這樣互聯機器人在轉發訊息時會採用自訂群組名，以防混淆
-        "aliases": {
-            'discord/87665432': '分部',
-            'discord/87665432': ['簡稱', '群組全稱']
-        },
-         */
+		// 如果希望把同一軟體的多個群組連接到一起，可為不同的群組設定不同的別名，
+		// 這樣互聯機器人在轉發訊息時會採用自訂群組名，以防混淆
+		"aliases": {
+			'discord/87665432': '分部',
+			'discord/87665432': ['簡稱', '群組全稱']
+		},
+		 */
 
 		/*
-        // 如果不希望特定方向的轉發，例如 Telegram 群不向 QQ 轉發，請在下面設定
-        "disables": {
-            'telegram/-12345678': ['irc/#aaa']         // Telegram 群 -12345678 的訊息不會向 IRC 的 #aaa 頻道轉發
-        },
-         */
+		// 如果不希望特定方向的轉發，例如 Telegram 群不向 QQ 轉發，請在下面設定
+		"disables": {
+			'telegram/-12345678': ['irc/#aaa']		 // Telegram 群 -12345678 的訊息不會向 IRC 的 #aaa 頻道轉發
+		},
+		 */
 
 		options: {
 			IRC: {
@@ -169,16 +169,16 @@ const config: ConfigTS = {
 				},
 				colorize: {
 					/*
-                       這裡可以設定機器人在 IRC 頻道中使用顏色。在啟用顏色功能之前，IRC 頻道的管理員需要解除頻道的 +c 模式，即
-                       /msg ChanServ SET #頻道 MLOCK -c
-                       轉發機器人的訊息有以下三種格式：
-                       <T> [nick] message
-                       <T> [nick] Re replyto 「repliedmessage」: message
-                       <T> [nick] Fwd fwdfrom: message
-                       （兩群互聯不會出現用於標識軟體的「<T>」）
-                       可用顏色：white、black、navy、green、red、brown、purple、
-                               olive、yellow、lightgreen、teal、cyan、blue、pink、gray、silver
-                    */
+					   這裡可以設定機器人在 IRC 頻道中使用顏色。在啟用顏色功能之前，IRC 頻道的管理員需要解除頻道的 +c 模式，即
+					   /msg ChanServ SET #頻道 MLOCK -c
+					   轉發機器人的訊息有以下三種格式：
+					   <T> [nick] message
+					   <T> [nick] Re replyto 「repliedmessage」: message
+					   <T> [nick] Fwd fwdfrom: message
+					   （兩群互聯不會出現用於標識軟體的「<T>」）
+					   可用顏色：white、black、navy、green、red、brown、purple、
+							   olive、yellow、lightgreen、teal、cyan、blue、pink、gray、silver
+					*/
 					enabled: true, // 是否允許在 IRC 頻道中使用顏色
 					broadcast: 'green', // < 整行通知的顏色 >
 					client: 'navy', // 用於標記使用者端「<T>」的顏色

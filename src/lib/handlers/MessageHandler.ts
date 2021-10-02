@@ -13,6 +13,12 @@ export type Telegram = Telegraf['telegram'];
 export type Discord = DiscordClient;
 export type IRC = IRCClient;
 
+export interface BaseEvents<rawdata extends rawmsg> extends Events {
+	command( context: Context<rawdata>, comand: string, param: string ): void;
+	[ key: `command#${ string }` ]: ( context: Context<rawdata>, comand: string, param: string ) => void;
+	text( context: Context<rawdata> ): void;
+}
+
 /**
  * 使用統一介面處理訊息
  *
@@ -27,7 +33,8 @@ export type IRC = IRCClient;
  *
  * context 須使用統一格式
  */
-export class MessageHandler<events extends Events = Events> extends EventEmitter<events> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class MessageHandler<events extends BaseEvents<any> = BaseEvents<rawmsg>> extends EventEmitter<events> {
 	protected _client: Telegraf | Discord | IRC = null;
 	protected _type: string;
 	protected _id: string;

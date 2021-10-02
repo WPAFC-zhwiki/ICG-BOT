@@ -2,12 +2,11 @@ import Discord from 'discord.js';
 import winston = require( 'winston' );
 
 import { ConfigTS } from 'src/config';
-import { MessageHandler } from 'src/lib/handlers/MessageHandler';
+import { BaseEvents, MessageHandler } from 'src/lib/handlers/MessageHandler';
 import { Context, ContextExtra as ContextExtra } from 'src/lib/handlers/Context';
-import { Events } from 'src/lib/event';
 import { getFriendlySize } from 'src/lib/util';
 
-export interface DiscordEvents {
+export interface DiscordEvents extends BaseEvents<Discord.Message> {
 	command( context: Context<Discord.Message>, comand: string, param: string ): void;
 	text( context: Context<Discord.Message> ): void;
 	ready( client: Discord.Client ): void;
@@ -19,7 +18,7 @@ export type DiscordSendMessage = string | string[] | Discord.MessageEmbed | Disc
 /**
  * 使用通用介面處理 Discord 訊息
  */
-export class DiscordMessageHandler extends MessageHandler<DiscordEvents & Events> {
+export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 	private readonly _token: string;
 	protected readonly _client: Discord.Client;
 	protected readonly _type: 'Discord' = 'Discord';

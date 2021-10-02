@@ -1,6 +1,6 @@
 import { MwnPage } from 'mwn';
 
-import { $, encodeURI } from 'src/modules/afc/util/index';
+import { $ } from 'src/modules/afc/util/index';
 import issuesData from 'src/modules/afc/util/issuesData.json';
 
 export type elementsTS = {
@@ -117,7 +117,7 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 	const extlink = $parseHTML.find( 'a' ).filter( function ( _i, a ) {
 		try {
 			return !$( a ).parents( '.ambox, .ombox, .fmbox, .dmbox, .stub, .afc-comment' ).length &&
-				new URL( $( a ).attr( 'href' ), `https://zh.wikipedia.org/wiki/${ encodeURI( page.toText() ) }` ).hostname !== 'zh.wikipedia.org';
+				new URL( $( a ).attr( 'href' ), 'https://zh.wikipedia.org/' ).hostname !== 'zh.wikipedia.org';
 		} catch {
 			return false;
 		}

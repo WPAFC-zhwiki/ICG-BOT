@@ -305,7 +305,7 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 			iMsg
 		} );
 	} catch ( e ) {
-		winston.error( '[afc/event/watchlist] Recentchange Error:  (Throw by Async Function) ' + e );
+		winston.error( '[afc/event/watchlist] Recentchange Error:  (Throw by Async Function) ', e );
 		if ( !( e instanceof Error ) ) {
 			console.log( e );
 		}

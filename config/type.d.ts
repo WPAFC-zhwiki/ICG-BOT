@@ -202,9 +202,9 @@ export interface ConfigTS {
 		/**
 		 * 1. 可以填任意個群組
 		 * 2. 群組格式：
-		 *     irc/#頻道 例如 irc/#test
-		 *     telegram/-群組ID 例如 telegram/-12345678
-		 *     discord/ID 例如 discord/123123123123
+		 * # irc/#頻道 例如 irc/#test
+		 * # telegram/-群組ID 例如 telegram/-12345678
+		 * # discord/ID 例如 discord/123123123123
 		 *  3. 如果需要，可以加入多個互聯體。例如將兩個 Telegram 分群連接到一起。
 		 */
 		groups: string[][];
@@ -265,7 +265,7 @@ export interface ConfigTS {
 				 *   （兩群互聯不會出現用於標識軟體的「<T>」）
 				 *
 				 *   可用顏色：white、black、navy、green、red、brown、purple、
-				 *           olive、yellow、lightgreen、teal、cyan、blue、pink、gray、silver
+				 *   olive、yellow、lightgreen、teal、cyan、blue、pink、gray、silver
 				 */
 				colorize: {
 					/**
@@ -502,6 +502,12 @@ export interface ConfigTS {
 		 */
 		mwn: MwnLoginNone | MwnLoginBotPassword | MwnLoginOAuth;
 	};
+
+	/**
+	 * 可以使用部分進階操作的人
+	 * 限TG使用，為uid陣列
+	 */
+	admin?: number[];
 }
 
 interface TransportServemediaBase {

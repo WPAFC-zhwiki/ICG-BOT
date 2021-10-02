@@ -6,15 +6,12 @@ import * as TT from 'telegraf/typings/telegram-types';
 import winston = require( 'winston' );
 
 import { ConfigTS } from 'src/config';
-import { MessageHandler, Command } from 'src/lib/handlers/MessageHandler';
+import { MessageHandler, Command, BaseEvents } from 'src/lib/handlers/MessageHandler';
 import { Context } from 'src/lib/handlers/Context';
-import { Events } from 'src/lib/event';
 import { getFriendlySize, getFriendlyLocation, copyObject } from 'src/lib/util';
 import HttpsProxyAgent from 'src/lib/proxy.js';
 
-export interface TelegramEvents {
-	command( context: Context<TContext>, comand: string, param: string ): void;
-	text( context: Context<TContext> ): void;
+export interface TelegramEvents extends BaseEvents<TContext> {
 	pin( info: {
 		from: {
 			id: number;
@@ -52,7 +49,7 @@ export interface SendMessageOpipons extends TT.ExtraSendMessage, TT.ExtraReplyMe
 /**
  * 使用通用介面處理 Telegram 訊息
  */
-export class TelegramMessageHandler extends MessageHandler<TelegramEvents & Events> {
+export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 	protected readonly _client: Telegraf<TContext>;
 	protected readonly _type: 'Telegram' = 'Telegram';
 	protected readonly _id: 'T' = 'T';
