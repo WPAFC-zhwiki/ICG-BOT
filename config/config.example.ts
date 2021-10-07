@@ -80,7 +80,7 @@ const config: ConfigTS = {
 			 * 無視 bot 的訊息
 			 * 若只想無視特定 bot 請用下方的 ignore 代替
 			 */
-			ignorebot: false,
+			ignoreBot: false,
 
 			/**
 			 * 無視某些成員的訊息

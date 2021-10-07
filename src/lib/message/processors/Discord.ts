@@ -1,10 +1,9 @@
-import { Manager } from 'src/init';
-import { Context } from 'src/lib/handlers/Context';
-
-import LRU from 'lru-cache';
+import LRU = require( 'lru-cache' );
 import winston = require( 'winston' );
 import Discord = require( 'discord.js' );
 
+import { Manager } from 'src/init';
+import { Context } from 'src/lib/handlers/Context';
 import msgManage from 'src/lib/message/msgManage';
 
 const userInfo = new LRU<string, Discord.User>( {

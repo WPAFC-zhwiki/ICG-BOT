@@ -1,5 +1,5 @@
 /*
- * 在 Telegram 群組中取得群組的 ID，以便於配置互聯機器人
+ * 在 Telegram 取得個別用戶的 ID
  */
 
 import winston = require( 'winston' );
@@ -13,14 +13,14 @@ tg.addCommand( 'userid', function ( context ) {
 	if ( 'reply_to_message' in rawdata.message ) {
 		if ( 'forward_from' in rawdata.message.reply_to_message ) {
 			output += `<code>${ rawdata.message.reply_to_message.forward_from.id }</code>`;
-			winston.debug( `[userid] Msg #${ context.msgId }: forward_userid = ${ rawdata.message.reply_to_message.forward_from.id }` );
+			winston.debug( `[userid-tg] Msg #${ context.msgId }: forward_userid = ${ rawdata.message.reply_to_message.forward_from.id }` );
 		} else {
 			output += `<code>${ rawdata.message.reply_to_message.from.id }</code>`;
-			winston.debug( `[userid] Msg #${ context.msgId }: reply_userid = ${ rawdata.message.reply_to_message.from.id }` );
+			winston.debug( `[userid-tg] Msg #${ context.msgId }: reply_userid = ${ rawdata.message.reply_to_message.from.id }` );
 		}
 	} else {
 		output += `<code>${ rawdata.message.from.id }</code>`;
-		winston.debug( `[userid] Msg #${ context.msgId }: userid = ${ rawdata.message.from.id }` );
+		winston.debug( `[userid-tg] Msg #${ context.msgId }: userid = ${ rawdata.message.from.id }` );
 	}
 	context.reply( output, {
 		parse_mode: 'HTML'

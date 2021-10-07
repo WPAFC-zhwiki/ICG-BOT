@@ -7,19 +7,22 @@ export { ConfigTS } from 'config/type';
 export { version } from 'package.json';
 export const repository: string = Repository.replace( /^git\+/, '' );
 
-let config: ConfigTS;
+declare global {
+	// eslint-disable-next-line no-var
+	var configPath: string;
+}
 
 if ( process.argv.indexOf( '--icconfig' ) > -1 ) {
 	const configPath: string = process.argv[ process.argv.indexOf( '--icconfig' ) + 1 ];
 	try {
-		config = require( path.join( __dirname, '../config', configPath ) ).default;
+		global.configPath = require.resolve( path.join( __dirname, '../config', configPath ) );
 	} catch ( err1 ) {
 		if ( String( err1 ).match( 'Cannot find module' ) ) {
 			try {
-				config = require( path.join( __dirname, '../', configPath ) ).default;
+				global.configPath = require.resolve( path.join( __dirname, '../', configPath ) );
 			} catch ( err2 ) {
 				if ( String( err2 ).match( 'Cannot find module' ) ) {
-					config = require( configPath ).default;
+					global.configPath = require.resolve( configPath );
 				} else {
 					throw err2;
 				}
@@ -29,7 +32,9 @@ if ( process.argv.indexOf( '--icconfig' ) > -1 ) {
 		}
 	}
 } else {
-	config = require( path.join( __dirname, '../config', 'config' ) ).default;
+	global.configPath = require.resolve( path.join( __dirname, '../config', 'config' ) );
 }
+
+const config: ConfigTS = require( global.configPath ).default;
 
 export default config;

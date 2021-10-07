@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-this-alias */
-/* eslint-disable max-len, @typescript-eslint/no-explicit-any */
+/* eslint-disable max-len, @typescript-eslint/no-explicit-any, @typescript-eslint/no-this-alias */
 /*!
  * EventEmitter2 6.4.4
  * https://github.com/EventEmitter2/EventEmitter2 commit 7dff2d6a160a636046921256fa4eef9025ae4bf8
@@ -61,7 +60,7 @@ export interface ListenerFn extends Event {
 }
 
 export interface EventAndListener {
-    ( event: EventName, ...args: any[] ): void;
+	( event: EventName, ...args: any[] ): void;
 }
 
 interface WaitForFilter {
@@ -69,26 +68,26 @@ interface WaitForFilter {
 }
 
 export interface WaitForOptions {
-    /**
-     * @default 0
-     */
-    timeout: number,
-    /**
-     * @default null
-     */
-    filter: WaitForFilter,
-    /**
-     * @default false
-     */
-    handleError: boolean,
-    /**
-     * @default Promise
-     */
-    Promise: PromiseConstructor,
-    /**
-     * @default false
-     */
-    overload: boolean
+	/**
+	 * @default 0
+	 */
+	timeout: number,
+	/**
+	 * @default null
+	 */
+	filter: WaitForFilter,
+	/**
+	 * @default false
+	 */
+	handleError: boolean,
+	/**
+	 * @default Promise
+	 */
+	Promise: PromiseConstructor,
+	/**
+	 * @default false
+	 */
+	overload: boolean
 }
 
 interface CancelablePromiseConstructor extends PromiseConstructor {
@@ -112,24 +111,24 @@ export interface CancelablePromise<T> extends Promise<T>{
 }
 
 export interface OnceOptions {
-    /**
-     * @default 0
-     */
-    timeout: number,
-    /**
-     * @default Promise
-     */
-    Promise: PromiseConstructor,
-    /**
-     * @default false
-     */
-    overload: boolean
+	/**
+	 * @default 0
+	 */
+	timeout: number,
+	/**
+	 * @default Promise
+	 */
+	Promise: PromiseConstructor,
+	/**
+	 * @default false
+	 */
+	overload: boolean
 }
 
 export interface ListenToOptions {
-    on?( event: EventName, handler: Func ): void;
-    off?( event: EventName, handler: Func ): void;
-    reducers: Func | Record<EventName, any>
+	on?( event: EventName, handler: Func ): void;
+	off?( event: EventName, handler: Func ): void;
+	reducers: Func | Record<EventName, any>
 }
 
 export interface EventEmitterLike {
@@ -153,10 +152,10 @@ export type GeneralEventEmitter = EventEmitterLike & ( {
 } );
 
 export interface OnOptions {
-    async?: boolean;
-    promisify?: boolean;
-    nextTick?: boolean;
-    objectify?: boolean;
+	async?: boolean;
+	promisify?: boolean;
+	nextTick?: boolean;
+	objectify?: boolean;
 }
 
 type OnOptions_Objectify = Partial<OnOptions> & {

@@ -1,7 +1,7 @@
 import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
 
-const clientFullNames = {};
+const clientFullNames: Record<string, string> = {};
 for ( const [ type, handler ] of Manager.handlers ) {
 	clientFullNames[ handler.id.toLowerCase() ] = type;
 	clientFullNames[ type.toLowerCase() ] = type;

@@ -4,7 +4,7 @@ type IRCColor = 'white' | 'black' | 'navy' | 'green' | 'red' | 'brown' | 'purple
 	'yellow' | 'lightgreen' | 'teal' | 'cyan' | 'blue' | 'pink' | 'gray' | 'silver';
 
 export interface ConfigTS {
-	IRC: {
+	IRC?: {
 		/**
 		 * 如果需要 IRC 機器人，請設定為 false
 		 */
@@ -52,7 +52,7 @@ export interface ConfigTS {
 		};
 	};
 
-	Telegram: {
+	Telegram?: {
 		/**
 		 * 如果需要 Telegram 機器人，請設定為 false
 		 */
@@ -142,7 +142,7 @@ export interface ConfigTS {
 		};
 	};
 
-	Discord: {
+	Discord?: {
 		/**
 		 * 如果需要 Discord 機器人，請設定為 false
 		 */
@@ -172,7 +172,83 @@ export interface ConfigTS {
 			 * 無視 bot 的訊息
 			 * 若只想無視特定 bot 請用下方的 ignore 代替
 			 */
-			ignorebot: boolean;
+			ignoreBot: boolean;
+
+			/**
+			 * 無視某些成員的訊息
+			 */
+			ignore: string[];
+		};
+	};
+
+	QQ?: {
+		/**
+		 * 如果需要 QQ 機器人，請設定為 false
+		 */
+		disabled: boolean;
+
+		bot: {
+			/**
+			 * 機器人的 QQ 號
+			 */
+			qq: number;
+
+			/**
+			 * 使用MD5進行加密後的QQ密碼
+			 */
+			passwordMd5: string;
+
+			/**
+			 * 登陸類型
+			 * 1. 安卓手機（默認）
+			 * 2. aPad
+			 * 3. 安卓手錶
+			 * 4. MacOS
+			 * 5. iPad
+			 */
+			platform: 1 | 2 | 3 | 4 | 5;
+
+			/**
+			 * 紀錄檔等級：從詳細到簡單分別是 trace, debug, info, warn, error, fatal, off，推薦用 info
+			 */
+			logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'off';
+
+			/**
+			 * 被擠下線是否在3秒後反擠對方
+			 */
+			kickoff: boolean;
+
+			/**
+			 * 群聊是否無視自己的發言
+			 */
+			ignoreSelf: true
+
+			/**
+			 * 設備文件保存路徑，默認為啟動文件同目錄下的data文件夾
+			 */
+			devicePath: string;
+		};
+
+		options: {
+			/**
+			 * 可取「groupcard」（優先採用群名片）、「nick」（優先採用暱稱）、「qq」（只用 QQ 號）
+			 */
+			nickStyle: 'groupcard' | 'nick' | 'qq';
+
+			/**
+			 * 根據 badwords.ts 檔案過濾敏感詞
+			 */
+			selfCensorship: boolean;
+
+			/**
+			 * 如果消息疑似口令紅包則忽略、屏蔽消息（注意程序無法區分口令紅包和群友自行刷屏）
+			 */
+			ignoreCash: boolean;
+
+			/**
+			 * 轉發時顯示頭銜（被@者不會顯示）
+			 */
+			showTitle: boolean;
 
 			/**
 			 * 無視某些成員的訊息
@@ -504,10 +580,10 @@ export interface ConfigTS {
 	};
 
 	/**
-	 * 可以使用部分進階操作的人
-	 * 限TG使用，為uid陣列
+	 * 於此列出的所有檔案在變更時都會自動退出，需搭配module exit使用
+	 * 建議使用絕對路徑
 	 */
-	admin?: number[];
+	exits?: string[];
 }
 
 interface TransportServemediaBase {

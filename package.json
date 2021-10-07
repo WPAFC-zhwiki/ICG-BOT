@@ -36,7 +36,7 @@
 		"lru-cache": "^6.0.0",
 		"module-alias": "^2.2.2",
 		"mwn": "^0.11.1",
-		"node-fetch": "^3.0.0",
+		"node-fetch": "^2.6.5",
 		"request": "~2.88.2",
 		"sharp": "^0.25.2",
 		"string-format": "^2.0.0",

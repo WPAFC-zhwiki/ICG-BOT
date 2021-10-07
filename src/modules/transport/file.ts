@@ -5,12 +5,11 @@
  * Telegram 音訊使用 ogg 格式，QQ 則使用 amr 和 silk，這個可以考慮互相轉換一下
  *
  */
-import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
-import request from 'request';
-import sharp from 'sharp';
-
+import crypto = require( 'crypto' );
+import fs = require( 'fs' );
+import path = require( 'path' );
+import request = require( 'request' );
+import sharp = require( 'sharp' );
 import winston = require( 'winston' );
 
 import { Manager } from 'src/init';
@@ -22,8 +21,8 @@ import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 const servemedia: ConfigTS[ 'transport' ][ 'servemedia' ] = Manager.config.transport.servemedia;
 
 type File = {
-    type: string;
-    url: string;
+	type: string;
+	url: string;
 };
 
 const USERAGENT = `AFC-ICG-BOT/${ version } (${ repository.replace( /^git\+/, '' ) })`;
@@ -364,6 +363,7 @@ const fileUploader = {
 		}
 	}
 };
+
 Manager.global.ifEnable( 'transport', function () {
 	bridge.addHook( 'bridge.send', async ( msg: BridgeMsg ) => {
 		msg.extra.uploads = await fileUploader.process( msg );

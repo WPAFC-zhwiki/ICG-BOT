@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord = require( 'discord.js' );
 import winston = require( 'winston' );
 
 import { ConfigTS } from 'src/config';
@@ -69,7 +69,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 			if (
 				!that._enabled ||
 				rawdata.author.id === client.user.id ||
-				discordOptions.ignorebot && rawdata.author.bot ||
+				discordOptions.ignoreBot && rawdata.author.bot ||
 				discordOptions.ignore.includes( rawdata.author.id )
 			) {
 				return;

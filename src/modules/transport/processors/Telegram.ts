@@ -1,7 +1,6 @@
-import path from 'path';
-import format from 'string-format';
+import path = require( 'path' );
+import format = require( 'string-format' );
 import { Context as TContext } from 'telegraf';
-
 import winston = require( 'winston' );
 
 import { Manager } from 'src/init';

@@ -1,4 +1,4 @@
-import lodash from 'lodash';
+import lodash = require( 'lodash' );
 import irc = require( 'irc-upd' );
 import color = require( 'irc-colors' );
 import winston = require( 'winston' );

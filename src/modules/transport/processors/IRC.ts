@@ -1,6 +1,6 @@
-import format from 'string-format';
-import irc from 'irc-upd';
+import format = require( 'string-format' );
 import color = require( 'irc-colors' );
+import irc = require( 'irc-upd' );
 import winston = require( 'winston' );
 
 import { Manager } from 'src/init';

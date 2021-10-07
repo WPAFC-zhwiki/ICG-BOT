@@ -3,6 +3,7 @@
  */
 
 import winston = require( 'winston' );
+
 import { Manager } from 'src/init';
 import { prepareBridgeMsg } from 'src/modules/transport';
 import { Context } from 'src/lib/handlers/Context';

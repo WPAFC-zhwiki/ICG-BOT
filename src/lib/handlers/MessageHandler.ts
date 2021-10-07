@@ -108,6 +108,19 @@ export class MessageHandler<events extends BaseEvents<any> = BaseEvents<rawmsg>>
 		return this;
 	}
 
+	public aliasCommand( command: string, rawCommand: string ): this {
+		if ( ( !rawCommand ) || ( rawCommand.trim() === '' ) ) {
+			return this;
+		}
+
+		const func = this._commands.get( rawCommand );
+
+		if ( !func ) {
+			return this;
+		}
+		return this.addCommand( command, func );
+	}
+
 	public deleteCommand( command: string ): this {
 		this._commands.delete( command );
 		return this;

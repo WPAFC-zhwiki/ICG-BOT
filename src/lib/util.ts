@@ -1,5 +1,3 @@
-import lodash from 'lodash';
-
 export function getFriendlySize( size: number ): string {
 	if ( size <= 1126 ) {
 		return `${ size.toLocaleString() } B`;
@@ -21,5 +19,3 @@ export function getFriendlyLocation( latitude: number, longitude: number ): stri
 
 	return `${ y }, ${ x }`;
 }
-
-export const copyObject = lodash.cloneDeep;

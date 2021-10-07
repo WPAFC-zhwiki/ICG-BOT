@@ -4,16 +4,22 @@
 
 import winston = require( 'winston' );
 
-import { addCommand } from 'src/lib/message';
+import { Manager } from 'src/init';
 
-addCommand( 'thisgroupid', function ( context ) {
-	if ( context.isPrivate ) {
-		context.reply( `YourId = ${ context.from }` );
-		winston.debug( `[groupid-tg] Msg #${ context.msgId }: YourId = ${ context.from }` );
+const tg = Manager.handlers.get( 'Telegram' );
+tg.addCommand( 'thisgroupid', function ( context ) {
+	const rawdata = context._rawdata;
+	let output: string;
+	if ( rawdata.from.id === rawdata.chat.id ) {
+		output = `Your ID: <code>${ rawdata.from.id }</code>`;
+		winston.debug( `[groupid-tg] Msg #${ context.msgId }: YourId = ${ rawdata.from.id }` );
 	} else {
-		context.reply( `GroupId = ${ context.to }` );
-		winston.debug( `[groupid-tg] Msg #${ context.msgId }: GroupId = ${ context.to }` );
+		output = `Group ID: <code>${ rawdata.chat.id }</code>`;
+		winston.debug( `[groupid-tg] Msg #${ context.msgId }: GroupId = ${ rawdata.chat.id }` );
 	}
-}, {
-	allowedClients: [ 'Telegram' ]
+	context.reply( output, {
+		parse_mode: 'HTML'
+	} );
 } );
+
+tg.aliasCommand( 'groupid', 'thisgroupid' );

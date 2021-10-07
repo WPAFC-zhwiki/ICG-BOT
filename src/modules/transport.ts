@@ -2,17 +2,17 @@
  * 互聯機器人
  */
 
-import { Manager } from 'src/init';
 import winston = require( 'winston' );
 
+import { Manager } from 'src/init';
 import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
-export * from 'src/modules/transport/BridgeMsg';
-
 import * as bridge from 'src/modules/transport/bridge';
-export * from 'src/modules/transport/bridge';
-export * from 'src/modules/transport/command';
 import 'src/modules/transport/file';
 import 'src/modules/transport/paeeye';
+
+export * from 'src/modules/transport/BridgeMsg';
+export * from 'src/modules/transport/bridge';
+export * from 'src/modules/transport/command';
 
 const options = Manager.config.transport;
 

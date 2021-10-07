@@ -1,14 +1,15 @@
-import https from 'https';
-import * as fs from 'fs';
-import * as Tls from 'tls';
+import fs = require( 'fs' );
+import https = require( 'https' );
+import { cloneDeep as copyObject } from 'lodash';
 import { Telegraf, Context as TContext, Telegram } from 'telegraf';
+import Tls = require( 'tls' );
 import * as TT from 'telegraf/typings/telegram-types';
 import winston = require( 'winston' );
 
 import { ConfigTS } from 'src/config';
 import { MessageHandler, Command, BaseEvents } from 'src/lib/handlers/MessageHandler';
 import { Context } from 'src/lib/handlers/Context';
-import { getFriendlySize, getFriendlyLocation, copyObject } from 'src/lib/util';
+import { getFriendlySize, getFriendlyLocation } from 'src/lib/util';
 import HttpsProxyAgent from 'src/lib/proxy.js';
 
 export interface TelegramEvents extends BaseEvents<TContext> {
@@ -426,6 +427,12 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 	public deleteCommand( command: string ): this {
 		const cmd = command.replace( /[^A-Za-z0-9_]/gu, '' );
 		return super.deleteCommand( cmd );
+	}
+
+	public aliasCommand( command: string, rawCommand: string ): this {
+		// 自動過濾掉 command 中的非法字元
+		const rawCmd = rawCommand.replace( /[^A-Za-z0-9_]/gu, '' );
+		return super.aliasCommand( command, rawCmd );
 	}
 
 	private async _say( method: string, target: string | number,

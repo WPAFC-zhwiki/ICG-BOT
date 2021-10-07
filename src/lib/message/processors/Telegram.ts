@@ -1,6 +1,7 @@
+import { Context as TContext } from 'telegraf';
+
 import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
-import { Context as TContext } from 'telegraf';
 import msgManage from 'src/lib/message/msgManage';
 
 const tgHandler = Manager.handlers.get( 'Telegram' );

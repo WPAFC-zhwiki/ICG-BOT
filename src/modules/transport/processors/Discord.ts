@@ -1,4 +1,4 @@
-import format from 'string-format';
+import format = require( 'string-format' );
 import winston = require( 'winston' );
 
 import { Manager } from 'src/init';

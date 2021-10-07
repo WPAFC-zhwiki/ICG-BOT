@@ -3,9 +3,9 @@ import Discord = require( 'discord.js' );
 import { mwbot, $, IRCBold as iB } from 'src/modules/afc/util/index';
 
 type ApiPageInfo = {
-    pageid: number;
-    ns: number;
-    title: string;
+	pageid: number;
+	ns: number;
+	title: string;
 };
 
 export async function getBacklogInfo(): Promise<{

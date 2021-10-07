@@ -2,13 +2,13 @@
  * linky - 自動將聊天中的[[]]與{{}}換成 Wiki 系統的連結
  */
 
-import { Manager } from 'src/init';
-import { transportMessage, BridgeMsg } from 'src/modules/transport';
-
 import winston = require( 'winston' );
+
+import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
 import { getUIDFromContext, msgManage, parseUID } from 'src/lib/message';
 import delay from 'src/lib/delay';
+import { transportMessage, BridgeMsg } from 'src/modules/transport';
 
 const options = Manager.config.wikilinky;
 

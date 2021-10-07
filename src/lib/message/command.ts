@@ -1,4 +1,5 @@
 import winston = require( 'winston' );
+
 import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
 import { parseUID, getUIDFromContext } from 'src/lib/message/uid';
