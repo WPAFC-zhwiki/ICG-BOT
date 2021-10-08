@@ -1,7 +1,7 @@
-import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 import winston = require( 'winston' );
 
-import { mwbot, recentChange } from 'src/modules/afc/util/index';
+import { mwbot } from 'src/modules/afc/util/index';
+import { recentChange, RecentChangeEvent } from 'src/modules/afc/util/recentchange';
 
 let caches: string[] = [];
 
@@ -43,9 +43,8 @@ export function hasReviewerCaches(): boolean {
 	return !!caches.length;
 }
 
-recentChange( function ( event: RecentChangeStreamEvent ): boolean {
+recentChange.addProcessFunction( function ( event: RecentChangeEvent ): boolean {
 	if (
-		event.wiki === 'zhwiki' &&
 		event.type === 'edit' &&
 		event.title === 'WikiProject:建立條目/參與者'
 	) {

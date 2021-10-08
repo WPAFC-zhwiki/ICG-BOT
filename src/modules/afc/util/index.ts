@@ -4,8 +4,6 @@ import { version, repository } from 'src/config';
 
 import TurndownService from 'turndown';
 import winston = require( 'winston' );
-import EventSource from 'eventsource';
-import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 
 const service = new TurndownService();
 
@@ -93,46 +91,3 @@ export function parseWikiLink( context: string ): string {
 		.replace( /&#91;/g, '[' )
 		.replace( /&#93;/g, ']' );
 }
-
-const EventStream = new EventSource( 'https://stream.wikimedia.org/v2/stream/recentchange', {
-	headers: {
-		'User-Agent': mwbot.options.userAgent
-
-	}
-} );
-
-EventStream.onerror = function ( err ) {
-	try {
-		const errjson: string = JSON.stringify( err );
-		if ( errjson === '{"type":"error"}' ) {
-			return; // ignore
-		}
-		winston.error( '[afc/event/clean] Recentchange Error (Throw by EventSource):' + errjson );
-	} catch ( e ) {
-		winston.error( '[afc/event/clean] Recentchange Error (Throw by EventSource): <Throw at console>' );
-		console.log( err );
-	}
-};
-
-let i = 0;
-
-// eslint-disable-next-line max-len
-const EventStreamManager = new Map<number, [( data: RecentChangeStreamEvent ) => boolean, ( data: RecentChangeStreamEvent ) => void]>();
-
-// eslint-disable-next-line max-len
-export function recentChange( filter: ( data: RecentChangeStreamEvent ) => boolean, action: ( data: RecentChangeStreamEvent ) => void ): void {
-	EventStreamManager.set( i++, [ filter, action ] );
-}
-
-EventStream.onmessage = function ( { data } ) {
-	const event: RecentChangeStreamEvent = JSON.parse( data );
-	EventStreamManager.forEach( function ( [ filter, action ] ) {
-		if ( filter( event ) ) {
-			try {
-				action( event );
-			} catch ( e ) {
-
-			}
-		}
-	} );
-};

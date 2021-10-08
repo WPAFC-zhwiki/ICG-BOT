@@ -1,8 +1,7 @@
-import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 import Discord = require( 'discord.js' );
 import winston = require( 'winston' );
 
-import { mwbot, $, recentChange, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
+import { mwbot, $, recentChange, RecentChangeEvent, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
@@ -12,9 +11,8 @@ function mdlink( title: string, text?: string ) {
 	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
-recentChange( function ( event: RecentChangeStreamEvent ) {
+recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	if (
-		event.wiki === 'zhwiki' &&
 		event.type === 'edit' &&
 		event.title === 'WikiProject:建立條目/詢問桌' &&
 		( event.length?.old || 0 ) < ( event.length?.new || 0 ) + 10
@@ -23,7 +21,7 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 	}
 
 	return false;
-}, async function ( event: RecentChangeStreamEvent ) {
+}, async function ( event: RecentChangeEvent ) {
 	const { compare } = await mwbot.request( {
 		action: 'compare',
 		format: 'json',

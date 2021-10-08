@@ -1,6 +1,6 @@
 {
 	"name": "afc-icg-bot",
-	"version": "1.1.1-rc2",
+	"version": "1.1.1-rc3",
 	"description": "中文維基百科建立條目專題互聯群機器人",
 	"repository": "git+https://github.com/WPAFC-zhwiki/ICG-Bot",
 	"author": {

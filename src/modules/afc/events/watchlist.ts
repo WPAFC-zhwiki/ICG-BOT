@@ -1,10 +1,9 @@
 /* eslint-disable no-jquery/no-class-state */
 import Discord = require( 'discord.js' );
 import { MwnPage } from 'mwn';
-import { RecentChangeStreamEvent } from 'mwn/build/eventstream';
 import winston = require( 'winston' );
 
-import { mwbot, $, recentChange, AFCPage, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
+import { mwbot, recentChange, RecentChangeEvent, $, AFCPage, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
 
 function getReason( $e: JQuery, title: string ) {
 	$e.find( 'a' ).each( function ( _i, a ) {
@@ -60,9 +59,8 @@ function mdlink( title: string, text?: string ) {
 	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
-recentChange( function ( event: RecentChangeStreamEvent ) {
+recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	if (
-		event.wiki === 'zhwiki' &&
 		event.type === 'categorize' &&
 		event.title === 'Category:正在等待審核的草稿'
 	) {
@@ -70,7 +68,7 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 	}
 
 	return false;
-}, async function ( event: RecentChangeStreamEvent ) {
+}, async function ( event: RecentChangeEvent ) {
 	try {
 		const title: string = event.comment.replace( /^\[\[:?([^[\]]+)\]\].*$/, '$1' );
 
@@ -82,9 +80,9 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 		const creator: string = await page.getCreator();
 		await page.purge();
 		let tMsg: string = htmllink( `User:${ user }`, user );
-		const dMsg: Discord.MessageEmbed = new Discord.MessageEmbed();
-
-		dMsg.setTimestamp( event.timestamp * 1000 );
+		const dMsg: Discord.MessageEmbed = new Discord.MessageEmbed( {
+			timestamp: event.timestamp * 1000
+		} );
 
 		const wikitext: string = afcpage.text;
 		const html: string = await mwbot.parseTitle( title, {
@@ -176,7 +174,7 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 				.setColor( 'GREEN' )
 				.setDescription( turndown( tMsg ) );
 
-			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: accept, tpClass: ${ tpClass.length && tpClass || undefined }` );
+			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: accept, tpClass: ${ tpClass.length && tpClass || undefined }` );
 		} else if ( !$submissionbox.length && page.namespace === 0 && user === creator ) {
 			const pagehistory = await page.history( 'user', 2, {
 				rvslots: 'main'
@@ -193,11 +191,11 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 					.setDescription( `${ mdlink( `User:${ user }`, user ) }在條目命名空間建立了草稿${ turndown( pagelink ) }` )
 					.setFooter( [ `[移動到草稿命名空間](${ moveurl })` ] );
 
-				winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: create in ns0` );
+				winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: create in ns0` );
 			} else {
 				tMsg += `移除了在條目命名空間的草稿${ pagelink }中的AFC模板。`;
 				dMsg.setDescription( turndown( tMsg ) );
-				winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & in ns0` );
+				winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & in ns0` );
 			}
 			dMsg.setColor( 'ORANGE' );
 		} else if ( !$submissionbox.length ) {
@@ -206,7 +204,7 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 				.setColor( 'ORANGE' )
 				.setDescription( turndown( tMsg ) );
 
-			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & not in ns0` );
+			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & not in ns0` );
 		} else if ( $submissionbox.hasClass( 'afc-submission-pending' ) ) {
 			if ( submitter !== user ) {
 				tMsg += `以${ htmllink( `User:${ encodeURI( submitter ) }`, submitter ) }的身分`;
@@ -219,7 +217,7 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 
 			const { issues } = await autoReview( page, wikitext, $parseHTML, { user, creator } );
 
-			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: submit, issues: ${ issues.join( ', ' ) }` );
+			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: submit, issues: ${ issues.join( ', ' ) }` );
 
 			dMsg.setDescription( turndown( tMsg ) );
 
@@ -278,7 +276,7 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 				} );
 			}
 
-			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, submituser: ${ submituser }, action: ${ $submissionbox.hasClass( 'afc-submission-rejected' ) ? 'rejected' : 'declined' }, reasons: ${ JSON.stringify( reasons ) }` );
+			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, submituser: ${ submituser }, action: ${ $submissionbox.hasClass( 'afc-submission-rejected' ) ? 'rejected' : 'declined' }, reasons: ${ JSON.stringify( reasons ) }` );
 
 			if ( reasons.length ) {
 				dMsg.setDescription( turndown( tMsg ) );
@@ -293,7 +291,7 @@ recentChange( function ( event: RecentChangeStreamEvent ) {
 				dMsg.addField( '拒絕理由', [ '• 未提供理由' ] );
 			}
 		} else {
-			winston.debug( `[afc/events/autoreview] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: ignore` );
+			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: ignore` );
 			return;
 		}
 

@@ -1,4 +1,5 @@
 import { ConfigTS } from 'config/type';
+// import path = require( 'path' );
 
 /*
  * 機器人的設定檔
@@ -114,6 +115,7 @@ const config: ConfigTS = {
 		'pia',
 		'wikilinky' // 提供連結
 		// 'afc' // afc主模組
+		// 'exit' // 變更配置時自動重載
 	],
 
 	transport: {
@@ -127,7 +129,7 @@ const config: ConfigTS = {
 				'irc/#test',
 				'telegram/-12345678', // Telegram 群組號碼：可以先把 bot 拉到群組中，然後透過 /thisgroupid 來取得 id
 				'discord/12345678'
-				// 'discord/87654321'			// 如果有這種需求，亦可以連接
+				// 'discord/87654321' // 如果有這種需求，亦可以連接
 			]
 			/*
 			 如果需要，可以繼續加
@@ -152,7 +154,7 @@ const config: ConfigTS = {
 		/*
 		// 如果不希望特定方向的轉發，例如 Telegram 群不向 QQ 轉發，請在下面設定
 		"disables": {
-			'telegram/-12345678': ['irc/#aaa']		 // Telegram 群 -12345678 的訊息不會向 IRC 的 #aaa 頻道轉發
+			'telegram/-12345678': ['irc/#aaa'] // Telegram 群 -12345678 的訊息不會向 IRC 的 #aaa 頻道轉發
 		},
 		 */
 
@@ -368,6 +370,18 @@ const config: ConfigTS = {
 	}
 	*/
 
+	/*
+	exits: [
+		{
+			type: 'file',
+			path: __filename // 配置改變時自動重載
+		},
+		{
+			type: 'folder',
+			path: path.join( __dirname, '../src' ) // 原始碼改變時自動重載
+		}
+	]
+	*/
 };
 
 export default config;

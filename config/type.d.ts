@@ -436,12 +436,12 @@ export interface ConfigTS {
 				/**
 				 * 在訊息前面使用此值會阻止此條訊息向其他群組轉發。
 				 */
-				prepend: string;
+				prepend?: string;
 
 				/**
 				 * 在訊息中間使用此值會阻止此條訊息向其他群組轉發。
 				 */
-				inline: string;
+				inline?: string;
 
 				/**
 				 * 訊息中與此正規表達式對應會阻止此條訊息向其他群組轉發。
@@ -583,7 +583,10 @@ export interface ConfigTS {
 	 * 於此列出的所有檔案在變更時都會自動退出，需搭配module exit使用
 	 * 建議使用絕對路徑
 	 */
-	exits?: string[];
+	exits?: ( {
+		type?: '' | 'file' | 'folder',
+		path: string;
+	} )[];
 }
 
 interface TransportServemediaBase {

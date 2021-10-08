@@ -160,7 +160,9 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 			throw new Error( 'Handler not enabled' );
 		} else {
 			const channel = await this._client.channels.fetch( target );
-			if ( channel.isText() ) {
+			if ( !channel ) {
+				throw new ReferenceError( `Fetch chennel ${ target } fail.` );
+			} else if ( channel.isText() ) {
 				return await channel.send( message );
 			}
 			throw new Error( `Channel ${ target } is not't a text channel.` );
