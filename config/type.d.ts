@@ -740,7 +740,7 @@ interface MwnLoginBase extends MwnOptions {
 }
 
 interface MwnLoginNone extends MwnLoginBase {
-	type: '' | 'none';
+	type?: '' | 'none';
 }
 
 interface MwnLoginBotPassword extends MwnLoginBase {

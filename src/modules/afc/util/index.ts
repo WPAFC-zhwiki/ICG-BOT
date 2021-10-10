@@ -44,9 +44,10 @@ export { default as jQuery, default as $ } from 'src/lib/jquery';
 export const mwbot = ( function (): mwn {
 	const mwnconfig = Manager.config.afc.mwn;
 	// eslint-disable-next-line no-shadow
-	const mwbot: mwn = new mwn( Object.assign( mwnconfig, {
+	const mwbot: mwn = new mwn( {
+		...mwnconfig,
 		silent: true
-	} ) );
+	} );
 
 	if ( mwnconfig.userAgent.length === 0 ) {
 		mwnconfig.userAgent = `AFC-ICG-BOT/${ version } (${ repository.replace( /^git\+/, '' ) })`;

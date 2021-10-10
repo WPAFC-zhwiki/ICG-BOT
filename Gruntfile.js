@@ -2,6 +2,10 @@ const { exec } = require( 'child_process' );
 let path = require( 'path' );
 const fs = require( 'fs-extra' );
 
+function getFullPath( ...paths ) {
+	return path.join( __dirname, ...paths );
+}
+
 /**
  * @param {import('grunt')} grunt
  */
@@ -22,9 +26,9 @@ module.exports = function ( grunt ) {
 		const done = this.async();
 
 		try {
-			fs.removeSync( path.join( __dirname, 'build' ) );
-			fs.removeSync( path.join( __dirname, 'config/config.js' ) );
-			fs.removeSync( path.join( __dirname, 'bin' ) );
+			fs.removeSync( getFullPath( 'build' ) );
+			fs.removeSync( getFullPath( 'config/config.js' ) );
+			fs.removeSync( getFullPath( 'bin' ) );
 		} catch ( e ) {
 			grunt.log.error( e );
 			done( false );
@@ -147,14 +151,23 @@ module.exports = function ( grunt ) {
 		}
 
 		try {
-			fs.copySync( path.join( __dirname, 'build/config/config.js' ), path.join( __dirname, 'config/config.js' ) );
-			grunt.log.write( `Copy ${ path.join( __dirname, 'build/config/config.js' ) } to ${ path.join( __dirname, 'config/config.js' ) } done.\n` );
-			fs.copySync( path.join( __dirname, 'build/src' ), path.join( __dirname, 'bin' ) );
-			grunt.log.write( `Copy ${ path.join( __dirname, 'build/src' ) } to ${ path.join( __dirname, 'bin' ) } done.\n` );
+			fs.copySync( getFullPath( 'build/config/config.js' ), getFullPath( 'config/config.js' ) );
+			grunt.log.write( `Copy ${ getFullPath( 'build/config/config.js' ) } to ${ getFullPath( 'config/config.js' ) } done.\n` );
+			fs.copySync( getFullPath( 'build/src' ), getFullPath( 'bin' ) );
+			grunt.log.write( `Copy ${ getFullPath( __dirname, 'build/src' ) } to ${ getFullPath( 'bin' ) } done.\n` );
 		} catch ( e ) {
 			grunt.log.error( e );
 			done( false );
 			return;
+		}
+
+		if ( grunt.file.exists( getFullPath( 'reloadFlag.txt' ) ) ) {
+			try {
+				grunt.file.write( getFullPath( 'reloadFlag.txt' ), 'Reload after build success.\n\nDate: ' + new Date().toISOString() );
+				grunt.log.write( `Refresh "${ getFullPath( 'reloadFlag.txt' ) }" success.\n` );
+			} catch ( e ) {
+				grunt.log.warn( `Fail to refresh "${ getFullPath( 'reloadFlag.txt' ) }": ${ e }\n` );
+			}
 		}
 
 		done( true );

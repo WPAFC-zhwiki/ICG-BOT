@@ -304,8 +304,5 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		} );
 	} catch ( e ) {
 		winston.error( '[afc/event/watchlist] Recentchange Error:  (Throw by Async Function) ', e );
-		if ( !( e instanceof Error ) ) {
-			console.log( e );
-		}
 	}
 } );

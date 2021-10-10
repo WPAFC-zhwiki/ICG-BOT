@@ -35,13 +35,21 @@ if ( config.exits ) {
 }
 
 exits.forEach( function ( exit ) {
-	fs.watch( exit, {
-		recursive: true
-	}, function ( _, n ) {
-		winston.warn( `[exit] listening path "${ path.join( exit, n ) }" change, exit.` );
-		// eslint-disable-next-line no-process-exit
-		process.exit( 1 );
-	} );
+	if ( exit.match( new RegExp( '\\' + path.sep + '$' ) ) ) {
+		fs.watch( exit, {
+			recursive: [ 'win32', 'darwin' ].includes( process.platform )
+		}, function ( _, n ) {
+			winston.warn( `[exit] listening path "${ path.join( exit, n ) }" change, exit.` );
+			// eslint-disable-next-line no-process-exit
+			process.exit( 1 );
+		} );
+	} else {
+		fs.watchFile( exit, function () {
+			winston.warn( `[exit] listening path "${ exit }" change, exit.` );
+			// eslint-disable-next-line no-process-exit
+			process.exit( 1 );
+		} );
+	}
 } );
 
 winston.info( `[exit] listening ${ exits.length } path......` );
