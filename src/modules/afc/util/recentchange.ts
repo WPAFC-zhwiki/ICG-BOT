@@ -260,6 +260,11 @@ class RecentChanges {
 	}
 
 	private async _request(): Promise<void> {
+		try {
+			mwbot.title.checkData();
+		} catch ( e ) {
+			await mwbot.loginPromise;
+		}
 		const data = await mwbot.request( this._filter );
 
 		const recentchanges: RecentChangeResponse[] = data.query.recentchanges;

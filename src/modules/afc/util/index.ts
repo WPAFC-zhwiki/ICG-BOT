@@ -41,21 +41,26 @@ export function decodeURI( encodedURI: string ): string {
 
 export { default as jQuery, default as $ } from 'src/lib/jquery';
 
-export const mwbot = ( function (): mwn {
+interface MwnStatic extends mwn {
+	loginPromise?: Promise<void>
+}
+
+export const mwbot = ( function (): MwnStatic {
 	const mwnconfig = Manager.config.afc.mwn;
-	// eslint-disable-next-line no-shadow
-	const mwbot: mwn = new mwn( {
-		...mwnconfig,
-		silent: true
-	} );
 
 	if ( mwnconfig.userAgent.length === 0 ) {
 		mwnconfig.userAgent = `AFC-ICG-BOT/${ version } (${ repository.replace( /^git\+/, '' ) })`;
 	}
 
+	// eslint-disable-next-line no-shadow
+	const mwbot: MwnStatic = new mwn( {
+		...mwnconfig,
+		silent: true
+	} );
+
 	switch ( mwnconfig.type ) {
 		case 'botpassword':
-			mwbot.login()
+			mwbot.loginPromise = mwbot.login()
 				.then( function () {
 					winston.debug( `[afc/util/index] mwn login successful: ${ mwnconfig.username }@${ mwnconfig.apiUrl.split( '/api.php' ).join( '' ) }/index.php` );
 				} )
@@ -65,7 +70,7 @@ export const mwbot = ( function (): mwn {
 			break;
 		case 'oauth':
 			mwbot.initOAuth();
-			mwbot.getTokensAndSiteInfo()
+			mwbot.loginPromise = mwbot.getTokensAndSiteInfo()
 				.then( function () {
 					winston.debug( '[afc/util/index] mwn: success get tokens and site info.' );
 				} )
@@ -74,7 +79,7 @@ export const mwbot = ( function (): mwn {
 				} );
 			break;
 		default:
-			mwbot.getSiteInfo()
+			mwbot.loginPromise = mwbot.getSiteInfo()
 				.then( function () {
 					winston.debug( '[afc/util/index] mwn: success get site info.' );
 				} );
