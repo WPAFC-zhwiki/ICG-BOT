@@ -1,5 +1,5 @@
-/* eslint-disable no-unused-expressions */
-import Discord = require( 'discord.js' );
+import { Message as TMessage } from 'telegraf/typings/telegram-types';
+import { Message as DMessage, MessageEmbed as DMessageEmbed } from 'discord.js';
 
 import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
@@ -13,8 +13,10 @@ const irc = Manager.handlers.get( 'IRC' );
 
 const enableCommands: string[] = Manager.config.afc.enables.concat( Manager.config.afc.enableCommands || [] );
 
+export type Response = void /* IRC */ | TMessage | DMessage;
+
 type command = ( args: string[], replyfunc: ( msg: {
-	dMsg?: string | Discord.MessageEmbed;
+	dMsg?: string | DMessageEmbed;
 	tMsg?: string;
 	iMsg?: string;
 } ) => void, msg: Context ) => void;
@@ -22,7 +24,7 @@ type command = ( args: string[], replyfunc: ( msg: {
 export function setCommand( cmd: string, func: command ): void {
 	addCommand( `${ cmd }`, function ( context ) {
 		func( context.param.split( ' ' ), function ( msg: {
-			dMsg?: string | Discord.MessageEmbed;
+			dMsg?: string | DMessageEmbed;
 			tMsg?: string;
 			iMsg?: string;
 		} ) {
@@ -34,23 +36,35 @@ export function setCommand( cmd: string, func: command ): void {
 	} );
 }
 
+type Transport = {
+	raw: Promise<Response>;
+	irc: Promise<void>[];
+	tg: Promise<TMessage>[];
+	dc: Promise<DMessage>[];
+};
+
 export async function reply( context: Context, msg: {
-	dMsg?: string | Discord.MessageEmbed;
+	dMsg?: string | DMessageEmbed;
 	tMsg?: string;
 	iMsg?: string;
-} ): Promise<void> {
+} ): Promise<Transport> {
 	const that = parseUID( getUIDFromContext( context, context.to ) );
 
-	if ( context.handler.id === 'Discord' ) {
-		msg.dMsg && dc.say( that.id, msg.dMsg );
-	} else if ( that.client === 'Telegram' ) {
-		msg.tMsg && tg.sayWithHTML( that.id, msg.tMsg, {
+	const output: Transport = {
+		raw: Promise.resolve(),
+		irc: [],
+		tg: [],
+		dc: []
+	};
+
+	if ( context.handler.id === 'Discord' && msg.dMsg ) {
+		output.raw = dc.say( that.id, msg.dMsg );
+	} else if ( that.client === 'Telegram' && msg.tMsg ) {
+		output.raw = tg.sayWithHTML( that.id, msg.tMsg, {
 			disable_web_page_preview: true
 		} );
-	} else if ( that.client === 'IRC' ) {
-		msg.iMsg && msg.iMsg.split( '\n' ).forEach( function ( m ) {
-			irc.say( that.id, m );
-		} );
+	} else if ( that.client === 'IRC' && msg.iMsg ) {
+		output.raw = irc.say( that.id, msg.iMsg );
 	}
 
 	moduleTransport.prepareBridgeMsg( context );
@@ -68,43 +82,43 @@ export async function reply( context: Context, msg: {
 				continue;
 			}
 			const s = parseUID( t );
-			if ( s.client === 'Discord' ) {
-				msg.dMsg && dc.say( s.id, msg.dMsg );
-			} else if ( s.client === 'Telegram' ) {
-				msg.tMsg && tg.sayWithHTML( s.id, msg.tMsg, {
+			if ( s.client === 'Discord' && msg.dMsg ) {
+				output.dc.push( dc.say( s.id, msg.dMsg ) );
+			} else if ( s.client === 'Telegram' && msg.tMsg ) {
+				output.tg.push( tg.sayWithHTML( s.id, msg.tMsg, {
 					disable_web_page_preview: true
-				} );
-			} else if ( s.client === 'IRC' ) {
-				msg.iMsg && msg.iMsg.split( '\n' ).forEach( function ( m ) {
-					irc.say( s.id, m );
-				} );
+				} ) );
+			} else if ( s.client === 'IRC' && msg.iMsg ) {
+				output.irc.push( irc.say( s.id, msg.iMsg ) );
 			}
 		}
 	}
+
+	return output;
 }
 
 const enableEvents: string[] = Manager.config.afc.enables.concat( Manager.config.afc.enableEvents || [] );
 const debugGroups: string[] = Manager.config.afc.debugGroups || [];
 
-export async function send( msg: {
-	dMsg?: string | Discord.MessageEmbed;
+export function send( msg: {
+	dMsg?: string | DMessageEmbed;
 	tMsg?: string;
 	iMsg?: string;
-}, debug?: boolean ): Promise<void> {
+}, debug?: boolean ): Promise<Response>[] {
+	const output: Promise<Response>[] = [];
 	( debug ? debugGroups : enableEvents ).forEach( function ( k ) {
 		const f = parseUID( k );
-		if ( f.client === 'Discord' ) {
-			msg.dMsg && dc.say( f.id, msg.dMsg );
-		} else if ( f.client === 'Telegram' ) {
-			msg.tMsg && tg.sayWithHTML( f.id, msg.tMsg, {
+		if ( f.client === 'Discord' && msg.dMsg ) {
+			output.push( dc.say( f.id, msg.dMsg ) );
+		} else if ( f.client === 'Telegram' && msg.tMsg ) {
+			output.push( tg.sayWithHTML( f.id, msg.tMsg, {
 				disable_web_page_preview: true
-			} );
-		} else if ( f.client === 'IRC' ) {
-			msg.iMsg && msg.iMsg.split( '\n' ).forEach( function ( m ) {
-				irc.say( f.id, m );
-			} );
+			} ) );
+		} else if ( f.client === 'IRC' && msg.iMsg ) {
+			output.push( irc.say( f.id, msg.iMsg ) );
 		}
 	} );
+	return output;
 }
 
 function htmlExcape( str: string ) {

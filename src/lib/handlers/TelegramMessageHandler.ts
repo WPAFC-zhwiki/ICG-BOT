@@ -40,7 +40,7 @@ export interface TelegramEvents extends BaseEvents<TContext> {
 		nick: string;
 		username?: string;
 	}, ctx: TContext ): void;
-	richmessage( context: Context ): void;
+	richmessage( context: Context<TContext> ): void;
 }
 
 export interface SendMessageOpipons extends TT.ExtraSendMessage, TT.ExtraReplyMessage {
@@ -433,6 +433,10 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		// 自動過濾掉 command 中的非法字元
 		const rawCmd = rawCommand.replace( /[^A-Za-z0-9_]/gu, '' );
 		return super.aliasCommand( command, rawCmd );
+	}
+
+	public registerInlineQuery( ...args: Parameters<Telegraf<TContext>[ 'inlineQuery' ]> ): void {
+		this._client.inlineQuery( ...args );
 	}
 
 	private async _say( method: string, target: string | number,

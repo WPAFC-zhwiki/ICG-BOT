@@ -7,6 +7,11 @@ import { Context, ContextExtra as ContextExtra } from 'src/lib/handlers/Context'
 import { getFriendlySize } from 'src/lib/util';
 
 export interface DiscordEvents extends BaseEvents<Discord.Message> {
+	pin( info: {
+		from: Discord.User,
+		to: Discord.Channel;
+		text: string;
+	}, rawdata: Discord.Message ): void;
 	command( context: Context<Discord.Message>, comand: string, param: string ): void;
 	text( context: Context<Discord.Message> ): void;
 	ready( client: Discord.Client ): void;
@@ -70,7 +75,12 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 				!that._enabled ||
 				rawdata.author.id === client.user.id ||
 				discordOptions.ignoreBot && rawdata.author.bot ||
-				discordOptions.ignore.includes( rawdata.author.id )
+				discordOptions.ignore.includes( rawdata.author.id ) ||
+				// 無視置頂
+				// TODO: 解析置頂訊息
+				rawdata.type === 'PINS_ADD' ||
+				// TODO: MessageEmbed轉文字
+				!rawdata.content && rawdata.embeds && rawdata.embeds.length
 			) {
 				return;
 			}

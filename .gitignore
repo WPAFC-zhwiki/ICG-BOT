@@ -14,8 +14,8 @@ node_modules
 # config
 config/*
 !config/config.example.ts 
-!config/type.d.ts
+!config/config.type.d.ts
 
-# built
+# build
 build/
 bin/

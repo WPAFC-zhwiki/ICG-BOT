@@ -41,11 +41,7 @@ export function decodeURI( encodedURI: string ): string {
 
 export { default as jQuery, default as $ } from 'src/lib/jquery';
 
-interface MwnStatic extends mwn {
-	loginPromise?: Promise<void>
-}
-
-export const mwbot = ( function (): MwnStatic {
+export const mwbot = ( function (): mwn {
 	const mwnconfig = Manager.config.afc.mwn;
 
 	if ( mwnconfig.userAgent.length === 0 ) {
@@ -53,14 +49,14 @@ export const mwbot = ( function (): MwnStatic {
 	}
 
 	// eslint-disable-next-line no-shadow
-	const mwbot: MwnStatic = new mwn( {
+	const mwbot: mwn = new mwn( {
 		...mwnconfig,
 		silent: true
 	} );
 
 	switch ( mwnconfig.type ) {
 		case 'botpassword':
-			mwbot.loginPromise = mwbot.login()
+			mwbot.login()
 				.then( function () {
 					winston.debug( `[afc/util/index] mwn login successful: ${ mwnconfig.username }@${ mwnconfig.apiUrl.split( '/api.php' ).join( '' ) }/index.php` );
 				} )
@@ -70,7 +66,7 @@ export const mwbot = ( function (): MwnStatic {
 			break;
 		case 'oauth':
 			mwbot.initOAuth();
-			mwbot.loginPromise = mwbot.getTokensAndSiteInfo()
+			mwbot.getTokensAndSiteInfo()
 				.then( function () {
 					winston.debug( '[afc/util/index] mwn: success get tokens and site info.' );
 				} )
@@ -79,7 +75,7 @@ export const mwbot = ( function (): MwnStatic {
 				} );
 			break;
 		default:
-			mwbot.loginPromise = mwbot.getSiteInfo()
+			mwbot.getSiteInfo()
 				.then( function () {
 					winston.debug( '[afc/util/index] mwn: success get site info.' );
 				} );

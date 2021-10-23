@@ -1,4 +1,4 @@
-import { ConfigTS } from 'config/type';
+import { ConfigTS } from 'config/config.type';
 // import path = require( 'path' );
 
 /*

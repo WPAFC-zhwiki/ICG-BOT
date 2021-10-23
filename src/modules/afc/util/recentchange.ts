@@ -263,7 +263,7 @@ class RecentChanges {
 		try {
 			mwbot.title.checkData();
 		} catch ( e ) {
-			await mwbot.loginPromise;
+			await mwbot.getSiteInfo();
 		}
 		const data = await mwbot.request( this._filter );
 

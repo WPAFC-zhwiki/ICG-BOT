@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { ConfigTS } from 'config/type';
+import { ConfigTS } from 'config/config.type';
 import { repository as Repository } from 'package.json';
 import path = require( 'path' );
 
-export { ConfigTS } from 'config/type';
+export { ConfigTS } from 'config/config.type';
 export { version } from 'package.json';
 export const repository: string = Repository.replace( /^git\+/, '' );
 
