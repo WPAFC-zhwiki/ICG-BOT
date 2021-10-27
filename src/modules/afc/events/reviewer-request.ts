@@ -1,5 +1,5 @@
-import Discord = require( 'discord.js' );
-import winston = require( 'winston' );
+import Discord from 'discord.js';
+import winston from 'winston';
 
 import { Manager } from 'src/init';
 
@@ -57,7 +57,8 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 
 		const tMsg = `${ output } （${ htmllink( diff, '<b>查看申請</b>' ) }）
 #審核員申請 `;
-		const iMsg = htmlToIRC( tMsg ).replace( '#審核員申請', '審核員申請' );
+		const iMsg = htmlToIRC( `<b>審核員申請</b>
+${ output } （${ htmllink( diff, '<b>查看申請</b>' ) }）` );
 
 		send( {
 			dMsg,

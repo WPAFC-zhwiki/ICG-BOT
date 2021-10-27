@@ -64,7 +64,9 @@ export async function reply( context: Context, msg: {
 			disable_web_page_preview: true
 		} );
 	} else if ( that.client === 'IRC' && msg.iMsg ) {
-		output.raw = irc.say( that.id, msg.iMsg );
+		output.raw = irc.say( that.id, msg.iMsg, {
+			doNotSplitText: true
+		} );
 	}
 
 	moduleTransport.prepareBridgeMsg( context );
@@ -89,7 +91,9 @@ export async function reply( context: Context, msg: {
 					disable_web_page_preview: true
 				} ) );
 			} else if ( s.client === 'IRC' && msg.iMsg ) {
-				output.irc.push( irc.say( s.id, msg.iMsg ) );
+				output.irc.push( irc.say( s.id, msg.iMsg, {
+					doNotSplitText: true
+				} ) );
 			}
 		}
 	}
@@ -115,7 +119,9 @@ export function send( msg: {
 				disable_web_page_preview: true
 			} ) );
 		} else if ( f.client === 'IRC' && msg.iMsg ) {
-			output.push( irc.say( f.id, msg.iMsg ) );
+			output.push( irc.say( f.id, msg.iMsg, {
+				doNotSplitText: true
+			} ) );
 		}
 	} );
 	return output;

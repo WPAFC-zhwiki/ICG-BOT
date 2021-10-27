@@ -240,14 +240,17 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 	}
 
 	public async say( target: string, message: string, options: {
-		isAction?: boolean
+		isAction?: boolean;
+		doNotSplitText?: boolean;
 	} = {} ): Promise<void> {
 		if ( !this._enabled ) {
 			throw new Error( 'Handler not enabled' );
 		} else if ( !target.length ) {
 			return;
 		} else {
-			const lines = this.splitText( message, 449, this._maxLines );
+			const lines = options.doNotSplitText ?
+				message.split( '\n' ) :
+				this.splitText( message, 449, this._maxLines );
 			if ( options.isAction ) {
 				this._client.action( target, lines.join( '\n' ) );
 			} else {
