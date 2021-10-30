@@ -1,5 +1,6 @@
 import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
+import { MessageHandler } from 'src/lib/handlers/MessageHandler';
 
 const clientFullNames: Record<string, string> = {};
 for ( const [ type, handler ] of Manager.handlers ) {
@@ -39,5 +40,9 @@ export function getUIDFromContext( context: Context, id: string | number ): stri
 		return null;
 	}
 
-	return `${ context.handler.type.toLowerCase() }/${ id }`;
+	return getUIDFromHandler( context.handler, id );
+}
+
+export function getUIDFromHandler( handler: MessageHandler, id: string | number ): string | null {
+	return `${ handler.type.toLowerCase() }/${ id }`;
 }

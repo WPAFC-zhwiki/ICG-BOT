@@ -1,17 +1,39 @@
 import { Message as TMessage } from 'telegraf/typings/telegram-types';
 import { Message as DMessage, MessageEmbed as DMessageEmbed } from 'discord.js';
+import winston = require( 'winston' );
 
 import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
-import { parseUID, getUIDFromContext, addCommand } from 'src/lib/message';
+import { parseUID, getUIDFromContext, addCommand, getUIDFromHandler } from 'src/lib/message';
 import * as moduleTransport from 'src/modules/transport';
 import { IRCBold, $, decodeURI } from 'src/modules/afc/util/index';
+
+function htmlExcape( str: string ) {
+	return $( '<div>' ).text( str ).html();
+}
+
+export function htmlToIRC( text: string ): string {
+	const $ele = $( '<div>' ).append( $.parseHTML( text ) );
+
+	$ele.find( 'a' ).each( function ( _i, a ) {
+		const $a: JQuery<HTMLAnchorElement> = $( a );
+		const href = decodeURI( $a.attr( 'href' ) ).replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
+
+		$a.html( ` ${ $a.html() } &lt;${ htmlExcape( href ) }&gt;` );
+	} );
+
+	$ele.find( 'b' ).each( function ( _i: number, b: HTMLElement ): void {
+		const $b: JQuery<HTMLElement> = $( b );
+
+		$b.html( `${ IRCBold }${ $b.html() }${ IRCBold }` );
+	} );
+
+	return $ele.text();
+}
 
 const dc = Manager.handlers.get( 'Discord' );
 const tg = Manager.handlers.get( 'Telegram' );
 const irc = Manager.handlers.get( 'IRC' );
-
-const enableCommands: string[] = Manager.config.afc.enables.concat( Manager.config.afc.enableCommands || [] );
 
 export type Response = void /* IRC */ | TMessage | DMessage;
 
@@ -32,7 +54,7 @@ export function setCommand( cmd: string, func: command ): void {
 		}, context );
 		return Promise.resolve();
 	}, {
-		enables: enableCommands
+		enables: Manager.config.afc.enableCommands
 	} );
 }
 
@@ -101,16 +123,39 @@ export async function reply( context: Context, msg: {
 	return output;
 }
 
-const enableEvents: string[] = Manager.config.afc.enables.concat( Manager.config.afc.enableEvents || [] );
-const debugGroups: string[] = Manager.config.afc.debugGroups || [];
+const enableEvents: Record<string, string[]> = {};
 
+const registeredEvents: string[] = [];
+
+export function registerEvent( name: string, disableDuplicateWarn = false ): void {
+	if ( registeredEvents.includes( name ) ) {
+		if ( !disableDuplicateWarn ) {
+			winston.warn( `[afc/util/msg] fail to register event "${ name }": Event has been registered.`, new Error().stack.substring( 6 ) );
+		}
+	} else if ( name === 'debug' ) {
+		return; // ignore
+	}
+	registeredEvents.push( name );
+}
 export function send( msg: {
 	dMsg?: string | DMessageEmbed;
 	tMsg?: string;
 	iMsg?: string;
-}, debug?: boolean ): Promise<Response>[] {
+}, event: string ): Promise<Response>[] {
 	const output: Promise<Response>[] = [];
-	( debug ? debugGroups : enableEvents ).forEach( function ( k ) {
+
+	// 將ircMessage前後加上分隔符
+	if ( msg.iMsg ) {
+		msg.iMsg = `
+——————————————————————————————
+${ msg.iMsg }
+——————————————————————————————
+`.trim();
+	}
+	Object.keys( enableEvents ).forEach( function ( k ) {
+		if ( !enableEvents[ k ].includes( event ) ) {
+			return;
+		}
 		const f = parseUID( k );
 		if ( f.client === 'Discord' && msg.dMsg ) {
 			output.push( dc.say( f.id, msg.dMsg ) );
@@ -127,25 +172,82 @@ export function send( msg: {
 	return output;
 }
 
-function htmlExcape( str: string ) {
-	return $( '<div>' ).text( str ).html();
+export async function pinMessage( promises: Promise<Response>[] ): Promise<void> {
+	if ( !registeredEvents.includes( 'pin' ) ) {
+		winston.error( '[afc/util/msg] Can\'t pin message: You didn\'t register event "pin".' );
+		return;
+	}
+
+	promises.forEach( async function ( promise ) {
+		const msg = await promise;
+
+		if ( msg ) {
+			if ( 'message_id' in msg && 'chat' in msg ) { // Telegram
+				if (
+					enableEvents[ getUIDFromHandler( tg, msg.chat.id ) ] &&
+					enableEvents[ getUIDFromHandler( tg, msg.chat.id ) ].includes( 'pin' )
+				) {
+					tg.rawClient.telegram.pinChatMessage( msg.chat.id, msg.message_id );
+				}
+			} else if ( 'id' in msg && 'channel' in msg ) { // Discord
+				if (
+					enableEvents[ getUIDFromHandler( dc, msg.channel.id ) ] &&
+					enableEvents[ getUIDFromHandler( dc, msg.channel.id ) ].includes( 'pin' )
+				) {
+					msg.pin();
+				}
+			}
+		}
+	} );
 }
 
-export function htmlToIRC( text: string ): string {
-	const $ele = $( '<div>' ).append( $.parseHTML( text ) );
-
-	$ele.find( 'a' ).each( function ( _i, a ) {
-		const $a: JQuery<HTMLAnchorElement> = $( a );
-		const href = decodeURI( $a.attr( 'href' ) ).replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
-
-		$a.html( ` ${ $a.html() } &lt;${ htmlExcape( href ) }&gt;` );
+export function checkRegister(): void {
+	winston.debug( '[afc/util/msg] Command enable list:' );
+	Manager.config.afc.enableCommands = Manager.config.afc.enableCommands.map( function ( g ) {
+		winston.debug( `\t${ parseUID( g ).uid }` );
+		return parseUID( g ).uid;
 	} );
+	winston.debug( '[afc/util/msg] Event enable list:' );
+	Manager.config.afc.enableEvents.forEach( function ( v ) {
+		if ( typeof v === 'string' ) {
+			enableEvents[ parseUID( v ).uid ] = [].concat( registeredEvents || [] );
 
-	$ele.find( 'b' ).each( function ( _i: number, b: HTMLElement ): void {
-		const $b: JQuery<HTMLElement> = $( b );
+			winston.debug( `\t${ parseUID( v ).uid }: all` );
+		} else {
+			let events: string[];
+			if ( v.include ) {
+				events = v.include.filter( function ( e ) {
+					if ( !registeredEvents.includes( e ) ) {
+						winston.warn( `[afc/util/msg] fail to listen event "${ e }" on "${ v.groups.join( '", "' ) }": Event is invaild.` );
+						return false;
+					}
+					return true;
+				} );
+			} else if ( v.exclude ) {
+				events = [].concat( registeredEvents || [] ).filter( function ( e ) {
+					if ( !v.exclude.includes( e ) ) {
+						return false;
+					}
+					return true;
+				} );
 
-		$b.html( `${ IRCBold }${ $b.html() }${ IRCBold }` );
+				v.exclude.forEach( function ( e ) {
+					if ( !registeredEvents.includes( e ) ) {
+						winston.warn( `[afc/util/msg] fail to exclude event "${ e }" on "${ v.groups.join( '", "' ) }": Event is invaild.` );
+					}
+				} );
+			} else {
+				events = [].concat( registeredEvents || [] );
+			}
+
+			if ( v.debug ) {
+				events.push( 'debug' );
+			}
+
+			v.groups.forEach( function ( g ) {
+				winston.debug( `\t${ parseUID( g ).uid }: ${ events.join( ', ' ) }` );
+				enableEvents[ parseUID( g ).uid ] = events;
+			} );
+		}
 	} );
-
-	return $ele.text();
 }

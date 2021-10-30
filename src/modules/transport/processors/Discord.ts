@@ -3,7 +3,6 @@ import winston = require( 'winston' );
 
 import { Manager } from 'src/init';
 import { ConfigTS } from 'src/config';
-import msgManage from 'src/lib/message/msgManage';
 import * as bridge from 'src/modules/transport/bridge';
 import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
@@ -39,8 +38,7 @@ function parseForwardBot( username: string, text: string ) {
 /*
  * 傳話
  */
-
-msgManage.on( 'discord', async function ( _from, _to, _text, context ) {
+discordHandler.on( 'text', async function ( context ) {
 	const extra = context.extra;
 
 	// 檢查是不是在回覆自己

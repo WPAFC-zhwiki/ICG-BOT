@@ -1,7 +1,7 @@
 import Discord = require( 'discord.js' );
 import winston = require( 'winston' );
 
-import { mwbot, $, recentChange, RecentChangeEvent, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
+import { $, encodeURI, htmlToIRC, mwbot, recentChange, RecentChangeEvent, registerEvent, send, turndown } from 'src/modules/afc/util';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
@@ -72,5 +72,7 @@ ${ ( parseHtml.length > 2048 ? parseHtml.substring( 0, 2045 ) + '...' : parseHtm
 		dMsg,
 		tMsg,
 		iMsg
-	} );
+	}, 'helpdesk' );
 } );
+
+registerEvent( 'helpdesk' );

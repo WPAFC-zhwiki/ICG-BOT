@@ -49,9 +49,9 @@ const map = bridge.map;
 Manager.global.ifEnable( 'transport', function () {
 	const groups = options.groups || [];
 
-	for ( const group of groups ) {
-	// 建立聯繫
-		for ( const c1 of group ) {
+	Object.keys( groups ).forEach( function ( group ) {
+		// 建立聯繫
+		Object.keys( group ).forEach( function ( c1 ) {
 			const client1 = BridgeMsg.parseUID( c1 ).uid;
 
 			if ( client1 ) {
@@ -69,12 +69,12 @@ Manager.global.ifEnable( 'transport', function () {
 					};
 				}
 			}
-		}
-	}
+		} );
+	} );
 
 	// 移除被禁止的聯繫
 	const disables = options.disables || {};
-	for ( const c1 in disables ) {
+	Object.keys( disables ).forEach( function ( c1 ) {
 		const client1 = BridgeMsg.parseUID( c1 ).uid;
 
 		if ( client1 && map[ client1 ] ) {
@@ -90,20 +90,20 @@ Manager.global.ifEnable( 'transport', function () {
 				}
 			}
 		}
-	}
+	} );
 
 	// 调试日志
 	winston.debug( '' );
 	winston.debug( '[transport] Bridge Map:' );
-	for ( const client1 in map ) {
-		for ( const client2 in map[ client1 ] ) {
+	Object.keys( map ).forEach( function ( client1 ) {
+		Object.keys( map[ client1 ] ).forEach( function ( client2 ) {
 			if ( map[ client1 ][ client2 ].disabled ) {
-				winston.debug( `${ client1 } -X-> ${ client2 }` );
+				winston.debug( `\t${ client1 } -X-> ${ client2 }` );
 			} else {
-				winston.debug( `${ client1 } ---> ${ client2 }` );
+				winston.debug( `\t${ client1 } ---> ${ client2 }` );
 			}
-		}
-	}
+		} );
+	} );
 
 	/**
 	 * 用戶端別名
@@ -111,7 +111,7 @@ Manager.global.ifEnable( 'transport', function () {
 	const aliases: Record<string, bridge.alias> = {};
 
 	// 處理用戶端別名
-	for ( const a in options.aliases ) {
+	Object.keys( options.aliases ).forEach( function ( a ) {
 		const cl = BridgeMsg.parseUID( a ).uid;
 		if ( cl ) {
 			const names = options.aliases[ a ];
@@ -130,7 +130,7 @@ Manager.global.ifEnable( 'transport', function () {
 				fullname
 			};
 		}
-	}
+	} );
 
 	bridge.setAliases( aliases );
 
@@ -139,7 +139,7 @@ Manager.global.ifEnable( 'transport', function () {
 	winston.debug( '[transport] Aliases:' );
 	let aliasesCount = 0;
 	for ( const alias in aliases ) {
-		winston.debug( `${ alias }: ${ aliases[ alias ].shortname } ---> ${ aliases[ alias ].fullname }` );
+		winston.debug( `\t${ alias }: ${ aliases[ alias ].shortname } ---> ${ aliases[ alias ].fullname }` );
 		aliasesCount++;
 	}
 	if ( aliasesCount === 0 ) {

@@ -1,11 +1,8 @@
 import Discord from 'discord.js';
 import winston from 'winston';
 
-import { Manager } from 'src/init';
-
-const tg = Manager.handlers.get( 'Telegram' );
-
-import { mwbot, $, recentChange, RecentChangeEvent, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
+import { $, encodeURI, htmlToIRC, mwbot, pinMessage, recentChange,
+	RecentChangeEvent, registerEvent, send, turndown } from 'src/modules/afc/util';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
@@ -60,24 +57,15 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		const iMsg = htmlToIRC( `<b>審核員申請</b>
 ${ output } （${ htmllink( diff, '<b>查看申請</b>' ) }）` );
 
-		send( {
+		const sendResponses = send( {
 			dMsg,
 			tMsg,
 			iMsg
-		} ).forEach( async function ( p ) {
-			const data = await p;
+		}, 'reviewer-request' );
 
-			if ( data ) {
-				if ( 'message_id' in data && 'chat' in data ) {
-					tg.rawClient.telegram.pinChatMessage( data.chat.id, data.message_id ).catch( function () {
-						// ignore
-					} );
-				} else if ( 'id' in data && 'channel' in data ) {
-					data.pin().catch( function () {
-						// ignore
-					} );
-				}
-			}
-		} );
+		pinMessage( sendResponses );
 	}
 } );
+
+registerEvent( 'reviewer-request' );
+registerEvent( 'pin', true );

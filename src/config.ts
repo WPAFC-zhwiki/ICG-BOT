@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { ConfigTS } from 'config/config.type';
 import { repository as Repository } from 'package.json';
 import path = require( 'path' );
@@ -35,6 +34,7 @@ if ( process.argv.indexOf( '--icconfig' ) > -1 ) {
 	global.configPath = require.resolve( path.join( __dirname, '../config', 'config' ) );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const config: ConfigTS = require( global.configPath ).default;
 
 export default config;

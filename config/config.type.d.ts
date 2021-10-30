@@ -406,7 +406,12 @@ export interface ConfigTS {
 					join: boolean;
 					leave: boolean;
 					pin: boolean;
-				}
+				};
+
+				/**
+				 * 是否轉傳頻道內容
+				 */
+				forwardChannels: boolean;
 
 				/**
 				 * 如果有人使用 Telegram 命令亦轉發到其他群組（但由於 Telegram 設定的原因，Bot 無法看到命令結果）
@@ -548,21 +553,14 @@ export interface ConfigTS {
 
 	afc?: {
 		/**
-		 * 在這些群啟用事件通報及命令
-		 */
-		enables: string[];
-
-		/**
 		 * 在這些群啟用事件通報
 		 */
-		enableEvents?: string[];
+		enableEvents?: ( string | AFCEventEnableType )[];
 
 		/**
 		 * 在這些群啟用命令
 		 */
 		enableCommands?: string[];
-
-		debugGroups?: string[];
 
 		/**
 		 * 使用 https://www.npmjs.com/package/mwn
@@ -588,6 +586,22 @@ export interface ConfigTS {
 		path: string;
 	} )[];
 }
+
+type AFCEventEnableType = {
+	groups: string[];
+
+	/**
+	 * 只發送這些訊息
+	 */
+	include?: string[];
+
+	/**
+	 * 排除這些訊息
+	 */
+	exclude?: string[];
+
+	debug?: boolean;
+};
 
 interface TransportServemediaBase {
 	/**

@@ -23,3 +23,7 @@ for ( const file of eventFiles ) {
 	require( `src/modules/afc/events/${ file }` );
 	winston.debug( `[afc] - ${ path.parse( file ).name }` );
 }
+
+import { checkRegister } from 'src/modules/afc/util';
+
+checkRegister();

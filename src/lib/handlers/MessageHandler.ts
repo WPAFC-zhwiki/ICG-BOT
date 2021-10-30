@@ -34,7 +34,7 @@ export interface BaseEvents<rawdata extends rawmsg> extends Events {
  * context 須使用統一格式
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class MessageHandler<events extends BaseEvents<any> = BaseEvents<rawmsg>> extends EventEmitter<events> {
+export class MessageHandler<E extends BaseEvents<any> = BaseEvents<rawmsg>> extends EventEmitter<E> {
 	protected _client: Telegraf | Discord | IRC = null;
 	protected _type: string;
 	protected _id: string;

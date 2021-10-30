@@ -3,7 +3,8 @@ import Discord = require( 'discord.js' );
 import { MwnPage } from 'mwn';
 import winston = require( 'winston' );
 
-import { mwbot, recentChange, RecentChangeEvent, $, AFCPage, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, send } from 'src/modules/afc/util';
+import { $, AFCPage, autoReview, encodeURI, getIssusData, htmlToIRC, mwbot,
+	recentChange, RecentChangeEvent, registerEvent, turndown, send } from 'src/modules/afc/util';
 
 function getReason( $e: JQuery, title: string ) {
 	$e.find( 'a' ).each( function ( _i, a ) {
@@ -115,7 +116,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 				} ),
 				tMsg: `未預料的錯誤：${ pagelink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
-			} );
+			}, 'debug' );
 		} else if ( !$parseHTML.find( '.afc-submission-pending' ).length && /已添加至分类/.exec( event.comment ) ) {
 			send( {
 				dMsg: new Discord.MessageEmbed( {
@@ -124,7 +125,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 				} ),
 				tMsg: `未預料的錯誤：${ pagelink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
-			} );
+			}, 'debug' );
 		} else if ( $parseHTML.find( '.afc-submission-pending' ).length && /已从分类中移除/.exec( event.comment ) ) {
 			const $pendings = $parseHTML.find( '.afc-submission-pending' );
 			send( {
@@ -134,7 +135,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 				} ),
 				tMsg: `未預料的錯誤：${ pagelink }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。`
-			} );
+			}, 'debug' );
 		}
 
 		if ( !$submissionbox.length && page.namespace === 0 && user !== creator && AFCPage.isReviewer( user ) ) {
@@ -301,8 +302,10 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			dMsg,
 			tMsg,
 			iMsg
-		} );
+		}, 'watchlist' );
 	} catch ( e ) {
 		winston.error( '[afc/event/watchlist] Recentchange Error:  (Throw by Async Function) ', e );
 	}
 } );
+
+registerEvent( 'watchlist' );

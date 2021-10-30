@@ -74,11 +74,15 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 			autoConnect: false
 		} );
 
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const that = this;
+
 		client.on( 'registered', async function () {
 			winston.info( 'IRCBot has been registered' );
 			while ( client.nick === client.hostMask ) {
 				await delay( 100 );
 			}
+			that._me.nick = client.nick;
 			winston.info( `IRCBot is ready, login as: ${ client.nick }!${ client.hostMask }.` );
 		} );
 
@@ -111,9 +115,6 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 			realName: botConfig.realName,
 			chans: this.chans
 		};
-
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const that = this;
 
 		// 绑定事件
 		function processMessage( from: string, to: string, text: string, rawdata: irc.IMessage, isAction = false ) {
@@ -243,18 +244,22 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		isAction?: boolean;
 		doNotSplitText?: boolean;
 	} = {} ): Promise<void> {
-		if ( !this._enabled ) {
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const that = this;
+		if ( !that._enabled ) {
 			throw new Error( 'Handler not enabled' );
 		} else if ( !target.length ) {
 			return;
 		} else {
 			const lines = options.doNotSplitText ?
-				message.split( '\n' ) :
-				this.splitText( message, 449, this._maxLines );
+				[ ...message.split( '\n' ).map( function ( s ) {
+					return that.splitText( s, 449, that._maxLines );
+				} ).flat( Infinity ) ] :
+				that.splitText( message, 449, that._maxLines );
 			if ( options.isAction ) {
-				this._client.action( target, lines.join( '\n' ) );
+				that._client.action( target, lines.join( '\n' ) );
 			} else {
-				this._client.say( target, lines.join( '\n' ) );
+				that._client.say( target, lines.join( '\n' ) );
 			}
 		}
 	}

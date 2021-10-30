@@ -5,7 +5,6 @@ import winston = require( 'winston' );
 
 import { Manager } from 'src/init';
 import { ConfigTS } from 'src/config';
-import msgManage from 'src/lib/message/msgManage';
 import * as bridge from 'src/modules/transport/bridge';
 import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
@@ -27,7 +26,7 @@ const colorize: ConfigTS[ 'transport' ][ 'options' ][ 'IRC' ][ 'colorize' ] = op
 ircHandler.once( 'registered', function () {
 	for ( const g in bridge.map ) {
 		const cl = BridgeMsg.parseUID( g );
-		if ( cl.client === 'IRC' ) {
+		if ( cl.client === 'IRC' && !ircHandler.rawClient.chans[ cl.id.toLowerCase() ] ) {
 			ircHandler.join( cl.id );
 		}
 	}
@@ -43,8 +42,7 @@ if ( colorize.enabled && colorize.linesplit ) {
 /*
  * 傳話
  */
-
-msgManage.on( 'irc', async function ( _from, _to, _text, context ) {
+ircHandler.on( 'text', async function ( context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( e ) {

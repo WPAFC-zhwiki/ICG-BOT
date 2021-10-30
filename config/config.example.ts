@@ -204,6 +204,8 @@ const config: ConfigTS = {
 					pin: true // 管理員在頻道內 pin message（公告）的時候是否提醒其他群組
 				},
 
+				forwardChannels: false, // 是否轉傳頻道內容
+
 				forwardCommands: true, // 如果有人使用 Telegram 命令亦轉發到其他群組（但由於 Telegram 設定的原因，Bot 無法看到命令結果）
 
 				forwardBots: { // 指出在 Telegram 運行的傳話機器人，以便取得訊息中的真實暱稱

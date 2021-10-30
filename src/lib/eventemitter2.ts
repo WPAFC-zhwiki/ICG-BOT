@@ -63,11 +63,9 @@ export interface EventAndListener {
 	( event: EventName, ...args: any[] ): void;
 }
 
-interface WaitForFilter {
-	( ...values: any[] ): boolean;
-}
+type WaitForFilter<E extends Event = Event> = ( ...values: Parameters<E> ) => boolean;
 
-export interface WaitForOptions {
+export interface WaitForOptions<E extends Event = Event> {
 	/**
 	 * @default 0
 	 */
@@ -75,7 +73,7 @@ export interface WaitForOptions {
 	/**
 	 * @default null
 	 */
-	filter: WaitForFilter,
+	filter: WaitForFilter<E>,
 	/**
 	 * @default false
 	 */
@@ -1287,9 +1285,9 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		}
 	}
 
-	public waitFor<K extends keyof E>( event: K, options?: Partial<WaitForOptions> | number | Func ): CancelablePromise<Parameters<E[ K ]>>;
-	public waitFor( event: EventName, options: Partial<WaitForOptions> | number | Func ): CancelablePromise<any>;
-	public waitFor( event: EventName, opt: Partial<WaitForOptions> | number | Func ): CancelablePromise<any> {
+	public waitFor<K extends keyof E>( event: K, options?: Partial<WaitForOptions<E[K]>> | number | WaitForFilter<E[K]> ): CancelablePromise<Parameters<E[ K ]>>;
+	public waitFor( event: EventName, options: Partial<WaitForOptions> | number | WaitForFilter ): CancelablePromise<any>;
+	public waitFor( event: EventName, opt: Partial<WaitForOptions> | number | WaitForFilter ): CancelablePromise<any> {
 		const self = this;
 
 		let options: Partial<WaitForOptions>;

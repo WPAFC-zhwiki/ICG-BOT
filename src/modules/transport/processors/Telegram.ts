@@ -8,7 +8,6 @@ import { ConfigTS } from 'src/config';
 import { Context } from 'src/lib/handlers/Context';
 import { SendMessageOpipons } from 'src/lib/handlers/TelegramMessageHandler';
 import jQuery from 'src/lib/jquery';
-import msgManage from 'src/lib/message/msgManage';
 import * as bridge from 'src/modules/transport/bridge';
 import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
@@ -51,9 +50,9 @@ function parseForwardBot( username: string, text: string ) {
 	return { realNick, realText };
 }
 
-msgManage.on( 'telegram', async function ( _from, _to, _text, context ) {
+function prepareText( context: Context, checkCommand = true ) {
 	const extra = context.extra;
-	if ( context.text.match( /^\/([A-Za-z0-9_@]+)(\s+(.*)|\s*)$/u ) && !options.forwardCommands ) {
+	if ( checkCommand && context.text.match( /^\/([A-Za-z0-9_@]+)(\s+(.*)|\s*)$/u ) && !options.forwardCommands ) {
 		return;
 	}
 
@@ -69,6 +68,10 @@ msgManage.on( 'telegram', async function ( _from, _to, _text, context ) {
 			[ extra.forward.nick, context.text ] = [ realNick, realText ];
 		}
 	}
+}
+
+tgHandler.on( 'text', async function ( context ) {
+	prepareText( context );
 
 	try {
 		await bridge.transportMessage( context );
@@ -77,20 +80,14 @@ msgManage.on( 'telegram', async function ( _from, _to, _text, context ) {
 	}
 } );
 
-tgHandler.on( 'richmessage', ( context: Context ) => {
-	const extra = context.extra;
+tgHandler.on( 'richMessage', async ( context: Context ) => {
+	prepareText( context, false );
 
-	// 檢查是不是在回覆互聯機器人
-	if ( extra.reply && forwardBots[ extra.reply.username ] ) {
-		const { realNick, realText } = parseForwardBot( extra.reply.username, extra.reply.message );
-		if ( realNick ) {
-			[ extra.reply.nick, extra.reply.message ] = [ realNick, realText ];
-		}
+	try {
+		await bridge.transportMessage( context );
+	} catch ( e ) {
+		winston.error( e instanceof Error ? e.stack : e );
 	}
-
-	bridge.transportMessage( context ).catch( function ( err ) {
-		throw err;
-	} );
 } );
 
 // Pinned message
@@ -180,6 +177,28 @@ tgHandler.on( 'leave', ( group: number, from: {
 		} );
 	}
 } );
+
+if ( config.options.Telegram.forwardChannels ) {
+	tgHandler.on( 'groupChannelText', async function ( can, context ) {
+		prepareText( context );
+
+		try {
+			await bridge.transportMessage( context, false );
+		} catch ( e ) {
+			winston.error( e instanceof Error ? e.stack : e );
+		}
+	} );
+
+	tgHandler.on( 'groupChannelRichMessage', async ( can, context: Context ) => {
+		prepareText( context, false );
+
+		try {
+			await bridge.transportMessage( context );
+		} catch ( e ) {
+			winston.error( e instanceof Error ? e.stack : e );
+		}
+	} );
+}
 
 // 收到了來自其他群組的訊息
 export default async function ( msg: BridgeMsg ): Promise<void> {

@@ -40,7 +40,10 @@ export interface TelegramEvents extends BaseEvents<TContext> {
 		nick: string;
 		username?: string;
 	}, ctx: TContext ): void;
-	richmessage( context: Context<TContext> ): void;
+	richMessage( context: Context<TContext> ): void;
+	channelPost( channel: TT.Chat.ChannelChat, msg: TT.Message, ctx: TContext ): void;
+	groupChannelText( channel: TT.Chat.ChannelChat, context: Context<TContext> ): void;
+	groupChannelRichMessage( channel: TT.Chat.ChannelChat, context: Context<TContext> ): void;
 }
 
 export interface SendMessageOpipons extends TT.ExtraSendMessage, TT.ExtraReplyMessage {
@@ -267,7 +270,11 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						}
 					}
 
-					that.emit( 'text', context );
+					if ( ctx.message.forward_from_chat && ctx.message.forward_from_chat.type === 'channel' ) {
+						that.emit( 'groupChannelText', ctx.message.forward_from_chat, context );
+					} else {
+						that.emit( 'text', context );
+					}
 				} else {
 					const message: TT.Message = ctx.message;
 
@@ -341,12 +348,20 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						}, ctx );
 					}
 
-					if ( context.text ) {
-						that.emit( 'richmessage', context );
+					if ( ctx.message.forward_from_chat && ctx.message.forward_from_chat.type === 'channel' ) {
+						that.emit( 'groupChannelRichMessage', ctx.message.forward_from_chat, context );
+					} else {
+						that.emit( 'richMessage', context );
 					}
 				}
 			}
 			return next();
+		} );
+
+		client.on( 'channel_post', function ( ctx ) {
+			if ( ctx.chat.type === 'channel' ) { // typescript bug
+				that.emit( 'channelPost', ctx.chat, ctx.channelPost, ctx );
+			}
 		} );
 	}
 
