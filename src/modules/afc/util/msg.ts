@@ -225,7 +225,7 @@ export function checkRegister(): void {
 				} );
 			} else if ( v.exclude ) {
 				events = [].concat( registeredEvents || [] ).filter( function ( e ) {
-					if ( !v.exclude.includes( e ) ) {
+					if ( v.exclude.includes( e ) ) {
 						return false;
 					}
 					return true;
