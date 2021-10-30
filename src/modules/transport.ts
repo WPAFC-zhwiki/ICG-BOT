@@ -21,37 +21,37 @@ BridgeMsg.setHandlers( Manager.handlers );
 export const handlers = Manager.handlers;
 
 /*
-		理清各群之間的關係：根據已知資料，建立一對一的關係（然後將 disable 的關係去除），便於查詢。例如：
+釐清各群之間的關係：根據已知資料，建立一對一的關係（然後將 disable 的關係去除），便於查詢。例如：
 
-		map: {
-			'irc/#channel1': {
-				'qq/123123123': {
-					disabled: false,
-				},
-				'telegram/-123123123': {
-					disabled: false,
-				}
-			},
-			'irc/#channel2': {
-				...
-			},
+	map: {
+		'irc/#channel1': {
 			'qq/123123123': {
-				'irc/#channel1': {
-					disabled: false,
-				},
-				...
+				disabled: false,
+			},
+			'telegram/-123123123': {
+				disabled: false,
+			}
+		},
+		'irc/#channel2': {
+			...
+		},
+		'qq/123123123': {
+			'irc/#channel1': {
+				disabled: false,
 			},
 			...
-		}
+		},
+		...
+	}
 	 */
 const map = bridge.map;
 
 Manager.global.ifEnable( 'transport', function () {
 	const groups = options.groups || [];
 
-	Object.keys( groups ).forEach( function ( group ) {
+	groups.forEach( function ( group ) {
 		// 建立聯繫
-		Object.keys( group ).forEach( function ( c1 ) {
+		group.forEach( function ( c1 ) {
 			const client1 = BridgeMsg.parseUID( c1 ).uid;
 
 			if ( client1 ) {
