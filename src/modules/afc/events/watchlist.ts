@@ -7,6 +7,9 @@ import { $, AFCPage, autoReview, encodeURI, getIssusData, htmlToIRC, mwbot,
 	recentChange, RecentChangeEvent, registerEvent, turndown, send } from 'src/modules/afc/util';
 
 function getReason( $e: JQuery, title: string ) {
+	$e.find( ':contains(<), :contains(>)' ).html( function ( _i, html ) {
+		return html.replace( /&([lg]t);/, '&amp;$1;' );
+	} );
 	$e.find( 'a' ).each( function ( _i, a ) {
 		const $a: JQuery<HTMLAnchorElement> = $( a );
 		const url = new URL( $a.attr( 'href' ), `https://zh.wikipedia.org/wiki/${ title }` );

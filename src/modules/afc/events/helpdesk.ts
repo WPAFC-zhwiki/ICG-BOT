@@ -43,6 +43,10 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		const url = new URL( $a.attr( 'href' ), 'https://zh.wikipedia.org/WikiProject:建立條目/詢問桌' );
 		$a.text( `<a href="${ url.href }">${ $a.text() }</a>` );
 	} );
+	$parse.find( '.mwe-math-element' ).each( function ( _i, ele ) {
+		$( ele ).find( 'annotation' ).remove();
+		$( ele ).text( $( ele ).find( 'math' ).text() );
+	} );
 	const parseHtml = $parse.text();
 	const parseMarkDown = turndown( parseHtml );
 

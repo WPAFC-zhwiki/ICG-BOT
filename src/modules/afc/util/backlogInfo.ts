@@ -22,8 +22,8 @@ export async function getBacklogInfo(): Promise<{
 }> {
 	let list: ApiPageInfo[] = await new mwbot.category( 'Category:正在等待審核的草稿' ).members();
 	list = list.filter( function ( x ) {
-		return x.title !== 'Category:正在等待审核的用户页草稿';
-	} );
+		return [ 0, 2, 118 ].includes( x.ns );
+	} ).sort();
 	const cnt = list.length;
 	await new mwbot.page( 'Template:AFC_status/level' ).purge();
 	const html = await mwbot.parseTitle( 'Template:AFC_status/level' );
