@@ -20,7 +20,8 @@ export const IRCBold = '\x02';
 export function encodeURI( uri: string ): string {
 	return encodeURIComponent( uri )
 		.replace(
-			/%(2[346BF]|3[AC-F]|40|5[BDE]|60|7[BCD])/g,
+			// $&+/:<=>@[]^`{|}
+			/%(2[46BF]|3[AC-E]|40|5[BDE]|60|7[BCD])/g,
 			decodeURIComponent
 		)
 		.replace( /:$/, '%3A' );

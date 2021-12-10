@@ -70,11 +70,6 @@ export interface ConfigTS {
 			timeout: number;
 
 			/**
-			 * 限定檢索的訊息數
-			 */
-			limit: number;
-
-			/**
 			 * 如果使用中國國內網路，無法直連 Telegram 伺服器，可通過設定 proxy（僅支援 HTTPS 代理）來翻牆
 			 * 或者自行在國外架設 Bot API（api.telegram.org）反向代理伺服器然後修改 apiRoot 的值
 			 */

@@ -78,7 +78,7 @@ discordHandler.on( 'text', function ( context: Context<Discord.Message> ) {
 	if ( /<@!?\d*?>/u.test( context.text ) ) {
 		// 處理 at
 		let ats: string[] = [];
-		const promises = [];
+		const promises: ( Discord.User | Promise<Discord.User | void> )[] = [];
 
 		context.text.replace( /<@!?(\d*?)>/gu, function ( _: string, id: string ) {
 			ats.push( id );
@@ -88,7 +88,7 @@ discordHandler.on( 'text', function ( context: Context<Discord.Message> ) {
 
 		for ( const at of ats ) {
 			if ( userInfo.has( at ) ) {
-				promises.push( Promise.resolve( userInfo.get( at ) ) );
+				promises.push( userInfo.get( at ) );
 			} else {
 				promises.push( discordHandler.fetchUser( at ).catch( function ( e: Error ) {
 					winston.error( e.stack );
@@ -96,7 +96,7 @@ discordHandler.on( 'text', function ( context: Context<Discord.Message> ) {
 			}
 		}
 
-		Promise.all<Discord.User>( promises ).then( ( infos ) => {
+		Promise.all( promises ).then( ( infos ) => {
 			for ( const info of infos ) {
 				if ( info ) {
 					if ( !userInfo.has( info.id ) ) {
@@ -109,7 +109,9 @@ discordHandler.on( 'text', function ( context: Context<Discord.Message> ) {
 					);
 				}
 			}
-		} ).catch( ( e ) => winston.error( e.trace ) ).then( function () {
+		} ).catch( function ( e ) {
+			winston.error( e.trace );
+		} ).then( function () {
 			msgManage.emit( 'discord', context.from, context.to, context.text, context );
 			msgManage.emit( 'text', 'Discord', context.from, context.to, context.text, context );
 		} );

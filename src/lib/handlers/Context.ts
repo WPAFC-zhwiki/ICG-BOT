@@ -56,6 +56,8 @@ export type ContextExtra = {
 
 	username?: string;
 
+	isChannel?: boolean;
+
 	/**
 	 * Telegram：檔案上傳用，由 bridge 發送
 	 */
@@ -151,16 +153,16 @@ export class Context<R extends rawmsg = rawmsg> implements ContextOptin<R> {
 	get from(): string {
 		return this._from;
 	}
-	set from( f: string ) {
-		this._from = f;
+	set from( f: string | number ) {
+		this._from = String( f );
 	}
 
 	protected _to: string = null;
 	get to(): string {
 		return this._to;
 	}
-	set to( t: string ) {
-		this._to = t;
+	set to( t: string | number ) {
+		this._to = String( t );
 	}
 
 	public nick: string = null;

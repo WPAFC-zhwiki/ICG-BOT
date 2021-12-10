@@ -2,8 +2,9 @@ import fs = require( 'fs' );
 import https = require( 'https' );
 import { cloneDeep as copyObject } from 'lodash';
 import { Telegraf, Context as TContext, Telegram } from 'telegraf';
+import { ExtraPhoto, ExtraReplyMessage } from 'telegraf/typings/telegram-types';
+import * as TT from 'typegram';
 import Tls = require( 'tls' );
-import * as TT from 'telegraf/typings/telegram-types';
 import winston = require( 'winston' );
 
 import { ConfigTS } from 'src/config';
@@ -46,7 +47,7 @@ export interface TelegramEvents extends BaseEvents<TContext> {
 	groupChannelRichMessage( channel: TT.Chat.ChannelChat, context: Context<TContext> ): void;
 }
 
-export interface SendMessageOpipons extends TT.ExtraSendMessage, TT.ExtraReplyMessage {
+export interface SendMessageOpipons extends ExtraReplyMessage {
 	withNick?: boolean
 }
 
@@ -59,18 +60,14 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 	protected readonly _id: 'T' = 'T';
 
 	private readonly _start: {
-		mode: 'webhook',
+		mode: 'webhook';
 		params: {
-			path: string,
-			tlsOptions: Tls.TlsOptions,
-			port: string | number
-		}
+			path: string;
+			tlsOptions: Tls.TlsOptions;
+			port: string | number;
+		};
 	} | {
-		mode: 'poll',
-		params: {
-			timeout: number,
-			limit: number
-		}
+		mode: 'poll';
 	}
 
 	private _username: string;
@@ -92,7 +89,6 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		const botConfig: ConfigTS[ 'Telegram' ][ 'bot' ] = config.bot || {
 			token: '',
 			timeout: 0,
-			limit: 0,
 			webhook: {
 				port: 0
 			},
@@ -120,7 +116,8 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			telegram: {
 				agent: myAgent,
 				apiRoot: botConfig.apiRoot || 'https://api.telegram.org'
-			}
+			},
+			handlerTimeout: botConfig.timeout
 		} );
 
 		client.telegram.getMe().then( function ( me ) {
@@ -129,8 +126,14 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			winston.info( `TelegramBot is ready, login as: ${ me.first_name }${ me.last_name ? ` ${ me.last_name }` : '' }@${ me.username }(${ me.id })` );
 		} );
 
-		client.catch( function ( err: Error ) {
-			winston.error( `TelegramBot error: ${ err.message }`, err );
+		client.catch( function ( err ) {
+			if ( err instanceof Error ) {
+				err.message = err.message.replace(
+					/\/\/api\.telegram\.org\/bot(\d+):[A-Za-z0-9]+\//g,
+					'//api.telegram.org/bot$1:<password>/'
+				);
+			}
+			winston.error( 'TelegramBot error:', err );
 		} );
 
 		if ( botConfig.webhook && botConfig.webhook.port > 0 ) {
@@ -173,11 +176,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		} else {
 			// 使用轮询机制
 			this._start = {
-				mode: 'poll',
-				params: {
-					timeout: botConfig.timeout || 30,
-					limit: botConfig.limit || 100
-				}
+				mode: 'poll'
 			};
 		}
 
@@ -194,7 +193,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			type: string ): Promise<void> {
 			context.extra.files = [ {
 				client: 'Telegram',
-				url: await that.getFileLink( msg.file_id ),
+				url: ( await that.getFileLink( msg.file_id ) ).href,
 				type: type,
 				id: msg.file_id,
 				size: msg.file_size,
@@ -208,7 +207,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					return;
 				}
 
-				const context = new Context<TContext>( {
+				const context: Context<TContext> = new Context<TContext>( {
 					from: ctx.message.from.id,
 					to: ctx.chat.id,
 					nick: that._getNick( ctx.message.from ),
@@ -221,30 +220,74 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					_rawdata: ctx
 				} );
 
-				if ( ctx.message.reply_to_message ) {
-					const reply: Partial<TT.Message> & TT.ReplyMessage = ctx.message.reply_to_message;
-					const replyTo = that._getNick( reply.from );
-					const replyMessage = that._convertToText( reply );
+				if ( ctx.from.id === 777000 ) {
+					if (
+						'forward_from_chat' in ctx.message &&
+						ctx.message.forward_from_chat.type === 'channel'
+					) {
+						context.from = ctx.message.forward_from_chat.id;
+						context.nick = 'Channel';
+						context.extra.username = ctx.message.forward_from_chat.username;
+						context.extra.isChannel = true;
+					} else if (
+						'sender_chat' in ctx.message &&
+						ctx.message.sender_chat.type === 'channel'
+					) {
+						context.from = ctx.message.sender_chat.id;
+						context.nick = `Channel ${ ctx.message.sender_chat.title }`;
+						context.extra.username = ctx.message.sender_chat.username;
+					}
+				}
 
+				if ( 'reply_to_message' in ctx.message ) {
+					const reply: TT.ReplyMessage = ctx.message.reply_to_message;
 					context.extra.reply = {
-						nick: replyTo,
+						nick: that._getNick( reply.from ),
 						username: reply.from.username,
-						message: replyMessage,
-						isText: reply.text && true,
+						message: that._convertToText( reply ),
+						isText: 'text' in reply && !!reply.text,
 						id: String( reply.from.id ),
 						_rawdata: null
 					};
-				} else if ( ctx.message.forward_from ) {
-					const fwd: TT.User = ctx.message.forward_from;
-					const fwdFrom: string = that._getNick( fwd );
 
-					context.extra.forward = {
-						nick: fwdFrom,
-						username: fwd.username
-					};
+					if (
+						reply.from.id === 777000 &&
+						'forward_from_chat' in reply &&
+						reply.forward_from_chat.type === 'channel'
+					) {
+						context.extra.reply.nick = `Channel ${ reply.forward_from_chat.title }`;
+						context.extra.reply.username = reply.forward_from_chat.username;
+					} else {
+						context.extra.reply = {
+							nick: that._getNick( reply.from ),
+							username: reply.from.username,
+							message: that._convertToText( reply ),
+							isText: 'text' in reply && !!reply.text,
+							id: String( reply.from.id ),
+							_rawdata: null
+						};
+					}
+				} else if ( 'forward_from' in ctx.message ) {
+					const fwd: TT.User = ctx.message.forward_from;
+					const fwdChat: TT.Chat = ctx.message.forward_from_chat;
+					if (
+						fwd.id === 777000 &&
+						fwdChat &&
+						fwdChat.type === 'channel'
+					) {
+						context.extra.forward = {
+							nick: `Channel ${ fwdChat.title }`,
+							username: fwdChat.username
+						};
+					} else {
+						context.extra.forward = {
+							nick: that._getNick( fwd ),
+							username: fwd.username
+						};
+					}
 				}
 
-				if ( ctx.message.text ) {
+				if ( 'text' in ctx.message ) {
 					if ( !context.text ) {
 						context.text = ctx.message.text;
 					}
@@ -270,15 +313,19 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						}
 					}
 
-					if ( ctx.message.forward_from_chat && ctx.message.forward_from_chat.type === 'channel' ) {
-						that.emit( 'groupChannelText', ctx.message.forward_from_chat, context );
+					if ( context.extra.isChannel ) {
+						that.emit(
+							'groupChannelText',
+							'forward_from_chat' in ctx.message && ctx.message.forward_from_chat,
+							context
+						);
 					} else {
 						that.emit( 'text', context );
 					}
 				} else {
 					const message: TT.Message = ctx.message;
 
-					if ( message.photo ) {
+					if ( 'photo' in message ) {
 						let sz = 0;
 						for ( const p of message.photo ) {
 							if ( p.file_size > sz ) {
@@ -293,30 +340,30 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						}
 						context.extra.isImage = true;
 						context.extra.imageCaption = message.caption;
-					} else if ( message.sticker ) {
+					} else if ( 'sticker' in message ) {
 						context.text = `${ message.sticker.emoji }<Sticker>`;
 						await setFile( context, message.sticker, 'sticker' );
 						context.extra.isImage = true;
-					} else if ( message.audio ) {
+					} else if ( 'audio' in message ) {
 						context.text = `<Audio: ${ message.audio.duration }", ${ getFriendlySize( message.audio.file_size ) }>`;
 						await setFile( context, message.audio, 'audio' );
-					} else if ( message.voice ) {
+					} else if ( 'voice' in message ) {
 						context.text = `<Voice: ${ message.voice.duration }", ${ getFriendlySize( message.voice.file_size ) }>`;
 						await setFile( context, message.voice, 'voice' );
-					} else if ( message.video ) {
+					} else if ( 'video' in message ) {
 						context.text = `<Video: ${ message.video.width }x${ message.video.height }, ${ message.video.duration }", ${ getFriendlySize( message.video.file_size ) }>`;
 						await setFile( context, message.video, 'video' );
-					} else if ( message.document ) {
+					} else if ( 'document' in message ) {
 						context.text = `<File: ${ message.document.file_name }, ${ getFriendlySize( message.document.file_size ) }>`;
 						await setFile( context, message.document, 'document' );
-					} else if ( message.contact ) {
+					} else if ( 'contact' in message ) {
 						context.text = `<Contact: ${ message.contact.first_name }, ${ message.contact.phone_number }>`;
-					} else if ( message.location ) {
-						context.text = `<Location: ${ getFriendlyLocation( message.location.latitude, message.location.longitude ) }>`;
-					} else if ( message.venue ) {
+					} else if ( 'venue' in message ) {
 						context.text = `<Venue: ${ message.venue.title }, ${ message.venue.address }, ${ getFriendlyLocation(
 							message.venue.location.latitude, message.venue.location.longitude ) }>`;
-					} else if ( message.pinned_message ) {
+					} else if ( 'location' in message ) {
+						context.text = `<Location: ${ getFriendlyLocation( message.location.latitude, message.location.longitude ) }>`;
+					} else if ( 'pinned_message' in message ) {
 						that.emit( 'pin', {
 							from: {
 								id: message.from.id,
@@ -326,7 +373,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 							to: ctx.chat.id,
 							text: that._convertToText( message.pinned_message )
 						}, ctx );
-					} else if ( message.left_chat_member ) {
+					} else if ( 'left_chat_member' in message ) {
 						that.emit( 'leave', ctx.chat.id, {
 							id: message.from.id,
 							nick: that._getNick( message.from ),
@@ -336,7 +383,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 							nick: that._getNick( message.left_chat_member ),
 							username: message.left_chat_member.username
 						}, ctx );
-					} else if ( message.new_chat_members ) {
+					} else if ( 'new_chat_members' in message ) {
 						that.emit( 'join', ctx.chat.id, {
 							id: message.from.id,
 							nick: that._getNick( message.from ),
@@ -348,8 +395,12 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						}, ctx );
 					}
 
-					if ( ctx.message.forward_from_chat && ctx.message.forward_from_chat.type === 'channel' ) {
-						that.emit( 'groupChannelRichMessage', ctx.message.forward_from_chat, context );
+					if ( context.extra.isChannel ) {
+						that.emit(
+							'groupChannelRichMessage',
+							'forward_from_chat' in ctx.message && ctx.message.forward_from_chat,
+							context
+						);
 					} else {
 						that.emit( 'richMessage', context );
 					}
@@ -384,33 +435,33 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 	}
 
 	private _convertToText( message: Partial<TT.Message> ) {
-		if ( message.audio ) {
+		if ( 'audio' in message ) {
 			return '<Audio>';
-		} else if ( message.photo ) {
+		} else if ( 'photo' in message ) {
 			return '<Photo>';
-		} else if ( message.document ) {
+		} else if ( 'document' in message ) {
 			return '<Document>';
-		} else if ( message.game ) {
+		} else if ( 'game' in message ) {
 			return '<Game>';
-		} else if ( message.sticker ) {
+		} else if ( 'sticker' in message ) {
 			return `${ message.sticker.emoji }<Sticker>`;
-		} else if ( message.video ) {
+		} else if ( 'video' in message ) {
 			return '<Video>';
-		} else if ( message.voice ) {
+		} else if ( 'voice' in message ) {
 			return '<Voice>';
-		} else if ( message.contact ) {
+		} else if ( 'contact' in message ) {
 			return '<Contact>';
-		} else if ( message.location ) {
-			return '<Location>';
-		} else if ( message.venue ) {
+		} else if ( 'venue' in message ) {
 			return '<Venue>';
-		} else if ( message.pinned_message ) {
+		} else if ( 'location' in message ) {
+			return '<Location>';
+		} else if ( 'pinned_message' in message ) {
 			return '<Pinned Message>';
-		} else if ( message.new_chat_members ) {
+		} else if ( 'new_chat_members' in message ) {
 			return '<New member>';
-		} else if ( message.left_chat_member ) {
+		} else if ( 'left_chat_member' in message ) {
 			return '<Removed member>';
-		} else if ( message.text ) {
+		} else if ( 'text' in message ) {
 			return message.text;
 		} else {
 			return '<Message>';
@@ -475,22 +526,22 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		return this.say( target, message, options2 );
 	}
 
-	public sendPhoto( ...args: Parameters<Telegram[ 'sendPhoto' ]> ): Promise<TT.MessagePhoto> {
+	public sendPhoto( ...args: Parameters<Telegram[ 'sendPhoto' ]> ): Promise<TT.Message.PhotoMessage> {
 		return this._client.telegram.sendPhoto( ...args );
 	}
 
-	public sendAudio( ...args: Parameters<Telegram[ 'sendAudio' ]> ): Promise<TT.MessageAudio> {
+	public sendAudio( ...args: Parameters<Telegram[ 'sendAudio' ]> ): Promise<TT.Message.AudioMessage> {
 		return this._client.telegram.sendAudio( ...args );
 	}
-	public sendVideo( ...args: Parameters<Telegram[ 'sendVideo' ]> ): Promise<TT.MessageVideo> {
+	public sendVideo( ...args: Parameters<Telegram[ 'sendVideo' ]> ): Promise<TT.Message.VideoMessage> {
 		return this._client.telegram.sendVideo( ...args );
 	}
 
-	public sendAnimation( ...args: Parameters<Telegram[ 'sendAnimation' ]> ): Promise<TT.MessageAnimation> {
+	public sendAnimation( ...args: Parameters<Telegram[ 'sendAnimation' ]> ): Promise<TT.Message.AnimationMessage> {
 		return this._client.telegram.sendAnimation( ...args );
 	}
 
-	public sendDocument( ...args: Parameters<Telegram[ 'sendDocument' ]> ): Promise<TT.MessageDocument> {
+	public sendDocument( ...args: Parameters<Telegram[ 'sendDocument' ]> ): Promise<TT.Message.DocumentMessage> {
 		return this._client.telegram.sendDocument( ...args );
 	}
 
@@ -515,12 +566,12 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 	}
 
 	public reply( context: Context<TContext>,
-		message: string, options?: TT.ExtraReplyMessage ): Promise<TT.Message> {
+		message: string, options?: ExtraReplyMessage ): Promise<TT.Message> {
 		return this._reply( 'sendMessage', context, message, options );
 	}
 
 	public replyWithPhoto( context: Context<TContext>,
-		photo: TT.InputFile, options?: TT.ExtraPhoto ): Promise<TT.MessagePhoto> {
+		photo: TT.InputFile, options?: ExtraPhoto ): Promise<TT.Message.PhotoMessage> {
 		return this._reply( 'sendPhoto', context, photo, options );
 	}
 
@@ -532,7 +583,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		return this._client.telegram.getFile( fileId );
 	}
 
-	public getFileLink( fileId: string ): Promise<string> {
+	public getFileLink( fileId: string ): Promise<URL> {
 		return this._client.telegram.getFileLink( fileId );
 	}
 
@@ -553,12 +604,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					}
 				} );
 			} else {
-				this._client.launch( {
-					polling: {
-						timeout: this._start.params.timeout,
-						limit: this._start.params.limit
-					}
-				} );
+				this._client.launch();
 			}
 		}
 	}
@@ -566,7 +612,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 	public async stop(): Promise<void> {
 		if ( this._started ) {
 			this._started = false;
-			await this._client.stop();
+			this._client.stop();
 		}
 	}
 }

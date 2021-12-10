@@ -40,7 +40,6 @@ const config: ConfigTS = {
 		bot: {
 			token: '', // BotFather 給你的 Token，類似「123456789:q234fipjfjaewkflASDFASjaslkdf」
 			timeout: 30, // 報超時的秒數
-			limit: 100, // 限定檢索的訊息數
 
 			// 代理伺服器。僅支援 HTTPS 代理
 			proxy: {

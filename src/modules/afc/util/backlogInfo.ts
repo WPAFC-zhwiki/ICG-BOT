@@ -58,7 +58,7 @@ export async function getBacklogInfo(): Promise<{
 					return 0x708ad7;
 			}
 		}() ),
-		description: `現時條目審核專題共有 **${ cnt }** 個積壓草稿需要審核，積壓約 **${ lvl }** 週。`,
+		description: `現時建立條目專題共有 **${ cnt }** 個積壓草稿需要審核，積壓約 **${ lvl }** 週。`,
 		fields: [ {
 			name: '工具欄',
 			value: [
@@ -70,13 +70,13 @@ export async function getBacklogInfo(): Promise<{
 	} );
 
 	const tMsg = `<b>條目審核積壓</b>
-現時條目審核專題共有 <b>${ cnt }</b> 個積壓草稿需要審核，積壓約 <b>${ lvl }</b> 週。
+現時建立條目專題共有 <b>${ cnt }</b> 個積壓草稿需要審核，積壓約 <b>${ lvl }</b> 週。
 ———
 <b>工具欄</b>
 <a href="https://zh.wikipedia.org/wiki/Category:正在等待審核的草稿">待審草稿</a> · <a href="https://zh.wikipedia.org/wiki/Special:RandomInCategory/Category:正在等待審核的草稿">隨機跳轉</a>`;
 
 	const iMsg = `${ iB }條目審核積壓${ iB }
-現時條目審核專題共有 ${ iB }${ cnt }${ iB } 個積壓草稿需要審核，積壓約 ${ iB }${ lvl }${ iB } 週。
+現時建立條目專題共有 ${ iB }${ cnt }${ iB } 個積壓草稿需要審核，積壓約 ${ iB }${ lvl }${ iB } 週。
 ———
 ${ iB }工具欄${ iB }
 待審草稿 <https://w.wiki/3cUm>\n隨機跳轉 <https://w.wiki/3cUo>`;

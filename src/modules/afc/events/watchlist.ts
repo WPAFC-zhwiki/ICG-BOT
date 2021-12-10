@@ -184,16 +184,11 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 				rvslots: 'main'
 			} );
 			if ( pagehistory.length === 1 ) {
-				const movequery = new URLSearchParams( {
-					wpOldTitle: title,
-					wpNewTitle: `Draft:${ title }`,
-					wpReason: '由[[Wikipedia:建立條目|建立條目精靈]]建立但錯誤放置在主名字空間且未符合條目收錄要求的草稿'
-				} );
-				const moveurl = `https://zh.wikipedia.org/wiki/Special:MovePage?${ movequery.toString() }`;
+				const moveurl = `https://zhwp-afc-bot.toolforge.org/s/move-namespace-error.njs?title=${ encodeURI( title ) }`;
 				tMsg += `在條目命名空間建立了草稿${ pagelink }（<a href="${ moveurl }">移動到草稿命名空間</a>）`;
 				dMsg
 					.setDescription( `${ mdlink( `User:${ user }`, user ) }在條目命名空間建立了草稿${ turndown( pagelink ) }` )
-					.setFooter( [ `[移動到草稿命名空間](${ moveurl })` ] );
+					.setFooter( `[移動到草稿命名空間](${ moveurl })` );
 
 				winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: create in ns0` );
 			} else {
@@ -219,7 +214,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			}
 			tMsg += `草稿${ pagelink }。`;
 
-			const { issues } = await autoReview( page, wikitext, $parseHTML, { user, creator } );
+			const issues = await autoReview( page, wikitext, $parseHTML, { user, creator } );
 
 			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: submit, issues: ${ issues.join( ', ' ) }` );
 
@@ -235,12 +230,12 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					.setColor( 'RED' )
 					.addField( '自動檢測問題', issues.map( function ( x ) {
 						return `• ${ turndown( getIssusData( x, true ) ) }`;
-					} ) );
+					} ).join( '\n' ) );
 			} else {
 				tMsg += '\n• 沒有發現顯著問題。';
 				dMsg
 					.setColor( 'GREEN' )
-					.addField( '自動檢測問題', [ '• 沒有發現顯著問題。' ] );
+					.addField( '自動檢測問題', '• 沒有發現顯著問題。' );
 			}
 		} else if ( $submissionbox.hasClass( 'afc-submission-declined' ) || $submissionbox.hasClass( 'afc-submission-rejected' ) ) {
 			tMsg += '將';
@@ -289,10 +284,10 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 				} ).join( '' );
 				dMsg.addField( '拒絕理由', reasons.map( function ( x ) {
 					return `• ${ turndown( x ) }`;
-				} ) );
+				} ).join( '\n' ) );
 			} else {
 				tMsg += '，未提供理由。';
-				dMsg.addField( '拒絕理由', [ '• 未提供理由' ] );
+				dMsg.addField( '拒絕理由', '• 未提供理由' );
 			}
 		} else {
 			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: ignore` );
