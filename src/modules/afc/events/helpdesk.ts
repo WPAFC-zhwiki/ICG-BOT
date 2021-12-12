@@ -37,15 +37,14 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	} );
 
 	const parse = await mwbot.parseWikitext( diffText );
-	const $parse = $( parse );
+	const $parse = $( $.parseHTML( parse ) );
 	$parse.find( 'a' ).each( function ( _i, a ) {
 		const $a: JQuery<HTMLAnchorElement> = $( a );
 		const url = new URL( $a.attr( 'href' ), 'https://zh.wikipedia.org/WikiProject:建立條目/詢問桌' );
 		$a.text( `<a href="${ url.href }">${ $a.text() }</a>` );
 	} );
 	$parse.find( '.mwe-math-element' ).each( function ( _i, ele ) {
-		$( ele ).find( 'annotation' ).remove();
-		$( ele ).text( $( ele ).find( 'math' ).text() );
+		$( ele ).text( `<math>${ $( ele ).find( 'math' ).attr( 'alttext' ) }</math>` );
 	} );
 	const parseHtml = $parse.text();
 	const parseMarkDown = turndown( parseHtml );
