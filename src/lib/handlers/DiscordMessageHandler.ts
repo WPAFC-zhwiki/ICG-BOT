@@ -17,7 +17,7 @@ export interface DiscordEvents extends BaseEvents<Discord.Message> {
 	ready( client: Discord.Client ): void;
 }
 
-export type DiscordSendMessage = string | Discord.MessageEmbed | Discord.MessageOptions & { split?: false };
+export type DiscordSendMessage = string | Discord.MessageOptions;
 
 /**
  * 使用通用介面處理 Discord 訊息
@@ -52,19 +52,19 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 			intents: [
 				Discord.Intents.FLAGS.GUILDS,
 				Discord.Intents.FLAGS.GUILD_MEMBERS,
-				Discord.Intents.FLAGS.GUILD_BANS,
+				// Discord.Intents.FLAGS.GUILD_BANS,
 				Discord.Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
 				Discord.Intents.FLAGS.GUILD_INTEGRATIONS,
-				Discord.Intents.FLAGS.GUILD_WEBHOOKS,
-				Discord.Intents.FLAGS.GUILD_INVITES,
-				Discord.Intents.FLAGS.GUILD_VOICE_STATES,
-				Discord.Intents.FLAGS.GUILD_PRESENCES,
+				// Discord.Intents.FLAGS.GUILD_WEBHOOKS,
+				// Discord.Intents.FLAGS.GUILD_INVITES,
+				// Discord.Intents.FLAGS.GUILD_VOICE_STATES,
+				// Discord.Intents.FLAGS.GUILD_PRESENCES,
 				Discord.Intents.FLAGS.GUILD_MESSAGES,
-				Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-				Discord.Intents.FLAGS.GUILD_MESSAGE_TYPING,
+				// Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+				// Discord.Intents.FLAGS.GUILD_MESSAGE_TYPING,
 				Discord.Intents.FLAGS.DIRECT_MESSAGES,
-				Discord.Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
-				Discord.Intents.FLAGS.DIRECT_MESSAGE_TYPING
+				Discord.Intents.FLAGS.DIRECT_MESSAGE_REACTIONS
+				// Discord.Intents.FLAGS.DIRECT_MESSAGE_TYPING
 			]
 		} );
 
@@ -75,7 +75,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		} );
 
 		client.on( 'error', function ( message: Error ): void {
-			winston.error( `DiscordBot Error: ${ message.message }` );
+			winston.error( 'DiscordBot Error:', message );
 		} );
 
 		this._token = botConfig.token;
@@ -87,7 +87,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		const that: this = this;
 
-		async function processMessage( rawdata: Discord.Message ): Promise<void> {
+		client.on( 'messageCreate', async function ( rawdata: Discord.Message ): Promise<void> {
 			if (
 				!that._enabled ||
 				rawdata.author.id === client.user.id ||
@@ -151,10 +151,10 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 
 			// 檢查是不是命令
 			if ( rawdata.content.startsWith( '!' ) || rawdata.content.startsWith( '/' ) ) {
-				const cmd = rawdata.content.substring( 1, rawdata.content.match( ' ' ) ? rawdata.content.match( ' ' ).index : rawdata.content.length );
+				const cmd = rawdata.content.slice( 1, rawdata.content.match( ' ' ) ? rawdata.content.match( ' ' ).index : rawdata.content.length );
 				if ( that._commands.has( cmd ) ) {
 					const callback = that._commands.get( cmd );
-					let param = rawdata.content.trim().substring( cmd.length + 1 );
+					let param = rawdata.content.trim().slice( cmd.length + 1 );
 					if ( param === '' || param.startsWith( ' ' ) ) {
 						param = param.trim();
 
@@ -172,9 +172,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 			}
 
 			that.emit( 'text', context );
-		}
-
-		client.on( 'message', processMessage );
+		} );
 
 		client.on( 'ready', function () {
 			// eslint-disable-next-line prefer-rest-params
@@ -192,11 +190,6 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 			if ( !channel ) {
 				throw new ReferenceError( `Fetch chennel ${ target } fail.` );
 			} else if ( channel.isText() ) {
-				if ( message instanceof Discord.MessageEmbed ) {
-					message = {
-						embeds: [ message ]
-					};
-				}
 				return await channel.send( message );
 			}
 			throw new Error( `Channel ${ target } is not't a text channel.` );

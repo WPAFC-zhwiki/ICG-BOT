@@ -335,7 +335,7 @@ declare module 'irc-upd' {
 			error( ...args: any[] ): void;
 
 			debug( ...args: any[] ): void;
-		}
+		};
 
 		/** Features supported by the server */
 		public supported: {
@@ -354,7 +354,7 @@ declare module 'irc-upd' {
 			nicklength: number
 			topiclength: number;
 			usermodes: string;
-		}
+		};
 
 		/**
 		 * The current nick of the client. Updated if the nick changes

@@ -38,7 +38,7 @@ export function addCommand( command: string, callback: ( msg: Context ) => void,
 		}
 
 		for ( const [ type ] of Manager.handlers ) {
-			if ( disallowedClients.indexOf( type.toLowerCase() ) === -1 ) {
+			if ( !disallowedClients.includes( type.toLowerCase() ) ) {
 				clients.push( type.toLowerCase() );
 			}
 		}
@@ -104,11 +104,11 @@ function emitCommand( context: Context, cmd: string ) {
 	const to_uid = getUIDFromContext( context, context.to );
 
 	// 判斷當前群組是否在處理範圍內
-	if ( disables.indexOf( to_uid ) !== -1 ) {
+	if ( disables.includes( to_uid ) ) {
 		winston.debug( `[command] Msg #${ context.msgId } command ignored (in disables).` );
 	}
 
-	if ( !enables || ( enables && enables.indexOf( to_uid ) !== -1 ) ) {
+	if ( !enables || ( enables && enables.includes( to_uid ) ) ) {
 		func = Fcmd.callback;
 	} else {
 		winston.debug( `[command] Msg #${ context.msgId } command ignored (not in enables).` );

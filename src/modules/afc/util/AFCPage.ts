@@ -190,7 +190,7 @@ export class AFCPage {
 		function parseTimestamp( str: string ) {
 			let exp: RegExp;
 			if ( !isNaN( +new Date( str ) ) ) {
-				return new Date( str ).toISOString().replace( /[^\d]/g, '' ).substring( 0, 14 );
+				return new Date( str ).toISOString().replace( /[^\d]/g, '' ).slice( 0, 14 );
 			} else if ( str.match( /^\d+$/ ) ) {
 				return str;
 			} else {
@@ -214,7 +214,7 @@ export class AFCPage {
 			}
 			date.setUTCSeconds( 0 );
 
-			return date.toISOString().replace( /[^\d]/g, '' ).substring( 0, 14 );
+			return date.toISOString().replace( /[^\d]/g, '' ).slice( 0, 14 );
 		}
 
 		for ( const template of this._templates ) {
@@ -413,7 +413,7 @@ export class AFCPage {
 					// `=` in the value, AND is in sequence with the other
 					// numerical parameters, we can omit the key= part
 					// (positional parameters, joyous day :/ )
-					!isNaN( +key ) && +key % 1 === 0 && value.indexOf( '=' ) === -1 &&
+					!isNaN( +key ) && +key % 1 === 0 && !value.includes( '=' ) &&
 
 					// Parameter 2 will be the first positional parameter,
 					// since 1 is always going to be the submission status.
@@ -487,7 +487,7 @@ export class AFCPage {
 
 		const CategoriesNeedRemove = [ '使用创建条目精灵建立的页面', '用条目向导创建的草稿', '正在等待審核的草稿' ];
 		for ( const cat in this.categories ) {
-			if ( CategoriesNeedRemove.indexOf( cat ) === -1 ) {
+			if ( !CategoriesNeedRemove.includes( cat ) ) {
 				this._text += `\n[[:Category:${ cat }${ ( this.categories[ cat ] ? `|${ this.categories[ cat ] }` : '' ) }]]`;
 			}
 		}
@@ -634,11 +634,11 @@ export class AFCPage {
 				nocreate: true
 			} );
 
-			winston.debug( '[afc/util/AFCPage] Edit success:  ' + JSON.stringify( data ) );
+			winston.debug( '[afc/util/AFCPage] Edit success:' + JSON.stringify( data ) );
 
 			return data;
 		} catch ( err ) {
-			winston.error( '[afc/util/AFCPage] Edit Error:  ' + err );
+			winston.error( '[afc/util/AFCPage] Edit Error:' + err );
 			throw err;
 		}
 	}

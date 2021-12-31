@@ -32,7 +32,7 @@ export async function rebuildReviewerCaches(): Promise<void> {
 }
 
 function upperFirst( str: string ) {
-	return str.substring( 0, 1 ).toUpperCase() + str.substring( 1, str.length );
+	return str.slice( 0, 1 ).toUpperCase() + str.slice( 1, str.length );
 }
 
 export function isReviewer( user: string ): boolean {

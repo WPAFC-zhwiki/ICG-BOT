@@ -203,7 +203,7 @@ export async function oldAutoReview( page: MwnPage, wikitext: string, $parseHTML
 		} ).length &&
 		$parseHTML.find( 'pre' ).filter( function ( _i, ele ) {
 			const parent = $( ele ).parent().get( 0 );
-			return Array.from( parent.classList ).indexOf( 'mw-highlight' ) > -1;
+			return !Array.from( parent.classList ).includes( 'mw-highlight' );
 		} ).length
 	) {
 		issues.push( 'bad-indents' );

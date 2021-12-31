@@ -11,7 +11,7 @@ declare global {
 	var configPath: string;
 }
 
-if ( process.argv.indexOf( '--icconfig' ) > -1 ) {
+if ( process.argv.includes( '--icconfig' ) ) {
 	const configPath: string = process.argv[ process.argv.indexOf( '--icconfig' ) + 1 ];
 	try {
 		global.configPath = require.resolve( path.join( __dirname, '../config', configPath ) );

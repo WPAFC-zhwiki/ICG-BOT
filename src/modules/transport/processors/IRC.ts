@@ -11,7 +11,7 @@ import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );
 	if ( str.length > maxLen ) {
-		str = str.substring( 0, maxLen - 3 ) + '...';
+		str = str.slice( 0, maxLen - 3 ) + '...';
 	}
 	return str;
 }
@@ -46,7 +46,7 @@ ircHandler.on( 'text', async function ( context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( e ) {
-		winston.error( e instanceof Error ? e.stack : e );
+		winston.error( '[transport/processors/IRC]', e );
 	}
 } );
 
@@ -91,9 +91,15 @@ ircHandler.on( 'join', async function ( channel, nick, message ) {
 			isNotice: true,
 			handler: ircHandler,
 			_rawdata: message
-		// eslint-disable-next-line @typescript-eslint/no-empty-function
-		} ) ).catch( function () {} );
+		} ) );
 	}
+
+	// 記錄使用者發言的時間與頻道
+	if ( !userlist[ nick ] ) {
+		userlist[ nick ] = {};
+	}
+
+	userlist[ nick ][ channel ] = 0;
 } );
 
 ircHandler.on( 'text', function ( context ) {
@@ -106,11 +112,11 @@ ircHandler.on( 'text', function ( context ) {
 		userlist[ context.from ] = {};
 	}
 
-	userlist[ context.from ][ String( context.to ).toLowerCase() ] = new Date().getTime();
+	userlist[ context.from ][ String( context.to ).toLowerCase() ] = Date.now();
 } );
 
 function isActive( nick: string | number, channel: string ) {
-	const now = new Date().getTime();
+	const now = Date.now();
 	return userlist[ nick ] && userlist[ nick ][ channel ] &&
 			awaySpan > 0 && ( now - userlist[ nick ][ channel ] <= awaySpan );
 }
@@ -124,7 +130,7 @@ ircHandler.on( 'nick', function ( oldnick, newnick, _channels, rawdata ) {
 
 	const message = `${ oldnick } 更名為 ${ newnick }`;
 
-	for ( const ch in ircHandler.chans ) {
+	for ( const ch in userlist[ newnick ] ) {
 		const chan = ch.toLowerCase();
 
 		if ( ( options.notify.rename === 'all' ) ||
@@ -138,14 +144,13 @@ ircHandler.on( 'nick', function ( oldnick, newnick, _channels, rawdata ) {
 				isNotice: true,
 				handler: ircHandler,
 				_rawdata: rawdata
-			// eslint-disable-next-line @typescript-eslint/no-empty-function
-			} ) ).catch( function () {} );
+			} ) );
 		}
 	}
 } );
 
 function leaveHandler( nick: string, chans: string[],
-	action: string, reason: string, rawdata: irc.IMessage ): void {
+	action: string, reason: string, rawdata: irc.IMessage, removeAll?: boolean ): void {
 	let message: string;
 	if ( reason ) {
 		message = `${ nick } 已${ action } (${ reason })`;
@@ -166,18 +171,21 @@ function leaveHandler( nick: string, chans: string[],
 				isNotice: true,
 				handler: ircHandler,
 				_rawdata: rawdata
-			// eslint-disable-next-line @typescript-eslint/no-empty-function
-			} ) ).catch( function () {} );
+			} ) );
 		}
 
 		if ( userlist[ nick ] ) {
 			delete userlist[ nick ][ chan ];
 		}
 	} );
+
+	if ( removeAll ) {
+		delete userlist[ nick ];
+	}
 }
 
 ircHandler.on( 'quit', ( nick, reason, channels, message ) => {
-	leaveHandler( nick, channels, '離開IRC', reason, message );
+	leaveHandler( nick, channels, '離開IRC', reason, message, true );
 } );
 
 ircHandler.on( 'part', ( channel, nick, reason, message ) => {
@@ -189,7 +197,7 @@ ircHandler.on( 'kick', ( channel, nick, by, reason, message ) => {
 } );
 
 ircHandler.on( 'kill', ( nick, reason, channels, message ) => {
-	leaveHandler( nick, channels, '被kill', reason, message );
+	leaveHandler( nick, channels, '被kill', reason, message, true );
 } );
 
 // 收到了來自其他群組的訊息

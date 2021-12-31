@@ -6,7 +6,7 @@ import winston = require( 'winston' );
 import { Manager } from 'src/init';
 import { ConfigTS } from 'src/config';
 import { Context } from 'src/lib/handlers/Context';
-import { SendMessageOpipons } from 'src/lib/handlers/TelegramMessageHandler';
+import { TelegramSendMessageOpipons } from 'src/lib/handlers/TelegramMessageHandler';
 import jQuery from 'src/lib/jquery';
 import * as bridge from 'src/modules/transport/bridge';
 import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
@@ -18,7 +18,7 @@ function htmlEscape( str: string ): string {
 function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );
 	if ( str.length > maxLen ) {
-		str = str.substring( 0, maxLen - 3 ) + '...';
+		str = str.slice( 0, maxLen - 3 ) + '...';
 	}
 	return str;
 }
@@ -76,7 +76,7 @@ tgHandler.on( 'text', async function ( context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( e ) {
-		winston.error( e instanceof Error ? e.stack : e );
+		winston.error( '[transport/processors/Telegram]', e );
 	}
 } );
 
@@ -86,7 +86,7 @@ tgHandler.on( 'richMessage', async ( context: Context ) => {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( e ) {
-		winston.error( e instanceof Error ? e.stack : e );
+		winston.error( '[transport/processors/Telegram]', e );
 	}
 } );
 
@@ -185,7 +185,7 @@ if ( config.options.Telegram.forwardChannels ) {
 		try {
 			await bridge.transportMessage( context, false );
 		} catch ( e ) {
-			winston.error( e instanceof Error ? e.stack : e );
+			winston.error( '[transport/processors/Telegram]', e );
 		}
 	} );
 
@@ -195,7 +195,7 @@ if ( config.options.Telegram.forwardChannels ) {
 		try {
 			await bridge.transportMessage( context );
 		} catch ( e ) {
-			winston.error( e instanceof Error ? e.stack : e );
+			winston.error( '[transport/processors/Telegram]', e );
 		}
 	} );
 }
@@ -235,7 +235,7 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 
 	// 如果含有相片和音訊
 	if ( msg.extra.uploads ) {
-		const replyOption: SendMessageOpipons = {
+		const replyOption: TelegramSendMessageOpipons = {
 			reply_to_message_id: newRawMsg.message_id
 		};
 

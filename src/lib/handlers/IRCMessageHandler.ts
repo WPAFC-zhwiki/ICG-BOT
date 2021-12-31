@@ -40,9 +40,9 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		prefix: string;
 		postfix: string;
 	} = {
-		prefix: '',
-		postfix: 'string'
-	};
+			prefix: '',
+			postfix: 'string'
+		};
 
 	public get rawClient(): irc.Client {
 		return this._client;
@@ -93,15 +93,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		} );
 
 		client.on( 'error', function ( message ) {
-			if ( message instanceof Error ) {
-				winston.error( `IRCBot error: ${ message }` );
-			} else {
-				try {
-					winston.error( `IRCBot error: ${ JSON.stringify( message ) }` );
-				} catch ( e ) {
-					winston.error( `IRCBot error: ${ message }` );
-				}
-			}
+			winston.error( 'IRCBot error:', message );
 		} );
 
 		// 加载设置
@@ -151,10 +143,10 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 
 			// 檢查是不是命令
 			if ( plainText.startsWith( '!' ) ) {
-				const cmd = plainText.substring( 1, plainText.match( ' ' ) ? plainText.match( ' ' ).index : plainText.length );
+				const cmd = plainText.slice( 1, plainText.match( ' ' ) ? plainText.match( ' ' ).index : plainText.length );
 				if ( that._commands.has( cmd ) ) {
 					const callback = that._commands.get( cmd );
-					let param = plainText.trim().substring( cmd.length + 1 );
+					let param = plainText.trim().slice( cmd.length + 1 );
 					if ( param === '' || param.startsWith( ' ' ) ) {
 						param = param.trim();
 

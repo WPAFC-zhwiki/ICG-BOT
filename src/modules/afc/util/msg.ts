@@ -1,9 +1,10 @@
-import { Message as TMessage } from 'telegraf/typings/telegram-types';
+import { Message as TMessage } from 'typegram';
 import { Message as DMessage, MessageEmbed as DMessageEmbed } from 'discord.js';
 import winston = require( 'winston' );
 
 import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
+import { DiscordSendMessage } from 'src/lib/handlers/DiscordMessageHandler';
 import { parseUID, getUIDFromContext, addCommand, getUIDFromHandler } from 'src/lib/message';
 import * as moduleTransport from 'src/modules/transport';
 import { IRCBold, $, decodeURI } from 'src/modules/afc/util/index';
@@ -37,20 +38,27 @@ const irc = Manager.handlers.get( 'IRC' );
 
 export type Response = void /* IRC */ | TMessage | DMessage;
 
+function discordEmbedToOption( dMsg: DiscordSendMessage | DMessageEmbed ): DiscordSendMessage {
+	return dMsg instanceof DMessageEmbed ? {
+		embeds: [ dMsg ]
+	} : dMsg;
+}
+
+// eslint-disable-next-line no-shadow
 type command = ( args: string[], replyfunc: ( msg: {
-	dMsg?: string | DMessageEmbed;
+	dMsg?: DiscordSendMessage | DMessageEmbed;
 	tMsg?: string;
 	iMsg?: string;
-} ) => void, msg: Context ) => void;
+} ) => Promise<Transport>, msg: Context ) => void;
 
 export function setCommand( cmd: string, func: command ): void {
 	addCommand( `${ cmd }`, function ( context ) {
 		func( context.param.split( ' ' ), function ( msg: {
-			dMsg?: string | DMessageEmbed;
+			dMsg?: DiscordSendMessage | DMessageEmbed;
 			tMsg?: string;
 			iMsg?: string;
-		} ) {
-			reply( context, msg );
+		} ): Promise<Transport> {
+			return reply( context, msg );
 		}, context );
 		return Promise.resolve();
 	}, {
@@ -66,7 +74,7 @@ type Transport = {
 };
 
 export async function reply( context: Context, msg: {
-	dMsg?: string | DMessageEmbed;
+	dMsg?: DiscordSendMessage | DMessageEmbed;
 	tMsg?: string;
 	iMsg?: string;
 } ): Promise<Transport> {
@@ -79,8 +87,8 @@ export async function reply( context: Context, msg: {
 		dc: []
 	};
 
-	if ( context.handler.id === 'Discord' && msg.dMsg ) {
-		output.raw = dc.say( that.id, msg.dMsg );
+	if ( that.client === 'Discord' && msg.dMsg ) {
+		output.raw = dc.say( that.id, discordEmbedToOption( msg.dMsg ) );
 	} else if ( that.client === 'Telegram' && msg.tMsg ) {
 		output.raw = tg.sayWithHTML( that.id, msg.tMsg, {
 			disable_web_page_preview: true
@@ -107,7 +115,7 @@ export async function reply( context: Context, msg: {
 			}
 			const s = parseUID( t );
 			if ( s.client === 'Discord' && msg.dMsg ) {
-				output.dc.push( dc.say( s.id, msg.dMsg ) );
+				output.dc.push( dc.say( s.id, discordEmbedToOption( msg.dMsg ) ) );
 			} else if ( s.client === 'Telegram' && msg.tMsg ) {
 				output.tg.push( tg.sayWithHTML( s.id, msg.tMsg, {
 					disable_web_page_preview: true
@@ -130,7 +138,7 @@ const registeredEvents: string[] = [];
 export function registerEvent( name: string, disableDuplicateWarn = false ): void {
 	if ( registeredEvents.includes( name ) ) {
 		if ( !disableDuplicateWarn ) {
-			winston.warn( `[afc/util/msg] fail to register event "${ name }": Event has been registered.`, new Error().stack.substring( 6 ) );
+			winston.warn( `[afc/util/msg] fail to register event "${ name }": Event has been registered.`, new Error().stack.slice( 6 ) );
 		}
 	} else if ( name === 'debug' ) {
 		return; // ignore
@@ -138,7 +146,7 @@ export function registerEvent( name: string, disableDuplicateWarn = false ): voi
 	registeredEvents.push( name );
 }
 export function send( msg: {
-	dMsg?: string | DMessageEmbed;
+	dMsg?: DiscordSendMessage | DMessageEmbed;
 	tMsg?: string;
 	iMsg?: string;
 }, event: string ): Promise<Response>[] {
@@ -158,7 +166,7 @@ ${ msg.iMsg }
 		}
 		const f = parseUID( k );
 		if ( f.client === 'Discord' && msg.dMsg ) {
-			output.push( dc.say( f.id, msg.dMsg ) );
+			output.push( dc.say( f.id, discordEmbedToOption( msg.dMsg ) ) );
 		} else if ( f.client === 'Telegram' && msg.tMsg ) {
 			output.push( tg.sayWithHTML( f.id, msg.tMsg, {
 				disable_web_page_preview: true
@@ -197,6 +205,32 @@ export async function pinMessage( promises: Promise<Response>[] ): Promise<void>
 					msg.pin();
 				}
 			}
+		}
+	} );
+}
+
+export async function editMessage( promises: Promise<Response>[] | Transport, edMsg: {
+	dMsg?: DiscordSendMessage;
+	tMsg?: string;
+} ): Promise<void> {
+	( Array.isArray( promises ) ? promises : [
+		promises.raw, ...promises.tg, ...promises.dc
+	] ).forEach( async function ( promise ) {
+		try {
+			const msg = await promise;
+
+			if ( msg ) {
+				if ( 'message_id' in msg && 'chat' in msg ) { // Telegram
+					tg.rawClient.telegram.editMessageText( msg.chat.id, msg.message_id, null, edMsg.tMsg, {
+						disable_web_page_preview: true,
+						parse_mode: 'HTML'
+					} );
+				} else if ( 'id' in msg && 'channel' in msg ) { // Discord
+					msg.edit( edMsg.dMsg );
+				}
+			}
+		} catch ( error ) {
+			winston.error( '[afc/util/msg]', error );
 		}
 	} );
 }

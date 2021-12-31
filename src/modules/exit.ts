@@ -1,6 +1,7 @@
 import fs = require( 'fs' );
 import path = require( 'path' );
 import winston = require( 'winston' );
+import chokidar = require( 'chokidar' );
 
 import config from 'src/config';
 
@@ -16,7 +17,7 @@ if ( config.exits ) {
 					winston.error( `[exit] Can't watch file "${ path.normalize( obj.path ) }": It is a directory.` );
 					return;
 				}
-				exits.push( path.normalize( obj.path ) + path.sep );
+				exits.push( path.normalize( obj.path ) + path.sep + '**' );
 			} else {
 				if ( isFolder ) {
 					winston.error( `[exit] Can't watch folder "${ path.normalize( obj.path ) }": It is a file.` );
@@ -34,23 +35,23 @@ if ( config.exits ) {
 	} );
 }
 
-exits.forEach( function ( exit ) {
-	if ( exit.match( new RegExp( '\\' + path.sep + '$' ) ) ) {
-		fs.watch( exit, {
-			recursive: [ 'win32', 'darwin' ].includes( process.platform )
-		}, function ( _, n ) {
-			winston.warn( `[exit] listening path "${ path.join( exit, n ) }" change, exit.` );
-			// eslint-disable-next-line no-process-exit
-			process.exit( 1 );
-		} );
-	} else {
-		fs.watchFile( exit, function () {
-			winston.warn( `[exit] listening path "${ exit }" change, exit.` );
-			// eslint-disable-next-line no-process-exit
-			process.exit( 1 );
-		} );
-	}
+const watcher = chokidar.watch( exits, {
+	persistent: true,
+	ignoreInitial: false
 } );
 
-winston.info( `[exit] listening ${ exits.length } path......` );
+watcher
+	.on( 'ready', function () {
+		winston.info( '[exit] chokidar ready.' );
+	} )
+	.on( 'error', function ( err ) {
+		winston.error( '[exit]', err );
+	} )
+	.on( 'change', function ( exit ) {
+		winston.warn( `[exit] watching path "${ exit }" change, exit.` );
+		// eslint-disable-next-line no-process-exit
+		process.exit( 1 );
+	} );
+
+winston.info( `[exit] watching ${ exits.length } path......` );
 winston.info( `[exit] paths: "${ exits.join( '", "' ) }"` );

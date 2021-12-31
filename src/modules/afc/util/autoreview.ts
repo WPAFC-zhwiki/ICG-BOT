@@ -5,6 +5,16 @@ import issuesData from 'src/modules/afc/util/issuesData.json';
 import { oldAutoReview } from 'src/modules/afc/util/autoreview-old';
 import winston from 'winston';
 
+interface ApiResult {
+	statue: number;
+	result: {
+		title: string;
+		pageid: number;
+		oldid: number;
+		issues: string[];
+	}
+}
+
 // eslint-disable-next-line max-len
 export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: JQuery<JQuery.Node[]|HTMLElement>, { user, creator }: {
 	user?: string;
@@ -15,19 +25,11 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 	try {
 		await fetch(
 			`https://zhwp-afc-bot.toolforge.org/api/autoreview.njs?title=${ encodeURIComponent( page.toString() ) }`
-		).then( async function ( res ): Promise<{
-			statue: number;
-			result: {
-				title: string;
-				pageid: number;
-				oldid: number;
-				issues: string[];
-			}
-		}> {
+		).then( async function ( res ): Promise<ApiResult> {
 			if ( res.status !== 200 ) {
 				throw new Error( `Request fail, response: ${ await res.text() }` );
 			}
-			return await res.json();
+			return <ApiResult>( await res.json() );
 		} ).then( function ( resJson ) {
 			issues.push( ...resJson.result.issues );
 		} );

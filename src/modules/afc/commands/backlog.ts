@@ -22,6 +22,6 @@ setCommand( 'backlog', async function ( _args, reply ) {
 			iMsg: output
 		} );
 
-		winston.error( err );
+		winston.error( '[afc/commands/backlog]', err );
 	}
 } );

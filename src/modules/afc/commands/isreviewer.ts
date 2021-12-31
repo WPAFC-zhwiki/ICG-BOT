@@ -4,7 +4,7 @@ import winston = require( 'winston' );
 import { rebuildReviewerCaches, hasReviewerCaches, isReviewer, encodeURI, turndown, htmlToIRC, setCommand } from 'src/modules/afc/util';
 
 function upperFirst( str: string ) {
-	return str.substring( 0, 1 ).toUpperCase() + str.substring( 1, str.length );
+	return str.slice( 0, 1 ).toUpperCase() + str.slice( 1, str.length );
 }
 
 setCommand( 'isreviewer', async function ( args, reply, bridgemsg ) {

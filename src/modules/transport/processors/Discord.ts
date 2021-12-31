@@ -9,7 +9,7 @@ import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );
 	if ( str.length > maxLen ) {
-		str = str.substring( 0, maxLen - 3 ) + '...';
+		str = str.slice( 0, maxLen - 3 ) + '...';
 	}
 	return str;
 }
@@ -53,7 +53,7 @@ discordHandler.on( 'text', async function ( context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( e ) {
-		winston.error( e instanceof Error ? e.stack : e );
+		winston.error( '[transport/processors/Discord]', e );
 	}
 } );
 

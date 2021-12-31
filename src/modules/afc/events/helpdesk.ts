@@ -59,7 +59,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		description: `留言者：${ mdlink( `User:${ event.user }`, event.user ) }`,
 		fields: [ {
 			name: '留言內容',
-			value: parseMarkDown.length > 1024 ? parseMarkDown.substring( 0, 1021 ) + '...' : parseMarkDown
+			value: parseMarkDown.length > 1024 ? parseMarkDown.slice( 0, 1021 ) + '...' : parseMarkDown
 		} ],
 		timestamp: event.timestamp * 1000
 	} );
@@ -67,7 +67,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	const tMsg = `${ htmllink( diff, '<b>詢問桌有新留言！</b>' ) }
 留言者：${ htmllink( `User:${ event.user }`, event.user ) }
 留言內容：
-${ ( parseHtml.length > 2048 ? parseHtml.substring( 0, 2045 ) + '...' : parseHtml ) }`;
+${ ( parseHtml.length > 2048 ? parseHtml.slice( 0, 2045 ) + '...' : parseHtml ) }`;
 
 	const iMsg = htmlToIRC( tMsg );
 

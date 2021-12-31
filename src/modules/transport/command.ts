@@ -47,7 +47,7 @@ Record<string, bridge.hook> | ( ( msg: BridgeMsg ) => Promise<void> ), opts: {
 		}
 
 		for ( const [ type ] of Manager.handlers ) {
-			if ( disallowedClients.indexOf( type.toLowerCase() ) === -1 ) {
+			if ( !disallowedClients.includes( type.toLowerCase() ) ) {
 				clients.push( type.toLowerCase() );
 			}
 		}
@@ -124,12 +124,12 @@ function sethook( event: string ) {
 			let func: bridge.hook = null;
 
 			// 判斷當前群組是否在處理範圍內
-			if ( disables.indexOf( msg.to_uid ) !== -1 ) {
+			if ( disables.includes( msg.to_uid ) ) {
 				winston.debug( `[transport/command] Msg #${ msg.msgId } command ignored (in disables).` );
 				return Promise.resolve();
 			}
 
-			if ( !enables || ( enables && enables.indexOf( msg.to_uid ) !== -1 ) ) {
+			if ( !enables || ( enables && !enables.includes( msg.to_uid ) ) ) {
 				func = cmd.callbacks[ event ];
 			} else {
 				winston.debug( `[transport/command] Msg #${ msg.msgId } command ignored (not in enables).` );

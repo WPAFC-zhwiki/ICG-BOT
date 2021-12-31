@@ -8,8 +8,7 @@ import EventEmitter, { Events } from 'src/lib/eventemitter2';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Command<rawdata extends rawmsg = any> = ( context: Context<rawdata>, cmd: string, param: string ) => void;
 
-export type Telegraf = TelegrafClient<TContext>;
-export type Telegram = Telegraf['telegram'];
+export type Telegram = TelegrafClient<TContext>;
 export type Discord = DiscordClient;
 export type IRC = IRCClient;
 
@@ -35,7 +34,7 @@ export interface BaseEvents<rawdata extends rawmsg> extends Events {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class MessageHandler<E extends BaseEvents<any> = BaseEvents<rawmsg>> extends EventEmitter<E> {
-	protected _client: Telegraf | Discord | IRC = null;
+	protected _client: Telegram | Discord | IRC = null;
 	protected _type: string;
 	protected _id: string;
 	protected _enabled = true;
@@ -48,7 +47,7 @@ export class MessageHandler<E extends BaseEvents<any> = BaseEvents<rawmsg>> exte
 		super();
 	}
 
-	public get rawClient(): Telegraf | Discord | IRC {
+	public get rawClient(): Telegram | Discord | IRC {
 		return this._client;
 	}
 
@@ -56,16 +55,8 @@ export class MessageHandler<E extends BaseEvents<any> = BaseEvents<rawmsg>> exte
 		return this._type;
 	}
 
-	public set type( value: string ) {
-		this._type = value;
-	}
-
 	public get id(): string {
 		return this._id;
-	}
-
-	public set id( value: string ) {
-		this._id = value;
 	}
 
 	public get enabled(): boolean {

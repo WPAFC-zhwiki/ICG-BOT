@@ -11,7 +11,9 @@ import { ConfigTS } from 'src/config';
 import { MessageHandler, Command, BaseEvents } from 'src/lib/handlers/MessageHandler';
 import { Context } from 'src/lib/handlers/Context';
 import { getFriendlySize, getFriendlyLocation } from 'src/lib/util';
-import HttpsProxyAgent from 'src/lib/proxy.js';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+
+export type TelegramFallbackBots = 'Link Channel' | 'Group' | 'Channel' | false;
 
 export interface TelegramEvents extends BaseEvents<TContext> {
 	pin( info: {
@@ -47,7 +49,7 @@ export interface TelegramEvents extends BaseEvents<TContext> {
 	groupChannelRichMessage( channel: TT.Chat.ChannelChat, context: Context<TContext> ): void;
 }
 
-export interface SendMessageOpipons extends ExtraReplyMessage {
+export interface TelegramSendMessageOpipons extends ExtraReplyMessage {
 	withNick?: boolean
 }
 
@@ -59,7 +61,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 	protected readonly _type: 'Telegram' = 'Telegram';
 	protected readonly _id: 'T' = 'T';
 
-	private readonly _start: {
+	readonly #start: {
 		mode: 'webhook';
 		params: {
 			path: string;
@@ -68,19 +70,19 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		};
 	} | {
 		mode: 'poll';
-	}
+	};
 
-	private _username: string;
-	private _nickStyle: 'username' | 'fullname' | 'firstname';
-	private _startTime: number = new Date().getTime() / 1000;
+	#username: string;
+	#nickStyle: 'username' | 'fullname' | 'firstname';
+	#startTime: number = Date.now() / 1000;
 
 	public get rawClient(): Telegraf<TContext> {
 		return this._client;
 	}
 
-	private _me: TT.User;
+	#me: TT.User;
 	public get me(): TT.User {
-		return this._me;
+		return this.#me;
 	}
 
 	public constructor( config: ConfigTS[ 'Telegram' ] ) {
@@ -107,8 +109,9 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		let myAgent: https.Agent = https.globalAgent;
 		if ( botConfig.proxy && botConfig.proxy.host ) {
 			myAgent = new HttpsProxyAgent( {
-				proxyHost: botConfig.proxy.host,
-				proxyPort: botConfig.proxy.port
+				host: botConfig.proxy.host,
+				port: botConfig.proxy.port,
+				secureProxy: true
 			} );
 		}
 
@@ -121,8 +124,8 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		} );
 
 		client.telegram.getMe().then( function ( me ) {
-			that._username = me.username;
-			that._me = me;
+			that.#username = me.username;
+			that.#me = me;
 			winston.info( `TelegramBot is ready, login as: ${ me.first_name }${ me.last_name ? ` ${ me.last_name }` : '' }@${ me.username }(${ me.id })` );
 		} );
 
@@ -165,7 +168,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 				}
 			}
 
-			this._start = {
+			this.#start = {
 				mode: 'webhook',
 				params: {
 					path: webhookConfig.path,
@@ -175,13 +178,13 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			};
 		} else {
 			// 使用轮询机制
-			this._start = {
+			this.#start = {
 				mode: 'poll'
 			};
 		}
 
 		this._client = client;
-		this._nickStyle = tgOptions.nickStyle || 'username';
+		this.#nickStyle = tgOptions.nickStyle || 'username';
 
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		const that: this = this;
@@ -203,14 +206,14 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 		client.on( 'message', async function ( ctx, next ) {
 			if ( that._enabled && ctx.message && ctx.chat ) {
-				if ( ctx.message.date < that._startTime ) {
+				if ( ctx.message.date < that.#startTime ) {
 					return;
 				}
 
 				const context: Context<TContext> = new Context<TContext>( {
 					from: ctx.message.from.id,
 					to: ctx.chat.id,
-					nick: that._getNick( ctx.message.from ),
+					nick: that.#getNick( ctx.message.from ),
 					text: '',
 					isPrivate: ( ctx.chat.id > 0 ),
 					extra: {
@@ -242,9 +245,9 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 				if ( 'reply_to_message' in ctx.message ) {
 					const reply: TT.ReplyMessage = ctx.message.reply_to_message;
 					context.extra.reply = {
-						nick: that._getNick( reply.from ),
+						nick: that.#getNick( reply.from ),
 						username: reply.from.username,
-						message: that._convertToText( reply ),
+						message: that.#convertToText( reply ),
 						isText: 'text' in reply && !!reply.text,
 						id: String( reply.from.id ),
 						_rawdata: null
@@ -259,9 +262,9 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						context.extra.reply.username = reply.forward_from_chat.username;
 					} else {
 						context.extra.reply = {
-							nick: that._getNick( reply.from ),
+							nick: that.#getNick( reply.from ),
 							username: reply.from.username,
-							message: that._convertToText( reply ),
+							message: that.#convertToText( reply ),
 							isText: 'text' in reply && !!reply.text,
 							id: String( reply.from.id ),
 							_rawdata: null
@@ -281,7 +284,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						};
 					} else {
 						context.extra.forward = {
-							nick: that._getNick( fwd ),
+							nick: that.#getNick( fwd ),
 							username: fwd.username
 						};
 					}
@@ -298,7 +301,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					if ( cmd ) {
 						// 如果包含 Bot 名，判断是否为自己
 						const [ , c, , n ] = cmd.match( /^([A-Za-z0-9_]+)(|@([A-Za-z0-9_]+))$/u ) || [];
-						if ( ( n && ( n.toLowerCase() === String( that._username ).toLowerCase() ) ) || !n ) {
+						if ( ( n && ( n.toLowerCase() === String( that.#username ).toLowerCase() ) ) || !n ) {
 							param = param || '';
 
 							context.command = c;
@@ -367,30 +370,30 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						that.emit( 'pin', {
 							from: {
 								id: message.from.id,
-								nick: that._getNick( message.from ),
+								nick: that.#getNick( message.from ),
 								username: message.from.username
 							},
 							to: ctx.chat.id,
-							text: that._convertToText( message.pinned_message )
+							text: that.#convertToText( message.pinned_message )
 						}, ctx );
 					} else if ( 'left_chat_member' in message ) {
 						that.emit( 'leave', ctx.chat.id, {
 							id: message.from.id,
-							nick: that._getNick( message.from ),
+							nick: that.#getNick( message.from ),
 							username: message.from.username
 						}, {
 							id: message.left_chat_member.id,
-							nick: that._getNick( message.left_chat_member ),
+							nick: that.#getNick( message.left_chat_member ),
 							username: message.left_chat_member.username
 						}, ctx );
 					} else if ( 'new_chat_members' in message ) {
 						that.emit( 'join', ctx.chat.id, {
 							id: message.from.id,
-							nick: that._getNick( message.from ),
+							nick: that.#getNick( message.from ),
 							username: message.from.username
 						}, {
 							id: message.new_chat_members[ 0 ].id,
-							nick: that._getNick( message.new_chat_members[ 0 ] ),
+							nick: that.#getNick( message.new_chat_members[ 0 ] ),
 							username: message.new_chat_members[ 0 ].username
 						}, ctx );
 					}
@@ -416,15 +419,15 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		} );
 	}
 
-	private _getNick( user: TT.User ): string {
+	#getNick( user: TT.User ): string {
 		if ( user ) {
 			const username: string = ( user.username || '' ).trim();
 			const firstname: string = ( user.first_name || '' ).trim() || ( user.last_name || '' ).trim();
 			const fullname: string = `${ user.first_name || '' } ${ user.last_name || '' }`.trim();
 
-			if ( this._nickStyle === 'fullname' ) {
+			if ( this.#nickStyle === 'fullname' ) {
 				return fullname || username;
-			} else if ( this._nickStyle === 'firstname' ) {
+			} else if ( this.#nickStyle === 'firstname' ) {
 				return firstname || username;
 			} else {
 				return username || fullname;
@@ -434,7 +437,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		}
 	}
 
-	private _convertToText( message: Partial<TT.Message> ) {
+	#convertToText( message: Partial<TT.Message> ) {
 		if ( 'audio' in message ) {
 			return '<Audio>';
 		} else if ( 'photo' in message ) {
@@ -468,16 +471,40 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		}
 	}
 
+	public isTelegramFallbackBot( message: TT.Message ): [ TelegramFallbackBots, number ] {
+		const fwdChat =
+			'forward_from_chat' in message &&
+			message.forward_from_chat.type === 'channel' &&
+			message.forward_from_chat;
+		if (
+			message.from.id === 777000 /* Telegram */ &&
+			fwdChat && fwdChat.type === 'channel'
+		) {
+			return [ 'Link Channel', fwdChat.id ];
+		} else if (
+			message.from.id === 1087968824 /* GroupAnonymousBot */
+		) {
+			return [ 'Group', message.chat.id ];
+		} else if (
+			message.from.id === 136817688 /* Channel Bot */ &&
+			message.sender_chat
+		) {
+			return [ 'Channel', message.sender_chat.id ];
+		}
+
+		return [ false, message.from.id ];
+	}
+
 	public get username(): string {
-		return this._username;
+		return this.#username;
 	}
 
 	public set username( v: string ) {
-		this._username = v;
+		this.#username = v;
 	}
 
 	public get nickStyle(): string {
-		return this._nickStyle;
+		return this.#nickStyle;
 	}
 
 	public set nickStyle( v: string ) {
@@ -505,9 +532,9 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		this._client.inlineQuery( ...args );
 	}
 
-	private async _say( method: string, target: string | number,
+	async #say( method: string, target: string | number,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		message: any, options?: SendMessageOpipons ): Promise<any> {
+		message: any, options?: TelegramSendMessageOpipons ): Promise<any> {
 		if ( !this._enabled ) {
 			throw new Error( 'Handler not enabled' );
 		} else {
@@ -515,13 +542,13 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		}
 	}
 
-	public say( target: string | number, message: string, options?: SendMessageOpipons ): Promise<TT.Message> {
-		return this._say( 'sendMessage', target, message, options );
+	public say( target: string | number, message: string, options?: TelegramSendMessageOpipons ): Promise<TT.Message> {
+		return this.#say( 'sendMessage', target, message, options );
 	}
 
 	public sayWithHTML( target: string | number, message: string,
-		options?: SendMessageOpipons ): Promise<TT.Message> {
-		const options2: SendMessageOpipons = copyObject( options || {} );
+		options?: TelegramSendMessageOpipons ): Promise<TT.Message> {
+		const options2: TelegramSendMessageOpipons = copyObject( options || {} );
 		options2.parse_mode = 'HTML';
 		return this.say( target, message, options2 );
 	}
@@ -545,19 +572,19 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		return this._client.telegram.sendDocument( ...args );
 	}
 
-	private async _reply( method: string, context: Context<TContext>,
+	async #reply( method: string, context: Context<TContext>,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		message: any, options?: SendMessageOpipons ): Promise<any> {
+		message: any, options?: TelegramSendMessageOpipons ): Promise<any> {
 		if ( ( context._rawdata && context._rawdata.message ) ) {
 			if ( context.isPrivate ) {
-				return await this._say( method, context.to, message, options );
+				return await this.#say( method, context.to, message, options );
 			} else {
-				const options2: SendMessageOpipons = copyObject( options || {} );
+				const options2: TelegramSendMessageOpipons = copyObject( options || {} );
 				options2.reply_to_message_id = context._rawdata.message.message_id;
 				if ( options2.withNick ) {
-					return await this._say( method, context.to, `${ context.nick }: ${ message }`, options2 );
+					return await this.#say( method, context.to, `${ context.nick }: ${ message }`, options2 );
 				} else {
-					return await this._say( method, context.to, `${ message }`, options2 );
+					return await this.#say( method, context.to, `${ message }`, options2 );
 				}
 			}
 		} else {
@@ -567,12 +594,12 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 	public reply( context: Context<TContext>,
 		message: string, options?: ExtraReplyMessage ): Promise<TT.Message> {
-		return this._reply( 'sendMessage', context, message, options );
+		return this.#reply( 'sendMessage', context, message, options );
 	}
 
 	public replyWithPhoto( context: Context<TContext>,
 		photo: TT.InputFile, options?: ExtraPhoto ): Promise<TT.Message.PhotoMessage> {
-		return this._reply( 'sendPhoto', context, photo, options );
+		return this.#reply( 'sendPhoto', context, photo, options );
 	}
 
 	public getChatAdministrators( group: string | number ): Promise<TT.ChatMember[]> {
@@ -595,12 +622,12 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		if ( !this._started ) {
 			this._started = true;
 
-			if ( this._start.mode === 'webhook' ) {
+			if ( this.#start.mode === 'webhook' ) {
 				this._client.launch( {
 					webhook: {
-						hookPath: this._start.params.path,
-						tlsOptions: this._start.params.tlsOptions,
-						port: Number( this._start.params.port )
+						hookPath: this.#start.params.path,
+						tlsOptions: this.#start.params.tlsOptions,
+						port: Number( this.#start.params.port )
 					}
 				} );
 			} else {

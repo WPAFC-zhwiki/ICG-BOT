@@ -343,7 +343,7 @@ const fileUploader = {
 					winston.debug( `[file] <FileUploader> #${ context.msgId } File ${ index + 1 }/${ fileCount }: Size limit exceeded. Ignore.` );
 				} else {
 					promises.push( uploadFile( file ).catch( function ( err ) {
-						winston.error( `[file] Error on processing files:  ${ err }` );
+						winston.error( '[file] Error on processing files:', err );
 						return null;
 					} ) );
 				}

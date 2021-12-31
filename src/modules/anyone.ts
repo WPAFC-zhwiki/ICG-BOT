@@ -23,7 +23,7 @@ addCommand( 'anyone', async function ( context: Context ) {
 	const rawdata: rawmsg = context._rawdata;
 
 	if ( rawdata instanceof TContext ) {
-		if ( rawdata.message.reply_to_message ) {
+		if ( 'reply_to_message' in rawdata.message ) {
 			tg.rawClient.telegram.sendMessage( rawdata.chat.id, '沒有人，你悲劇了。', {
 				reply_to_message_id: rawdata.message.reply_to_message.message_id
 			} );

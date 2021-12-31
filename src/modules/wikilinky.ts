@@ -168,7 +168,7 @@ async function processlinky( from: string, to: string, text: string, context: Co
 			}
 		}
 	} catch ( ex ) {
-		winston.error( `[wikilinkly] error: ${ ex }` );
+		winston.error( '[wikilinkly] error:', ex );
 	}
 }
 

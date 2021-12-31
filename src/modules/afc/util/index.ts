@@ -27,8 +27,6 @@ export function encodeURI( uri: string ): string {
 		.replace( /:$/, '%3A' );
 }
 
-const oldDecodeURI = global.decodeURI;
-
 /**
  * Gets the unencoded version of an encoded Uniform Resource Identifier (URI).
  *
@@ -36,7 +34,7 @@ const oldDecodeURI = global.decodeURI;
  * @return {string} decode url
  */
 export function decodeURI( encodedURI: string ): string {
-	return oldDecodeURI( encodedURI )
+	return global.decodeURI( encodedURI )
 		.replace( /\s/g, '_' );
 }
 

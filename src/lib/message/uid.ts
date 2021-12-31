@@ -23,12 +23,12 @@ export function parseUID( u: string ): {
 		const i: number = s.indexOf( '/' );
 
 		if ( i !== -1 ) {
-			client = s.substr( 0, i ).toLowerCase();
+			client = s.slice( 0, i ).toLowerCase();
 			if ( clientFullNames[ client ] ) {
 				client = clientFullNames[ client ];
 			}
 
-			id = s.substr( i + 1 );
+			id = s.slice( i + 1 );
 			uid = `${ client.toLowerCase() }/${ id }`;
 		}
 	}

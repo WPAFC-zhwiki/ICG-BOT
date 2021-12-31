@@ -15,7 +15,7 @@ const backlogCronJob = new CronJob( '0 0 */4 * * *', async function () {
 
 		winston.debug( `[afc/event/backlog] count: ${ cnt }, level ${ lvl }` );
 	} catch ( err ) {
-		winston.error( err );
+		winston.error( '[afc/event/backlog]', err );
 	}
 } );
 backlogCronJob.start();

@@ -108,7 +108,7 @@ const config: ConfigTS = {
 
 	modules: [
 		'transport', // 啟用互聯功能，不想禁止互聯的話請勿移除
-		'groupid-tg', // 取得目前 Telegram 群組的 ID，可在正式連接之前啟用該套件，然後在 Telegram 群中使用 /thisgroupid 取得ID
+		'ids-tg', // 取得 Telegram 相關 ID
 		'ircquery', // 允許查詢 IRC 的一些訊息
 		'irccommand', // 允許向 IRC 發送一些命令（注意，不是 IRC 命令而是給頻道內機器人使用的命令）
 		'pia',

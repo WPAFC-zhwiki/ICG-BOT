@@ -18,7 +18,7 @@ type Emoji = {
 	id: string;
 };
 
-discordHandler.on( 'text', function ( context: Context<Discord.Message> ) {
+export async function preProcess( context: Context<Discord.Message> ) {
 	userInfo.set( String( context.from ), context._rawdata.author );
 
 	if ( /<a?:\w+:\d*?>/g.test( context.text ) ) {
@@ -91,13 +91,13 @@ discordHandler.on( 'text', function ( context: Context<Discord.Message> ) {
 				promises.push( userInfo.get( at ) );
 			} else {
 				promises.push( discordHandler.fetchUser( at ).catch( function ( e: Error ) {
-					winston.error( e.stack );
+					winston.error( `[message/process/Discord] Fail to fetch user ${ at }:`, e.stack );
 				} ) );
 			}
 		}
 
-		Promise.all( promises ).then( ( infos ) => {
-			for ( const info of infos ) {
+		try {
+			for ( const info of await Promise.all( promises ) ) {
 				if ( info ) {
 					if ( !userInfo.has( info.id ) ) {
 						userInfo.set( info.id, info );
@@ -105,18 +105,20 @@ discordHandler.on( 'text', function ( context: Context<Discord.Message> ) {
 
 					context.text = context.text.replace(
 						new RegExp( `<@!?${ info.id }>`, 'gu' ),
-						info.bot ? `<@bot ${ discordHandler.getNick( info ) }>` : `@${ discordHandler.getNick( info ) }`
+						`<${ info.bot ? 'bot' : 'user' } @${ discordHandler.getNick( info ) }>`
 					);
 				}
 			}
-		} ).catch( function ( e ) {
-			winston.error( e.trace );
-		} ).then( function () {
-			msgManage.emit( 'discord', context.from, context.to, context.text, context );
-			msgManage.emit( 'text', 'Discord', context.from, context.to, context.text, context );
-		} );
-	} else {
-		msgManage.emit( 'discord', context.from, context.to, context.text, context );
-		msgManage.emit( 'text', 'Discord', context.from, context.to, context.text, context );
+		} catch ( e ) {
+			winston.error( '[message/process/Discord]', e );
+		}
 	}
+	return context;
+}
+
+discordHandler.on( 'text', async function ( context: Context<Discord.Message> ) {
+	await preProcess( context );
+	msgManage.emit( 'discord', context.from, context.to, context.text, context );
+	msgManage.emit( 'text', 'Discord', context.from, context.to, context.text, context );
+
 } );

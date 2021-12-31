@@ -10,7 +10,7 @@ function mdlink( title: string, text?: string ) {
 	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
-setCommand( 'waitlist', async function ( args, reply ) {
+setCommand( 'waitlist', async function ( _args, reply ) {
 	const { list } = await getBacklogInfo();
 
 	// TODO: 範圍
