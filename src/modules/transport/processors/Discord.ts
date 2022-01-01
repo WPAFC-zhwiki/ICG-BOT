@@ -5,6 +5,7 @@ import { Manager } from 'src/init';
 import { ConfigTS } from 'src/config';
 import * as bridge from 'src/modules/transport/bridge';
 import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
+import { preProcess } from 'src/lib/message/processors/Discord';
 
 function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );
@@ -39,6 +40,8 @@ function parseForwardBot( username: string, text: string ) {
  * 傳話
  */
 discordHandler.on( 'text', async function ( context ) {
+	await preProcess( context );
+
 	const extra = context.extra;
 
 	// 檢查是不是在回覆自己
