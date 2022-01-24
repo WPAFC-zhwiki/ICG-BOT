@@ -11,6 +11,7 @@
 		"start": "grunt clean && node -r ts-node/register -r tsconfig-paths/register ./src/index.ts",
 		"test": "npm run lint && npm run build && npm build-start",
 		"build": "grunt",
+		"build:no-relad": "grunt build:noReloadFlag",
 		"build-start": "grunt built && node bin/index",
 		"lint": "eslint src/*.ts src/**/*.ts",
 		"forever": "forever start -c bash -o logs/forever.log main.sh",

@@ -576,10 +576,13 @@ export interface ConfigTS {
 	 * 於此列出的所有檔案在變更時都會自動退出，需搭配module exit使用
 	 * 建議使用絕對路徑
 	 */
-	exits?: ( {
-		type?: '' | 'file' | 'folder',
-		path: string;
-	} )[];
+	exits?: {
+		paths: ( {
+			type?: '' | 'file' | 'folder',
+			path: string;
+		} )[];
+		usePolling?: boolean
+	}
 }
 
 type AFCEventEnableType = {

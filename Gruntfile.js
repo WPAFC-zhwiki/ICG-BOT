@@ -42,40 +42,40 @@ module.exports = function ( grunt ) {
 		const done = this.async();
 
 		async function systemSync( cmd ) {
-			let result = '', exitcode = 0;
+			let sResult = '', sExitcode = 0;
 
 			await new Promise( function ( reslove ) {
 				exec( cmd, ( err, stdout, stderr ) => {
 					if ( stdout && stdout.length ) {
-						result += stdout;
+						sResult += stdout;
 						grunt.log.write( stdout );
 					}
 
 					if ( stderr && stderr.length ) {
-						result += stderr;
+						sResult += stderr;
 						grunt.log.write( stderr );
 					}
 
 					if ( err ) {
 						if ( err.killed ) {
-							result += '\nThe task has been kill.';
+							sResult += '\nThe task has been kill.';
 						}
-						exitcode = err.code;
+						sExitcode = err.code;
 					}
 				} ).on( 'exit', function ( code ) {
-					exitcode = code;
+					sExitcode = code;
 				} ).on( 'close', function () {
 					reslove();
 				} );
 			} );
 
 			return {
-				result,
-				exitcode
+				result: sResult,
+				exitcode: sExitcode
 			};
 		}
 
-		const starttime = +new Date();
+		const starttime = Date.now();
 
 		const { result, exitcode } = await systemSync( 'tsc' );
 
@@ -129,7 +129,7 @@ module.exports = function ( grunt ) {
 			}
 		}
 
-		const take = ( ( +new Date() - starttime ) / 1000 ).toFixed( 2 );
+		const take = ( ( Date.now() - starttime ) / 1000 ).toFixed( 2 );
 
 		if ( !isError && !( level1ErrorCount + level5ErrorCount + nonEmitPreventingWarningCount ) ) {
 			grunt.log.writeln( '' );
@@ -161,6 +161,10 @@ module.exports = function ( grunt ) {
 			return;
 		}
 
+		done( true );
+	} );
+
+	grunt.task.registerTask( 'reloadFlag', async function () {
 		if ( grunt.file.exists( getFullPath( 'reloadFlag.txt' ) ) ) {
 			try {
 				grunt.file.write( getFullPath( 'reloadFlag.txt' ), 'Reload after build success.\n\nDate: ' + new Date().toISOString() );
@@ -170,8 +174,9 @@ module.exports = function ( grunt ) {
 			}
 		}
 
-		done( true );
+		this.async()( true );
 	} );
 
-	grunt.registerTask( 'default', [ 'clean', 'build' ] );
+	grunt.registerTask( 'default', [ 'clean', 'build', 'reloadFlag' ] );
+	grunt.registerTask( 'build:noReloadFlag', [ 'clean', 'build' ] );
 };

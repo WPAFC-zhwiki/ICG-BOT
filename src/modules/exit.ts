@@ -8,7 +8,7 @@ import config from 'src/config';
 const exits: string[] = [];
 
 if ( config.exits ) {
-	config.exits.forEach( function ( obj ) {
+	config.exits.paths.forEach( function ( obj ) {
 		const isFolder = obj.type === 'folder';
 		try {
 			const stats = fs.statSync( obj.path );
@@ -37,7 +37,8 @@ if ( config.exits ) {
 
 const watcher = chokidar.watch( exits, {
 	persistent: true,
-	ignoreInitial: false
+	ignoreInitial: false,
+	usePolling: config.exits.usePolling
 } );
 
 watcher
