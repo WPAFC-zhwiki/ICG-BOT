@@ -6,6 +6,8 @@ import winston = require( 'winston' );
 import { mwbot, $ } from 'src/modules/afc/util/index';
 import { isReviewer } from 'src/modules/afc/util/reviewer';
 
+const categoryRegex = /\[\[:?(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):([^[\]]+)\]\]/gi;
+
 async function revisionRequest( title: string, props: ApiQueryRevisionsParams[ 'rvprop' ],
 	limit: number, customOptions?: ApiQueryRevisionsParams ): Promise<ApiRevision[]> {
 	const data = await mwbot.request( {
@@ -456,7 +458,6 @@ export class AFCPage {
 	}
 
 	private _parseCategories(): void {
-		const categoryRegex = /\[\[:?(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):([^[\]]+)\]\]/gi;
 		let match = categoryRegex.exec( this._text );
 		this.categories = {};
 
@@ -468,7 +469,7 @@ export class AFCPage {
 			match = categoryRegex.exec( this._text );
 		}
 
-		this._text = this._text.replace( /\[\[:?(?:Cat|Category|分[类類]):([^[\]]+)\]\]/gi, '' );
+		this._text = this._text.replace( categoryRegex, '' );
 
 		this._removeExcessNewlines();
 	}
@@ -534,7 +535,8 @@ export class AFCPage {
 			.replace( /<\/?hr\s*\/?>/g, '<hr />' )
 
 			// Remove html comments (<!--) that surround categories
-			.replace( /<!--\s*((?:\[\[:{0,1}(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):.*?\]\]\s*)+)-->/gi, '$1' )
+			// categoryRegex
+			.replace( new RegExp( '<!--[\\s\\r\\t\\n]*((' + categoryRegex.source + '[\\s\\r\\t\\n]*)+)-->', 'gi' ), '$1' )
 
 			// Remove spaces/commas between <ref> tags
 			.replace(

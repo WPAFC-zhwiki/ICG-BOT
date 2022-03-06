@@ -46,8 +46,10 @@ tg.addCommand( 'userid', function ( context ) {
 			'forward_from_chat' in rawdata.message.reply_to_message &&
 			[ 'channel', 'group', 'supergroup' ].includes( rawdata.message.reply_to_message.forward_from_chat.type )
 		) {
+			let type = rawdata.message.reply_to_message.forward_from_chat.type;
+			type = type === 'supergroup' ? 'group' : type;
 			output = 'Forward From ' + getOutPut( [
-				upperCaseFirst( rawdata.message.reply_to_message.forward_from_chat.type ),
+				upperCaseFirst( type ),
 				rawdata.message.reply_to_message.forward_from_chat.id
 			] );
 		} else {
