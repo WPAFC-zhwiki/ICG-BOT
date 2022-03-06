@@ -39,10 +39,6 @@ tg.addCommand( 'userid', function ( context ) {
 	let output: string;
 	if ( 'reply_to_message' in rawdata.message ) {
 		if (
-			'forward_from' in rawdata.message.reply_to_message
-		) {
-			output = 'Forward From ' + getOutPut( [ false, rawdata.message.reply_to_message.forward_from.id ] );
-		} else if (
 			'forward_from_chat' in rawdata.message.reply_to_message &&
 			[ 'channel', 'group', 'supergroup' ].includes( rawdata.message.reply_to_message.forward_from_chat.type )
 		) {
@@ -50,6 +46,10 @@ tg.addCommand( 'userid', function ( context ) {
 				upperCaseFirst( rawdata.message.reply_to_message.forward_from_chat.type ),
 				rawdata.message.reply_to_message.forward_from_chat.id
 			] );
+		} else if (
+			'forward_from' in rawdata.message.reply_to_message
+		) {
+			output = 'Forward From ' + getOutPut( [ false, rawdata.message.reply_to_message.forward_from.id ] );
 		} else {
 			output = 'Reply to ' + getOutPut( tg.isTelegramFallbackBot( rawdata.message.reply_to_message ) );
 		}
