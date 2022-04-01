@@ -64,12 +64,14 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		timestamp: event.timestamp * 1000
 	} );
 
-	const tMsg = `${ htmllink( diff, '<b>詢問桌有新留言！</b>' ) }
+	let tMsg = `${ htmllink( diff, '<b>詢問桌有新留言！</b>' ) }
 留言者：${ htmllink( `User:${ event.user }`, event.user ) }
 留言內容：
 ${ ( parseHtml.length > 2048 ? parseHtml.slice( 0, 2045 ) + '...' : parseHtml ) }`;
 
 	const iMsg = htmlToIRC( tMsg );
+
+	tMsg += '\n\n#詢問桌留言';
 
 	send( {
 		dMsg,

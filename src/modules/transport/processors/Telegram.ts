@@ -8,6 +8,7 @@ import { ConfigTS } from 'src/config';
 import { Context } from 'src/lib/handlers/Context';
 import { TelegramSendMessageOpipons } from 'src/lib/handlers/TelegramMessageHandler';
 import jQuery from 'src/lib/jquery';
+import delay from 'src/lib/delay';
 import * as bridge from 'src/modules/transport/bridge';
 import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
 
@@ -30,9 +31,6 @@ const options: ConfigTS[ 'transport' ][ 'options' ][ 'Telegram' ] = config.optio
 
 const forwardBots: Record<string, '[]' | '<>' | 'self'> = options.forwardBots;
 
-// 我們自己也是傳話機器人
-forwardBots[ tgHandler.username ] = 'self';
-
 // 如果是互聯機器人，那麼提取真實的使用者名稱和訊息內容
 function parseForwardBot( username: string, text: string ) {
 	let realText: string, realNick: string;
@@ -49,6 +47,17 @@ function parseForwardBot( username: string, text: string ) {
 
 	return { realNick, realText };
 }
+
+( async function () {
+	while ( !tgHandler.username ) {
+		await delay( 100 );
+	}
+
+	// 我們自己也是傳話機器人
+	forwardBots[ tgHandler.username ] = 'self';
+
+	console.log( forwardBots );
+}() );
 
 function prepareText( context: Context, checkCommand = true ) {
 	const extra = context.extra;
@@ -80,7 +89,7 @@ tgHandler.on( 'text', async function ( context ) {
 	}
 } );
 
-tgHandler.on( 'richMessage', async ( context: Context ) => {
+tgHandler.on( 'richMessage', async function ( context: Context ) {
 	prepareText( context, false );
 
 	try {
@@ -91,7 +100,7 @@ tgHandler.on( 'richMessage', async ( context: Context ) => {
 } );
 
 // Pinned message
-tgHandler.on( 'pin', ( info: {
+tgHandler.on( 'pin', function ( info: {
 	from: {
 		id: number;
 		nick: string;
@@ -99,7 +108,7 @@ tgHandler.on( 'pin', ( info: {
 	};
 	to: number;
 	text: string;
-}, ctx: TContext ) => {
+}, ctx: TContext ) {
 	if ( options.notify.pin ) {
 		bridge.transportMessage( new BridgeMsg( {
 			from: info.from.id,
@@ -116,7 +125,7 @@ tgHandler.on( 'pin', ( info: {
 } );
 
 // 加入與離開
-tgHandler.on( 'join', ( group: number, from: {
+tgHandler.on( 'join', function ( group: number, from: {
 	id: number;
 	nick: string;
 	username?: string;
@@ -124,7 +133,7 @@ tgHandler.on( 'join', ( group: number, from: {
 	id: number;
 	nick: string;
 	username?: string;
-}, ctx: TContext ) => {
+}, ctx: TContext ) {
 	let text: string;
 	if ( from.id === target.id ) {
 		text = `${ target.nick } 加入群組`;
@@ -147,7 +156,7 @@ tgHandler.on( 'join', ( group: number, from: {
 	}
 } );
 
-tgHandler.on( 'leave', ( group: number, from: {
+tgHandler.on( 'leave', function ( group: number, from: {
 	id: number;
 	nick: string;
 	username?: string;
@@ -155,7 +164,7 @@ tgHandler.on( 'leave', ( group: number, from: {
 	id: number;
 	nick: string;
 	username?: string;
-}, ctx: TContext ) => {
+}, ctx: TContext ) {
 	let text: string;
 	if ( from.id === target.id ) {
 		text = `${ target.nick } 離開群組`;
@@ -179,7 +188,7 @@ tgHandler.on( 'leave', ( group: number, from: {
 } );
 
 if ( config.options.Telegram.forwardChannels ) {
-	tgHandler.on( 'groupChannelText', async function ( can, context ) {
+	tgHandler.on( 'groupChannelText', async function ( _chan, context ) {
 		prepareText( context );
 
 		try {
@@ -189,7 +198,7 @@ if ( config.options.Telegram.forwardChannels ) {
 		}
 	} );
 
-	tgHandler.on( 'groupChannelRichMessage', async ( can, context: Context ) => {
+	tgHandler.on( 'groupChannelRichMessage', async function ( _chan, context: Context ) {
 		prepareText( context, false );
 
 		try {

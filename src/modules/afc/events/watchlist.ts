@@ -117,7 +117,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					timestamp: new Date(),
 					description: `未預料的錯誤：${ turndown( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pagelink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`,
+				tMsg: `未預料的錯誤：${ pagelink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。 #監視錯誤`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
 			}, 'debug' );
 		} else if ( !$parseHTML.find( '.afc-submission-pending' ).length && /已添加至分类/.exec( event.comment ) ) {
@@ -126,7 +126,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					timestamp: new Date(),
 					description: `未預料的錯誤：${ turndown( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pagelink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`,
+				tMsg: `未預料的錯誤：${ pagelink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。 #監視錯誤`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
 			}, 'debug' );
 		} else if ( $parseHTML.find( '.afc-submission-pending' ).length && /已从分类中移除/.exec( event.comment ) ) {
@@ -136,13 +136,16 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					timestamp: new Date(),
 					description: `未預料的錯誤：${ turndown( pagelink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pagelink }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。`,
+				tMsg: `未預料的錯誤：${ pagelink }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。 #監視錯誤`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。`
 			}, 'debug' );
 		}
 
+		let tgTag = '';
+
 		if ( !$submissionbox.length && page.namespace === 0 && user !== creator && AFCPage.isReviewer( user ) ) {
 			tMsg += `已接受${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ pagelink }`;
+			tgTag = '#接受草稿';
 			let tpClass: string;
 			try {
 				const talkPage = await mwbot.read( page.getTalkPage() );
@@ -170,6 +173,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			}
 			if ( cClass.length > 0 ) {
 				tMsg += `（${ cClass }級）`;
+				tgTag += ` #評級${ cClass }級`;
 			}
 
 			tMsg += '。';
@@ -184,6 +188,8 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 				rvslots: 'main'
 			} );
 			if ( pagehistory.length === 1 ) {
+				tgTag = '#提交草稿 #於條目命名空間';
+
 				const moveurl = `https://zhwp-afc-bot.toolforge.org/s/move-namespace-error.njs?title=${ encodeURI( title ) }`;
 				tMsg += `在條目命名空間建立了草稿${ pagelink }（<a href="${ moveurl }">移動到草稿命名空間</a>）`;
 				dMsg
@@ -192,12 +198,16 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 
 				winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: create in ns0` );
 			} else {
+				tgTag = '#移除模板';
+
 				tMsg += `移除了在條目命名空間的草稿${ pagelink }中的AFC模板。`;
 				dMsg.setDescription( turndown( tMsg ) );
 				winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & in ns0` );
 			}
 			dMsg.setColor( 'ORANGE' );
 		} else if ( !$submissionbox.length ) {
+			tgTag = '#移除模板';
+
 			tMsg += `移除了${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ pagelink }的AFC模板。`;
 			dMsg
 				.setColor( 'ORANGE' )
@@ -205,12 +215,16 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 
 			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & not in ns0` );
 		} else if ( $submissionbox.hasClass( 'afc-submission-pending' ) ) {
+			tgTag = '#提交草稿';
+
 			if ( submitter !== user ) {
+				tgTag += ' #代為提交';
 				tMsg += `以${ htmllink( `User:${ encodeURI( submitter ) }`, submitter ) }的身分`;
 			}
 			tMsg += '提交了';
 			if ( creator !== user ) {
 				tMsg += `${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }建立的`;
+				tgTag += ' #他人草稿';
 			}
 			tMsg += `草稿${ pagelink }。`;
 
@@ -238,6 +252,8 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					.addField( '自動檢測問題', '• 沒有發現顯著問題。' );
 			}
 		} else if ( $submissionbox.hasClass( 'afc-submission-declined' ) || $submissionbox.hasClass( 'afc-submission-rejected' ) ) {
+			tgTag = '#拒絕草稿';
+
 			tMsg += '將';
 			let submituser: string = null;
 			if ( wikitext.match( /\|u=([^|]+)\|/ ) ) {
@@ -248,8 +264,12 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			}
 			tMsg += `草稿${ pagelink }標記為`;
 			if ( $submissionbox.hasClass( 'afc-submission-rejected' ) ) {
+				tMsg += '#拒絕再次提交';
+
 				tMsg += '拒絕再次提交的草稿';
 			} else {
+				tMsg += '#仍需改善';
+
 				tMsg += '仍需改善的草稿';
 			}
 
@@ -295,6 +315,8 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		}
 
 		const iMsg: string = htmlToIRC( tMsg );
+
+		tMsg += '\n\n' + tgTag;
 
 		send( {
 			dMsg,

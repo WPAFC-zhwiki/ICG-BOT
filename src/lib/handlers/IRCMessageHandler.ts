@@ -40,9 +40,9 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		prefix: string;
 		postfix: string;
 	} = {
-			prefix: '',
-			postfix: 'string'
-		};
+		prefix: '',
+		postfix: 'string'
+	};
 
 	public get rawClient(): irc.Client {
 		return this._client;

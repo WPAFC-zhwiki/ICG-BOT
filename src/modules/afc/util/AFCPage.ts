@@ -1,6 +1,7 @@
 import { ApiPage, ApiRevision, MwnPage } from 'mwn';
 import { ApiQueryRevisionsParams } from 'mwn/build/api_params';
 import { MwnError } from 'mwn/build/error';
+import removeExcessiveNewline = require( 'remove-excessive-newline' );
 import winston = require( 'winston' );
 
 import { mwbot, $ } from 'src/modules/afc/util/index';
@@ -324,10 +325,7 @@ export class AFCPage {
 	}
 
 	private _removeExcessNewlines(): void {
-		this._text = this._text
-			// Replace 4+ newlines with just three
-			.replace( /([\s\t]*[\r\n]){3,}/g, '\n\n\n' )
-			// Remove initial request artifact
+		this._text = removeExcessiveNewline( this._text, 2 )
 			.replace( /=+([^=\n]+)=+[\t\n\s]*$/gi, function ( _all: string, title: string ) {
 				const regexp = /^(?:外部(?:[链鏈]接|[连連]結)|[参參]考(?:[资資]料|[来來]源|文[档檔献獻]))$/;
 				return regexp.exec( title ) ? `== ${ title } ==` : '';
