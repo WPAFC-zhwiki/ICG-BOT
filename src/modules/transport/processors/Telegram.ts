@@ -55,8 +55,6 @@ function parseForwardBot( username: string, text: string ) {
 
 	// 我們自己也是傳話機器人
 	forwardBots[ tgHandler.username ] = 'self';
-
-	console.log( forwardBots );
 }() );
 
 function prepareText( context: Context, checkCommand = true ) {
