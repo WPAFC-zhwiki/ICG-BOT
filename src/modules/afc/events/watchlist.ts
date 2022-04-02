@@ -264,11 +264,11 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			}
 			tMsg += `草稿${ pagelink }標記為`;
 			if ( $submissionbox.hasClass( 'afc-submission-rejected' ) ) {
-				tgTag += '#拒絕再次提交';
+				tgTag += ' #拒絕再次提交';
 
 				tMsg += '拒絕再次提交的草稿';
 			} else {
-				tgTag += '#仍需改善';
+				tgTag += ' #仍需改善';
 
 				tMsg += '仍需改善的草稿';
 			}
