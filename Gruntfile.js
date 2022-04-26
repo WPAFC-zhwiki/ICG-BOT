@@ -22,13 +22,27 @@ module.exports = function ( grunt ) {
 		done( true );
 	} );
 
-	grunt.task.registerTask( 'clean', function () {
+	grunt.task.registerTask( 'clean:all', function () {
+		const done = this.async();
+		grunt.task.run( 'clean:build' );
+
+		try {
+			fs.removeSync( getFullPath( 'config/config.js' ) );
+			fs.removeSync( getFullPath( 'bin' ) );
+		} catch ( e ) {
+			grunt.log.error( e );
+			done( false );
+			return;
+		}
+
+		done( true );
+	} );
+
+	grunt.task.registerTask( 'clean:build', function () {
 		const done = this.async();
 
 		try {
 			fs.removeSync( getFullPath( 'build' ) );
-			fs.removeSync( getFullPath( 'config/config.js' ) );
-			fs.removeSync( getFullPath( 'bin' ) );
 		} catch ( e ) {
 			grunt.log.error( e );
 			done( false );
@@ -177,6 +191,7 @@ module.exports = function ( grunt ) {
 		this.async()( true );
 	} );
 
-	grunt.registerTask( 'default', [ 'clean', 'build', 'reloadFlag' ] );
-	grunt.registerTask( 'build:noReloadFlag', [ 'clean', 'build' ] );
+	grunt.registerTask( 'clean', [ 'clean:all' ] );
+	grunt.registerTask( 'default', [ 'clean:all', 'build', 'reloadFlag', 'clean:build' ] );
+	grunt.registerTask( 'build:noReloadFlag', [ 'clean:all', 'build', 'clean:build' ] );
 };

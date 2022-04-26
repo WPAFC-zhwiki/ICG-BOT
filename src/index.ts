@@ -1,7 +1,7 @@
 /* eslint quote-props: ["error", "always"] */
 /**
  * AFC-ICG-BOT
- * https://github.com/sunny00217wm/AFC-zhwiki-ICG-Bot
+ * https://github.com/WPAFC-zhwiki/ICG-BOT
  */
 import moduleAlias from 'module-alias';
 import path = require( 'path' );
