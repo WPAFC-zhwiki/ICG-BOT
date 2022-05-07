@@ -1,5 +1,7 @@
 import winston = require( 'winston' );
 
+import removeToken = require( '@sunafterrainwm/winston-format-remove-telegram-apitoken' );
+
 import { default as config, version } from 'src/config';
 
 import { Context } from 'src/lib/handlers/Context';
@@ -30,6 +32,9 @@ const logFormat: winston.Logform.FormatWrap = winston.format( function ( info: w
 
 winston.add( new winston.transports.Console( {
 	format: winston.format.combine(
+		removeToken( {
+			apiRoot: config.Telegram?.bot?.apiRoot
+		} ),
 		logFormat(),
 		winston.format.colorize(),
 		winston.format.timestamp( {
