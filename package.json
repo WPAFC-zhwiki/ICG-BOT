@@ -24,7 +24,7 @@
 	},
 	"private": true,
 	"dependencies": {
-		"@sunafterrainwm/winston-format-remove-telegram-apitoken": "^1.0.0",
+		"@sunafterrainwm/winston-format-remove-telegram-apitoken": "file:lib/winston-format-remove-telegram-apitoken",
 		"asciify-image": "^0.1.8",
 		"chokidar": "^3.5.2",
 		"cron": "^1.8.2",
