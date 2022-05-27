@@ -164,6 +164,12 @@ module.exports = function ( grunt ) {
 			return;
 		}
 
+		done( true );
+	} );
+
+	grunt.task.registerTask( 'moveBuiltFiles', async function () {
+		const done = this.async();
+
 		try {
 			fs.copySync( getFullPath( 'build/config/config.js' ), getFullPath( 'config/config.js' ) );
 			grunt.log.write( `Copy ${ getFullPath( 'build/config/config.js' ) } to ${ getFullPath( 'config/config.js' ) } done.\n` );
@@ -192,6 +198,6 @@ module.exports = function ( grunt ) {
 	} );
 
 	grunt.registerTask( 'clean', [ 'clean:all' ] );
-	grunt.registerTask( 'default', [ 'clean:all', 'build', 'reloadFlag', 'clean:build' ] );
-	grunt.registerTask( 'build:noReloadFlag', [ 'clean:all', 'build', 'clean:build' ] );
+	grunt.registerTask( 'default', [ 'clean:all', 'build', 'moveBuiltFiles', 'reloadFlag', 'clean:build' ] );
+	grunt.registerTask( 'build:noReloadFlag', [ 'clean:all', 'build', 'moveBuiltFiles', 'clean:build' ] );
 };

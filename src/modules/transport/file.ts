@@ -10,6 +10,7 @@ import fs = require( 'fs' );
 import path = require( 'path' );
 import request = require( 'request' );
 import sharp = require( 'sharp' );
+import stream = require( 'stream' );
 import winston = require( 'winston' );
 
 import { Manager } from 'src/init';
@@ -72,12 +73,12 @@ function convertFileType( type: string ): string {
  *
  * @return {fs.ReadStream}
  */
-function getFileStream( file: fileTS ): fs.ReadStream | request.Request | sharp.Sharp {
+function getFileStream( file: fileTS ): stream.Readable {
 	const filePath: string = file.url || file.path;
-	let fileStream: fs.ReadStream | request.Request | sharp.Sharp;
+	let fileStream: stream.Readable;
 
 	if ( file.url ) {
-		fileStream = request.get( file.url );
+		fileStream = request.get( file.url ) as stream.Stream as stream.Readable;
 	} else if ( file.path ) {
 		fileStream = fs.createReadStream( file.path );
 	} else {
@@ -102,7 +103,7 @@ function getFileStream( file: fileTS ): fs.ReadStream | request.Request | sharp.
 
 }
 
-function pipeFileStream( file: fileTS, pipe: fs.WriteStream | request.Request ): Promise<void> {
+function pipeFileStream( file: fileTS, pipe: stream.Writable ): Promise<void> {
 	return new Promise<void>( function ( resolve, reject ) {
 		const fileStream = getFileStream( file );
 		fileStream
@@ -275,7 +276,7 @@ function uploadToLinx( file: fileTS ): Promise<string> {
 			} else {
 				reject( new Error( error ) );
 			}
-		} ) ).catch( function ( err ) {
+		} ) as stream.Stream as stream.Writable ).catch( function ( err ) {
 			reject( err );
 		} );
 	} );
