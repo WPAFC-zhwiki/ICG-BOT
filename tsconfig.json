@@ -29,7 +29,8 @@
 			"package.json": [
 				"../package.json"
 			]
-		}
+		},
+		"skipLibCheck": true
 	},
 	"include": [
 		"config/*.ts",

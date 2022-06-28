@@ -133,7 +133,9 @@ setCommand( 'autoreview', async function ( args, reply ) {
 	let tMsg = `<b>自動審閱系統</b>\n${ output }`;
 
 	if ( $parseHTML.find( '#disambigbox' ).length ) {
-		dMsg.setFooter( '提醒：本頁為消歧義頁，審閱結果可能不準確。' );
+		dMsg.setFooter( {
+			text: '提醒：本頁為消歧義頁，審閱結果可能不準確。'
+		} );
 		tMsg += '\n<b>提醒</b>：本頁為消歧義頁，審閱結果可能不準確。';
 	}
 

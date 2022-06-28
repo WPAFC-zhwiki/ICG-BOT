@@ -1,5 +1,5 @@
 import { Message as TMessage } from 'typegram';
-import { Message as DMessage, MessageEmbed as DMessageEmbed } from 'discord.js';
+import { Message as DMessage, MessageEmbed as DMessageEmbed, MessageEditOptions as DMessageEditOptions } from 'discord.js';
 import winston = require( 'winston' );
 
 import { Manager } from 'src/init';
@@ -9,7 +9,7 @@ import { parseUID, getUIDFromContext, addCommand, getUIDFromHandler } from 'src/
 import * as moduleTransport from 'src/modules/transport';
 import { IRCBold, $, decodeURI } from 'src/modules/afc/util/index';
 
-function htmlExcape( str: string ) {
+function htmlEscape( str: string ) {
 	return $( '<div>' ).text( str ).html();
 }
 
@@ -20,7 +20,7 @@ export function htmlToIRC( text: string ): string {
 		const $a: JQuery<HTMLAnchorElement> = $( a );
 		const href = decodeURI( $a.attr( 'href' ) ).replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
 
-		$a.html( ` ${ $a.html() } &lt;${ htmlExcape( href ) }&gt;` );
+		$a.html( ` ${ $a.html() } &lt;${ htmlEscape( href ) }&gt;` );
 	} );
 
 	$ele.find( 'b' ).each( function ( _i: number, b: HTMLElement ): void {
@@ -210,7 +210,7 @@ export async function pinMessage( promises: Promise<Response>[] ): Promise<void>
 }
 
 export async function editMessage( promises: Promise<Response>[] | Transport, edMsg: {
-	dMsg?: DiscordSendMessage;
+	dMsg?: string | DMessageEditOptions;
 	tMsg?: string;
 } ): Promise<void> {
 	( Array.isArray( promises ) ? promises : [
