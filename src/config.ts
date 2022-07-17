@@ -1,5 +1,6 @@
 import { ConfigTS } from 'config/config.type';
 import { repository as Repository } from 'package.json';
+// import winston = require( 'winston' );
 import path = require( 'path' );
 
 export { ConfigTS } from 'config/config.type';
@@ -36,5 +37,7 @@ if ( process.argv.includes( '--icconfig' ) ) {
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const config: ConfigTS = require( global.configPath ).default;
+
+// winston.debug( 'load config from "' + global.configPath + '".' );
 
 export default config;
