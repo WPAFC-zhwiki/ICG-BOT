@@ -52,9 +52,9 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	winston.debug( `[afc/events/helpdesk] comment: ${ event.comment }, diff: ${ event.revision.old } -> ${ event.revision.new }, user: ${ event.user }, title: ${ event.title }, new: ${ parseHtml }` );
 
 	const diff = `Special:Diff/${ event.revision.old }/${ event.revision.new }`;
-	const dMsg = new Discord.MessageEmbed( {
+	const dMsg = new Discord.EmbedBuilder( {
 		title: '詢問桌有新留言！',
-		color: 'BLUE',
+		color: Discord.Colors.Blue,
 		url: `https://zh.wikipedia.org/wiki/${ diff }`,
 		description: `留言者：${ mdlink( `User:${ event.user }`, event.user ) }`,
 		fields: [ {

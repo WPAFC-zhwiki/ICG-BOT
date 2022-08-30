@@ -5,13 +5,14 @@
  */
 import moduleAlias from 'module-alias';
 import path = require( 'path' );
+import winston = require( 'winston' );
+import util = require( 'util' );
+
 moduleAlias.addAliases( {
 	'src': __dirname,
 	'config': path.join( __dirname, '../config' ),
 	'package.json': path.join( __dirname, '../package.json' )
 } );
-
-import winston = require( 'winston' );
 
 import { Manager } from 'src/init';
 import 'src/lib/message';
@@ -25,8 +26,8 @@ for ( const module of Manager.config.modules ) {
 	try {
 		winston.info( `Loading module: ${ module }` );
 		require( `src/modules/${ module }` );
-	} catch ( ex ) {
-		winston.error( `Error while loading plugin ${ module }: `, ex );
+	} catch ( error ) {
+		winston.error( `Error while loading plugin ${ module }: `, util.inspect( error ) );
 	}
 }
 

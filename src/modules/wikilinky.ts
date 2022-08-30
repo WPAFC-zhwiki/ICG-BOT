@@ -3,6 +3,7 @@
  */
 
 import winston = require( 'winston' );
+import util = require( 'util' );
 
 import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
@@ -60,7 +61,7 @@ function linky( string: string, articlepath: string ) {
 			$m = $txt.match( /^\[\[([^|#]+)(?:#([^|]+))?.*?\]\]$/ );
 			$page = $m[ 1 ].trim();
 			if ( $m[ 2 ] ) {
-				$section = '#' + $m[ 2 ].trimRight();
+				$section = '#' + $m[ 2 ].trimEnd();
 			} else {
 				$section = '';
 			}
@@ -167,8 +168,8 @@ async function processlinky( from: string, to: string, text: string, context: Co
 				}
 			}
 		}
-	} catch ( ex ) {
-		winston.error( '[wikilinkly] error:', ex );
+	} catch ( error ) {
+		winston.error( '[wikilinkly] error:', util.inspect( error ) );
 	}
 }
 

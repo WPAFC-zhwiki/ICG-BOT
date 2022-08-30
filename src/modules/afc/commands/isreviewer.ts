@@ -31,9 +31,9 @@ setCommand( 'isreviewer', async function ( args, reply, bridgemsg ) {
 		winston.debug( `[afc/command/isreviewer] user: ${ user }, isreviewer: ${ isReviewer( user ) }` );
 		const msg = `使用者<a href="https://zh.wikipedia.org/wiki/User:${ encodeURI( user ) }">${ user }</a>${ isReviewer( user ) ? '是' : '不是' }審核員。`;
 		reply( {
-			dMsg: new Discord.MessageEmbed( {
+			dMsg: new Discord.EmbedBuilder( {
 				description: turndown( msg ),
-				color: isReviewer( user ) ? 'GOLD' : null
+				color: isReviewer( user ) ? Discord.Colors.Gold : null
 			} ),
 			tMsg: msg,
 			iMsg: htmlToIRC( msg )

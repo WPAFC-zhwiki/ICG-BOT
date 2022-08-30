@@ -1,5 +1,6 @@
 import Discord = require( 'discord.js' );
 import winston = require( 'winston' );
+import util = require( 'util' );
 
 import { ConfigTS } from 'src/config';
 import { BaseEvents, MessageHandler } from 'src/lib/handlers/MessageHandler';
@@ -25,8 +26,8 @@ export type DiscordSendMessage = string | Discord.MessageOptions;
 export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 	private readonly _token: string;
 	protected readonly _client: Discord.Client;
-	protected readonly _type: 'Discord' = 'Discord';
-	protected readonly _id: 'D' = 'D';
+	protected readonly _type = 'Discord' as const;
+	protected readonly _id = 'D' as const;
 
 	private readonly _nickStyle: 'nickname' | 'username' | 'fullname' | 'firstname';
 	public readonly useProxyURL: boolean = false;
@@ -50,21 +51,21 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 
 		const client: Discord.Client = new Discord.Client( {
 			intents: [
-				Discord.Intents.FLAGS.GUILDS,
-				Discord.Intents.FLAGS.GUILD_MEMBERS,
-				// Discord.Intents.FLAGS.GUILD_BANS,
-				Discord.Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
-				Discord.Intents.FLAGS.GUILD_INTEGRATIONS,
-				// Discord.Intents.FLAGS.GUILD_WEBHOOKS,
-				// Discord.Intents.FLAGS.GUILD_INVITES,
-				// Discord.Intents.FLAGS.GUILD_VOICE_STATES,
-				// Discord.Intents.FLAGS.GUILD_PRESENCES,
-				Discord.Intents.FLAGS.GUILD_MESSAGES,
-				// Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-				// Discord.Intents.FLAGS.GUILD_MESSAGE_TYPING,
-				Discord.Intents.FLAGS.DIRECT_MESSAGES,
-				Discord.Intents.FLAGS.DIRECT_MESSAGE_REACTIONS
-				// Discord.Intents.FLAGS.DIRECT_MESSAGE_TYPING
+				Discord.GatewayIntentBits.Guilds,
+				Discord.GatewayIntentBits.GuildMembers,
+				// Discord.GatewayIntentBits.GuildBans,
+				// Discord.GatewayIntentBits.GuildEmojisAndStickers,
+				Discord.GatewayIntentBits.GuildIntegrations,
+				// Discord.GatewayIntentBits.GuildWebhooks,
+				// Discord.GatewayIntentBits.GuildInvites,
+				// Discord.GatewayIntentBits.GuildVoiceStates,
+				// Discord.GatewayIntentBits.GuildPresences,
+				Discord.GatewayIntentBits.GuildMessages,
+				// Discord.GatewayIntentBits.GuildMessageReactions,
+				// Discord.GatewayIntentBits.GuildMessageTyping,
+				Discord.GatewayIntentBits.DirectMessages
+				// Discord.GatewayIntentBits.DirectMessageReactions,
+				// Discord.GatewayIntentBits.DirectMessageTyping
 			]
 		} );
 
@@ -75,7 +76,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		} );
 
 		client.on( 'error', function ( message: Error ): void {
-			winston.error( 'DiscordBot Error:', message );
+			winston.error( 'DiscordBot Error:', util.inspect( message ) );
 		} );
 
 		this._token = botConfig.token;
@@ -95,8 +96,8 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 				discordOptions.ignore.includes( rawdata.author.id ) ||
 				// 無視置頂
 				// TODO: 解析置頂訊息
-				rawdata.type === 'CHANNEL_PINNED_MESSAGE' ||
-				// TODO: MessageEmbed轉文字
+				rawdata.type === Discord.MessageType.ChannelPinnedMessage ||
+				// TODO: EmbedBuilder轉文字
 				!rawdata.content && rawdata.embeds && rawdata.embeds.length
 			) {
 				return;
@@ -143,7 +144,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 				to: rawdata.channel.id,
 				nick: that.getNick( rawdata.member || rawdata.author ),
 				text: text,
-				isPrivate: rawdata.channel.type === 'DM',
+				isPrivate: rawdata.channel.type === Discord.ChannelType.DM,
 				extra: extra,
 				handler: that,
 				_rawdata: rawdata
@@ -189,7 +190,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 				await this._client.channels.fetch( target );
 			if ( !channel ) {
 				throw new ReferenceError( `Fetch chennel ${ target } fail.` );
-			} else if ( channel.isText() ) {
+			} else if ( channel.type === Discord.ChannelType.GuildText ) {
 				return await channel.send( message );
 			}
 			throw new Error( `Channel ${ target } is not't a text channel.` );

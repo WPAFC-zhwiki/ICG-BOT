@@ -1,5 +1,6 @@
 import { CronJob } from 'cron';
 import winston = require( 'winston' );
+import util = require( 'util' );
 
 import { getBacklogInfo, registerEvent, send } from 'src/modules/afc/util';
 
@@ -14,8 +15,8 @@ const backlogCronJob = new CronJob( '0 0 */4 * * *', async function () {
 		}, 'backlog' );
 
 		winston.debug( `[afc/event/backlog] count: ${ cnt }, level ${ lvl }` );
-	} catch ( err ) {
-		winston.error( '[afc/event/backlog]', err );
+	} catch ( error ) {
+		winston.error( '[afc/event/backlog]', util.inspect( error ) );
 	}
 } );
 backlogCronJob.start();

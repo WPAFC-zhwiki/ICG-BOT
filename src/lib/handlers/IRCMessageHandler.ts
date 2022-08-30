@@ -31,8 +31,8 @@ type Me = {
  */
 export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 	protected readonly _client: irc.Client;
-	protected readonly _type: 'IRC' = 'IRC';
-	protected readonly _id: 'I' = 'I';
+	protected readonly _type = 'IRC' as const;
+	protected readonly _id = 'I' as const;
 
 	private _maxLines: number;
 
@@ -93,7 +93,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		} );
 
 		client.on( 'error', function ( message ) {
-			winston.error( 'IRCBot error:', message );
+			winston.error( 'IRCBot error:', JSON.stringify( message ) );
 		} );
 
 		// 加载设置

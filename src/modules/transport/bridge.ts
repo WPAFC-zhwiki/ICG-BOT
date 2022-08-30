@@ -1,4 +1,5 @@
 import winston = require( 'winston' );
+import util = require( 'util' );
 
 import { Manager } from 'src/init';
 import { Context, rawmsg } from 'src/lib/handlers/Context';
@@ -236,15 +237,15 @@ export async function transportMessage( m: BridgeMsg | Context, bot?: boolean ):
 		return;
 	}
 
-	let allresolved = false;
+	let allResolved = false;
 
 	const promises = sendMessage( msg, isbridge );
 
 	try {
 		await Promise.all( promises );
-	} catch ( e ) {
-		allresolved = false;
-		winston.error( '[transport/bridge] <BotSend> Rejected: ', e );
+	} catch ( error ) {
+		allResolved = false;
+		winston.error( '[transport/bridge] <BotSend> Rejected: ', util.inspect( error ) );
 	}
 
 	emitHook( 'bridge.sent', msg );
@@ -253,5 +254,5 @@ export async function transportMessage( m: BridgeMsg | Context, bot?: boolean ):
 	} else {
 		winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } has no targets. Ignored.` );
 	}
-	return await Promise.resolve( allresolved );
+	return await Promise.resolve( allResolved );
 }

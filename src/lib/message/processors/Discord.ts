@@ -1,6 +1,7 @@
 import LRU = require( 'lru-cache' );
 import winston = require( 'winston' );
 import Discord = require( 'discord.js' );
+import util = require( 'util' );
 
 import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
@@ -90,8 +91,8 @@ export async function preProcess( context: Context<Discord.Message> ) {
 			if ( userInfo.has( at ) ) {
 				promises.push( userInfo.get( at ) );
 			} else {
-				promises.push( discordHandler.fetchUser( at ).catch( function ( e: Error ) {
-					winston.error( `[message/process/Discord] Fail to fetch user ${ at }:`, e.stack );
+				promises.push( discordHandler.fetchUser( at ).catch( function ( error: Error ) {
+					winston.error( `[message/process/Discord] Fail to fetch user ${ at }:`, util.inspect( error ) );
 				} ) );
 			}
 		}
@@ -109,8 +110,8 @@ export async function preProcess( context: Context<Discord.Message> ) {
 					);
 				}
 			}
-		} catch ( e ) {
-			winston.error( '[message/process/Discord]', e );
+		} catch ( error ) {
+			winston.error( '[message/process/Discord]', util.inspect( error ) );
 		}
 	}
 	return context;

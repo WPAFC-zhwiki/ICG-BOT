@@ -17,9 +17,9 @@ setCommand( 'waitlist', async function ( _args, reply ) {
 	const from = 1,
 		to = list.length;
 
-	const dMsg = new Discord.MessageEmbed( {
+	const dMsg = new Discord.EmbedBuilder( {
 		title: '候審草稿列表',
-		color: 0x708ad7,
+		color: 0x708AD7,
 		description: list.map( function ( page ) {
 			return mdlink( page.title );
 		} ).slice( from - 1, to ).join( '\n' ),

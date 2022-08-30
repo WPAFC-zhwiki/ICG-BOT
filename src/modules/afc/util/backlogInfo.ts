@@ -16,7 +16,7 @@ export async function getBacklogInfo(): Promise<{
 		title: string;
 	}[];
 	lvl: number;
-	dMsg: Discord.MessageEmbed;
+	dMsg: Discord.EmbedBuilder;
 	tMsg: string;
 	iMsg: string;
 }> {
@@ -30,7 +30,7 @@ export async function getBacklogInfo(): Promise<{
 	const $rawLvl = $( $.parseHTML( html ) );
 	const lvl = parseInt( $rawLvl.find( 'p' ).text(), 10 );
 
-	const dMsg = new Discord.MessageEmbed( {
+	const dMsg = new Discord.EmbedBuilder( {
 		title: '條目審核積壓',
 		color: ( function () {
 			switch ( lvl ) {
@@ -41,11 +41,11 @@ export async function getBacklogInfo(): Promise<{
 				case 2:
 					return 0x32CD32;
 				case 3:
-					return 'YELLOW';
+					return Discord.Colors.Yellow;
 				case 4:
-					return 'ORANGE';
+					return Discord.Colors.Orange;
 				case 5:
-					return 'RED';
+					return Discord.Colors.Red;
 				case 6:
 					return 0x7F0000;
 				case 7:
@@ -53,7 +53,7 @@ export async function getBacklogInfo(): Promise<{
 				case 8:
 					return 0x1A0000;
 				case 9:
-					return 'DARK_BUT_NOT_BLACK';
+					return Discord.Colors.DarkButNotBlack;
 				default:
 					return 0x708ad7;
 			}

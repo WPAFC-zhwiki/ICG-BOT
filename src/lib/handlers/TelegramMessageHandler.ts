@@ -6,6 +6,7 @@ import { ExtraPhoto, ExtraReplyMessage } from 'telegraf/typings/telegram-types';
 import * as TT from 'typegram';
 import Tls = require( 'tls' );
 import winston = require( 'winston' );
+import util = require( 'util' );
 
 import { ConfigTS } from 'src/config';
 import { MessageHandler, Command, BaseEvents } from 'src/lib/handlers/MessageHandler';
@@ -58,8 +59,8 @@ export interface TelegramSendMessageOpipons extends ExtraReplyMessage {
  */
 export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 	protected readonly _client: Telegraf<TContext>;
-	protected readonly _type: 'Telegram' = 'Telegram';
-	protected readonly _id: 'T' = 'T';
+	protected readonly _type = 'Telegram' as const;
+	protected readonly _id = 'T' as const;
 
 	readonly #start: {
 		mode: 'webhook';
@@ -129,14 +130,14 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			winston.info( `TelegramBot is ready, login as: ${ me.first_name }${ me.last_name ? ` ${ me.last_name }` : '' }@${ me.username }(${ me.id })` );
 		} );
 
-		client.catch( function ( err ) {
-			if ( err instanceof Error ) {
-				err.message = err.message.replace(
-					/\/\/api\.telegram\.org\/bot(\d+):[A-Za-z0-9]+\//g,
-					'//api.telegram.org/bot$1:<password>/'
+		client.catch( function ( error ) {
+			if ( error instanceof Error ) {
+				error.message = error.message.replace(
+					/\/bot(\d+):[^/]+\//g,
+					'/bot$1:<password>/'
 				);
 			}
-			winston.error( 'TelegramBot error:', err );
+			winston.error( 'TelegramBot error:', util.inspect( error ) );
 		} );
 
 		if ( botConfig.webhook && botConfig.webhook.port > 0 ) {

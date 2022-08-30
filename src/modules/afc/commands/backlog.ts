@@ -1,4 +1,5 @@
 import winston = require( 'winston' );
+import util = require( 'util' );
 
 import { getBacklogInfo, setCommand } from 'src/modules/afc/util';
 
@@ -13,7 +14,7 @@ setCommand( 'backlog', async function ( _args, reply ) {
 		} );
 
 		winston.debug( `[afc/commands/backlog] count: ${ cnt }, level ${ lvl }` );
-	} catch ( err ) {
+	} catch ( error ) {
 		const output = '生成等待時間數據失敗，請稍後再試。';
 
 		reply( {
@@ -22,6 +23,6 @@ setCommand( 'backlog', async function ( _args, reply ) {
 			iMsg: output
 		} );
 
-		winston.error( '[afc/commands/backlog]', err );
+		winston.error( '[afc/commands/backlog]', util.inspect( error ) );
 	}
 } );

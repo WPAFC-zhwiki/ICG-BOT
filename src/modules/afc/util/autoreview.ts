@@ -1,9 +1,10 @@
 import { MwnPage } from 'mwn';
 import fetch from 'node-fetch';
+import winston = require( 'winston' );
+import util = require( 'util' );
 
 import issuesData from 'src/modules/afc/util/issuesData.json';
 import { oldAutoReview } from 'src/modules/afc/util/autoreview-old';
-import winston from 'winston';
 
 interface ApiResult {
 	statue: number;
@@ -29,12 +30,12 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 			if ( res.status !== 200 ) {
 				throw new Error( `Request fail, response: ${ await res.text() }` );
 			}
-			return <ApiResult>( await res.json() );
+			return await res.json() as ApiResult;
 		} ).then( function ( resJson ) {
 			issues.push( ...resJson.result.issues );
 		} );
-	} catch ( err ) {
-		winston.error( '[afc/util/autoreview]', err );
+	} catch ( error ) {
+		winston.error( '[afc/util/autoreview]', util.inspect( error ) );
 		issues.push( ...( await oldAutoReview( page, wikitext, $parseHTML ) ).issues );
 	}
 

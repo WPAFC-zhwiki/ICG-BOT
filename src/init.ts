@@ -1,4 +1,5 @@
 import winston = require( 'winston' );
+import util = require( 'util' );
 
 import removeToken = require( '@sunafterrainwm/winston-format-remove-telegram-apitoken' );
 
@@ -45,21 +46,21 @@ winston.add( new winston.transports.Console( {
 } ) );
 
 process.on( 'unhandledRejection', function ( _reason, promise ) {
-	promise.catch( function ( e ) {
-		winston.error( 'Unhandled Rejection:', e );
+	promise.catch( function ( error ) {
+		winston.error( 'Unhandled Rejection:', util.inspect( error ) );
 	} );
 } );
 
-process.on( 'uncaughtException', function ( err ) {
-	winston.error( 'Uncaught exception:', err );
+process.on( 'uncaughtException', function ( error ) {
+	winston.error( 'Uncaught exception:', util.inspect( error ) );
 } );
 
 process.on( 'rejectionHandled', function () {
 	// 忽略
 } );
 
-process.on( 'warning', ( warning ) => {
-	winston.warn( warning );
+process.on( 'warning', function ( warning ) {
+	winston.warn( util.inspect( warning ) );
 } );
 
 // 日志等级、文件设置

@@ -2,6 +2,8 @@
 import Discord = require( 'discord.js' );
 import { MwnPage } from 'mwn';
 import winston = require( 'winston' );
+import crypto = require( 'crypto' );
+import util = require( 'util' );
 
 import { $, AFCPage, autoReview, encodeURI, getIssusData, htmlToIRC, mwbot,
 	recentChange, RecentChangeEvent, registerEvent, turndown, send } from 'src/modules/afc/util';
@@ -55,11 +57,11 @@ function getReason( $e: JQuery, title: string ) {
 		} );
 }
 
-function htmllink( title: string, text?: string ) {
+function htmlLink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
 }
 
-function mdlink( title: string, text?: string ) {
+function mdLink( title: string, text?: string ) {
 	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
@@ -78,74 +80,78 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 
 		const { user }: { user: string } = event;
 
-		const afcpage: AFCPage = await AFCPage.new( title );
+		const afcPage: AFCPage = await AFCPage.new( title );
 
-		const page: MwnPage = afcpage.mwnpage;
+		const page: MwnPage = afcPage.mwnPage;
 		const creator: string = await page.getCreator();
 		await page.purge();
-		let tMsg: string = htmllink( `User:${ user }`, user );
-		const dMsg: Discord.MessageEmbed = new Discord.MessageEmbed( {
+		let tMsg: string = htmlLink( `User:${ user }`, user );
+		const dMsg: Discord.EmbedBuilder = new Discord.EmbedBuilder( {
 			timestamp: event.timestamp * 1000
 		} );
 
-		const wikitext: string = afcpage.text;
+		const wikitext: string = afcPage.text;
 		const html: string = await mwbot.parseTitle( title, {
 			uselang: 'zh-hant'
 		} );
 		const $parseHTML: JQuery<JQuery.Node[]> = $( $.parseHTML( html ) );
-		const $submissionbox: JQuery<HTMLElement> = $parseHTML.find( '.afc-submission-pending' ).length ?
+		const $submissionBox: JQuery<HTMLElement> = $parseHTML.find( '.afc-submission-pending' ).length ?
 			$parseHTML.find( '.afc-submission-pending' ).first() :
 			$parseHTML.find( '.afc-submission' ).first();
 
 		let submitter = user;
 
-		if ( $submissionbox.length ) {
-			afcpage.cleanUp();
+		if ( $submissionBox.length ) {
+			afcPage.cleanUp();
 
-			const templateuser = afcpage.text.match( /\|u=([^|{}[\]]+)[|}]/ );
+			const templateUser = afcPage.text.match( /\|u=([^|{}[\]]+)[|}]/ );
 
-			if ( templateuser && templateuser[ 1 ] ) {
-				submitter = templateuser[ 1 ];
+			if ( templateUser && templateUser[ 1 ] ) {
+				submitter = templateUser[ 1 ];
 			}
 		}
 
-		const pagelink = htmllink( title );
+		const pageLink = htmlLink( title );
 
-		if ( !$submissionbox.length && /已添加至分类/.exec( event.comment ) ) {
+		if ( !$submissionBox.length && /已添加至分类/.exec( event.comment ) ) {
 			send( {
-				dMsg: new Discord.MessageEmbed( {
+				dMsg: new Discord.EmbedBuilder( {
 					timestamp: new Date(),
-					description: `未預料的錯誤：${ turndown( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
+					description: `未預料的錯誤：${ turndown( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pagelink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。 #監視錯誤`,
-				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
+				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。 #監視錯誤`,
+				iMsg: `未預料的錯誤：${ htmlToIRC( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
 			}, 'debug' );
 		} else if ( !$parseHTML.find( '.afc-submission-pending' ).length && /已添加至分类/.exec( event.comment ) ) {
 			send( {
-				dMsg: new Discord.MessageEmbed( {
+				dMsg: new Discord.EmbedBuilder( {
 					timestamp: new Date(),
-					description: `未預料的錯誤：${ turndown( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
+					description: `未預料的錯誤：${ turndown( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pagelink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。 #監視錯誤`,
-				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
+				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。 #監視錯誤`,
+				iMsg: `未預料的錯誤：${ htmlToIRC( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
 			}, 'debug' );
 		} else if ( $parseHTML.find( '.afc-submission-pending' ).length && /已从分类中移除/.exec( event.comment ) ) {
-			const $pendings = $parseHTML.find( '.afc-submission-pending' );
+			const $pending = $parseHTML.find( '.afc-submission-pending' );
 			send( {
-				dMsg: new Discord.MessageEmbed( {
+				dMsg: new Discord.EmbedBuilder( {
 					timestamp: new Date(),
-					description: `未預料的錯誤：${ turndown( pagelink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。`
+					description: `未預料的錯誤：${ turndown( pageLink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pending.length }個等待審核的AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pagelink }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。 #監視錯誤`,
-				iMsg: `未預料的錯誤：${ htmlToIRC( pagelink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pendings.length }個等待審核的AFC審核模板。`
+				tMsg: `未預料的錯誤：${ pageLink }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pending.length }個等待審核的AFC審核模板。 #監視錯誤`,
+				iMsg: `未預料的錯誤：${ htmlToIRC( pageLink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pending.length }個等待審核的AFC審核模板。`
 			}, 'debug' );
 		}
 
-		let tgTag = '';
+		const tgTags: string[] = [
+			'#' + crypto.createHash( 'shake256', {
+				outputLength: 10
+			} ).update( page.toText() ).digest( 'hex' )
+		];
 
-		if ( !$submissionbox.length && page.namespace === 0 && user !== creator && AFCPage.isReviewer( user ) ) {
-			tMsg += `已接受${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ pagelink }`;
-			tgTag = '#接受草稿';
+		if ( !$submissionBox.length && page.namespace === 0 && user !== creator && AFCPage.isReviewer( user ) ) {
+			tMsg += `已接受${ htmlLink( `User:${ creator }`, creator ) }的草稿${ pageLink }`;
+			tgTags.push( '#接受草稿' );
 			let tpClass: string;
 			try {
 				const talkPage = await mwbot.read( page.getTalkPage() );
@@ -173,60 +179,62 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			}
 			if ( cClass.length > 0 ) {
 				tMsg += `（${ cClass }級）`;
-				tgTag += ` #評級${ cClass }級`;
+				tgTags.push( `#評級${ cClass }級` );
 			}
 
 			tMsg += '。';
 
 			dMsg
-				.setColor( 'GREEN' )
+				.setColor( Discord.Colors.Green )
 				.setDescription( turndown( tMsg ) );
 
 			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: accept, tpClass: ${ tpClass.length && tpClass || undefined }` );
-		} else if ( !$submissionbox.length && page.namespace === 0 && user === creator ) {
-			const pagehistory = await page.history( 'user', 2, {
+		} else if ( !$submissionBox.length && page.namespace === 0 && user === creator ) {
+			const pageHistory = await page.history( 'user', 2, {
 				rvslots: 'main'
 			} );
-			if ( pagehistory.length === 1 ) {
-				tgTag = '#提交草稿 #於條目命名空間';
+			if ( pageHistory.length === 1 ) {
+				tgTags.push( '#提交草稿', '#於條目命名空間' );
 
-				const moveurl = `https://zhwp-afc-bot.toolforge.org/s/move-namespace-error.njs?title=${ encodeURI( title ) }`;
-				tMsg += `在條目命名空間建立了草稿${ pagelink }（<a href="${ moveurl }">移動到草稿命名空間</a>）`;
+				const moveUrl = `https://zhwp-afc-bot.toolforge.org/s/move-namespace-error.njs?title=${ encodeURI( title ) }`;
+				tMsg += `在條目命名空間建立了草稿${ pageLink }（<a href="${ moveUrl }">移動到草稿命名空間</a>）`;
 				dMsg
-					.setDescription( `${ mdlink( `User:${ user }`, user ) }在條目命名空間建立了草稿${ turndown( pagelink ) }` )
-					.setFooter( `[移動到草稿命名空間](${ moveurl })` );
+					.setDescription( `${ mdLink( `User:${ user }`, user ) }在條目命名空間建立了草稿${ turndown( pageLink ) }` )
+					.setFooter( {
+						text: `[移動到草稿命名空間](${ moveUrl })`
+					} );
 
 				winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: create in ns0` );
 			} else {
-				tgTag = '#移除模板';
+				tgTags.push( '#移除模板' );
 
-				tMsg += `移除了在條目命名空間的草稿${ pagelink }中的AFC模板。`;
+				tMsg += `移除了在條目命名空間的草稿${ pageLink }中的AFC模板。`;
 				dMsg.setDescription( turndown( tMsg ) );
 				winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & in ns0` );
 			}
-			dMsg.setColor( 'ORANGE' );
-		} else if ( !$submissionbox.length ) {
-			tgTag = '#移除模板';
+			dMsg.setColor( Discord.Colors.Orange );
+		} else if ( !$submissionBox.length ) {
+			tgTags.push( '#移除模板' );
 
-			tMsg += `移除了${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的草稿${ pagelink }的AFC模板。`;
+			tMsg += `移除了${ htmlLink( `User:${ creator }`, creator ) }的草稿${ pageLink }的AFC模板。`;
 			dMsg
-				.setColor( 'ORANGE' )
+				.setColor( Discord.Colors.Orange )
 				.setDescription( turndown( tMsg ) );
 
 			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: remove afc template & not in ns0` );
-		} else if ( $submissionbox.hasClass( 'afc-submission-pending' ) ) {
-			tgTag = '#提交草稿';
+		} else if ( $submissionBox.hasClass( 'afc-submission-pending' ) ) {
+			tgTags.push( '#提交草稿' );
 
 			if ( submitter !== user ) {
-				tgTag += ' #代為提交';
-				tMsg += `以${ htmllink( `User:${ encodeURI( submitter ) }`, submitter ) }的身分`;
+				tgTags.push( '#代為提交' );
+				tMsg += `以${ htmlLink( `User:${ submitter }`, submitter ) }的身分`;
 			}
 			tMsg += '提交了';
 			if ( creator !== user ) {
-				tMsg += `${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }建立的`;
-				tgTag += ' #他人草稿';
+				tgTags.push( '#他人草稿' );
+				tMsg += `${ htmlLink( `User:${ creator }`, creator ) }建立的`;
 			}
-			tMsg += `草稿${ pagelink }。`;
+			tMsg += `草稿${ pageLink }。`;
 
 			const issues = await autoReview( page, wikitext, $parseHTML, { user, creator } );
 
@@ -241,46 +249,52 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					return `\n• ${ getIssusData( x, true ) }`;
 				} ).join( '' );
 				dMsg
-					.setColor( 'RED' )
-					.addField( '自動檢測問題', issues.map( function ( x ) {
-						return `• ${ turndown( getIssusData( x, true ) ) }`;
-					} ).join( '\n' ) );
+					.setColor( Discord.Colors.Red )
+					.addFields( [ {
+						name: '自動檢測問題',
+						value: issues.map( function ( x ) {
+							return `• ${ turndown( getIssusData( x, true ) ) }`;
+						} ).join( '\n' )
+					} ] );
 			} else {
 				tMsg += '\n• 沒有發現顯著問題。';
 				dMsg
-					.setColor( 'GREEN' )
-					.addField( '自動檢測問題', '• 沒有發現顯著問題。' );
+					.setColor( Discord.Colors.Green )
+					.addFields( [ {
+						name: '自動檢測問題',
+						value: '• 沒有發現顯著問題。'
+					} ] );
 			}
-		} else if ( $submissionbox.hasClass( 'afc-submission-declined' ) || $submissionbox.hasClass( 'afc-submission-rejected' ) ) {
-			tgTag = '#拒絕草稿';
+		} else if ( $submissionBox.hasClass( 'afc-submission-declined' ) || $submissionBox.hasClass( 'afc-submission-rejected' ) ) {
+			tgTags.push( '#拒絕草稿' );
 
 			tMsg += '將';
-			let submituser: string = null;
+			let submitUser: string = null;
 			if ( wikitext.match( /\|u=([^|]+)\|/ ) ) {
-				submituser = wikitext.match( /\|u=([^|]+)\|/ )[ 1 ];
-				tMsg += `提交者${ htmllink( `User:${ encodeURI( submituser ) }`, submituser ) }所提交的`;
+				submitUser = wikitext.match( /\|u=([^|]+)\|/ )[ 1 ];
+				tMsg += `提交者${ htmlLink( `User:${ submitUser }`, submitUser ) }所提交的`;
 			} else {
-				tMsg += `建立者${ htmllink( `User:${ encodeURI( creator ) }`, creator ) }的`;
+				tMsg += `建立者${ htmlLink( `User:${ creator }`, creator ) }的`;
 			}
-			tMsg += `草稿${ pagelink }標記為`;
-			if ( $submissionbox.hasClass( 'afc-submission-rejected' ) ) {
-				tgTag += ' #拒絕再次提交';
+			tMsg += `草稿${ pageLink }標記為`;
+			if ( $submissionBox.hasClass( 'afc-submission-rejected' ) ) {
+				tgTags.push( '#拒絕再次提交' );
 
 				tMsg += '拒絕再次提交的草稿';
 			} else {
-				tgTag += ' #仍需改善';
+				tgTags.push( '#仍需改善' );
 
 				tMsg += '仍需改善的草稿';
 			}
 
 			dMsg.setDescription( turndown( `<b>${ tMsg }</b>` ) );
 
-			const $reasonbox = $submissionbox.find( '.afc-submission-reason-box' );
+			const $reasonBox = $submissionBox.find( '.afc-submission-reason-box' );
 			let reasons: string[] = [];
-			if ( $reasonbox.children().length ) {
+			if ( $reasonBox.children().length ) {
 				dMsg.setDescription( turndown( tMsg ) );
 
-				$reasonbox.children().each( function ( _i, $e ) {
+				$reasonBox.children().each( function ( _i, $e ) {
 					if ( $( $e ).children().length > 1 && $( $e ).children().length === $( $e ).children( 'table, hr' ).length ) {
 						$( $e ).children().each( function ( _ei, $ee ) {
 							const res = getReason( $( $ee ), title );
@@ -295,19 +309,25 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 				} );
 			}
 
-			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, submituser: ${ submituser }, action: ${ $submissionbox.hasClass( 'afc-submission-rejected' ) ? 'rejected' : 'declined' }, reasons: ${ JSON.stringify( reasons ) }` );
+			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, submituser: ${ submitUser }, action: ${ $submissionBox.hasClass( 'afc-submission-rejected' ) ? 'rejected' : 'declined' }, reasons: ${ JSON.stringify( reasons ) }` );
 
 			if ( reasons.length ) {
 				dMsg.setDescription( turndown( tMsg ) );
 				tMsg += '，理由：' + reasons.map( function ( x ) {
 					return `\n• ${ x }`;
 				} ).join( '' );
-				dMsg.addField( '拒絕理由', reasons.map( function ( x ) {
-					return `• ${ turndown( x ) }`;
-				} ).join( '\n' ) );
+				dMsg.addFields( [ {
+					name: '拒絕理由',
+					value: reasons.map( function ( x ) {
+						return `• ${ turndown( x ) }`;
+					} ).join( '\n' )
+				} ] );
 			} else {
 				tMsg += '，未提供理由。';
-				dMsg.addField( '拒絕理由', '• 未提供理由' );
+				dMsg.addFields( [ {
+					name: '拒絕理由',
+					value: '• 未提供理由'
+				} ] );
 			}
 		} else {
 			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: ignore` );
@@ -316,15 +336,15 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 
 		const iMsg: string = htmlToIRC( tMsg );
 
-		tMsg += '\n\n' + tgTag;
+		tMsg += '\n\n' + tgTags.join( ' ' );
 
 		send( {
 			dMsg,
 			tMsg,
 			iMsg
 		}, 'watchlist' );
-	} catch ( e ) {
-		winston.error( '[afc/event/watchlist] Recentchange Error:  (Throw by Async Function) ', e );
+	} catch ( error ) {
+		winston.error( '[afc/event/watchlist] RecentChange Error: (Throw by Async Function) ', util.inspect( error ) );
 	}
 } );
 

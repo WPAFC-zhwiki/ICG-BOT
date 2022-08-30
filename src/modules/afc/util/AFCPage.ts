@@ -3,6 +3,7 @@ import { ApiQueryRevisionsParams } from 'mwn/build/api_params';
 import { MwnError } from 'mwn/build/error';
 import removeExcessiveNewline = require( 'remove-excessive-newline' );
 import winston = require( 'winston' );
+import util = require( 'util' );
 
 import { mwbot, $ } from 'src/modules/afc/util/index';
 import { isReviewer } from 'src/modules/afc/util/reviewer';
@@ -41,22 +42,22 @@ export type ApiEditResponse = {
 export class AFCPage {
 	private _page: MwnPage;
 
-	get mwnpage(): MwnPage {
+	get mwnPage(): MwnPage {
 		return this._page;
 	}
 
-	private _oldtext: string;
+	private _oldText: string;
 	private _text: string;
 
-	private _starttimestamp: string = new Date().toISOString();
-	private _basetimestamp: string;
-	private _baserevid: number;
+	private _startTimestamp: string = new Date().toISOString();
+	private _baseTimestamp: string;
+	private _baseRevId: number;
 
 	private _templates: {
 		target: string;
 		params: Record<string, string>;
 	}[] = [];
-	private _submimissions: {
+	private _submissions: {
 		status: string;
 		timestamp: string | null;
 		params: Record<string, string>;
@@ -92,9 +93,9 @@ export class AFCPage {
 	private async _getPageText(): Promise<void> {
 		const history: ApiRevision[] = await this._page.history( [ 'content', 'ids' ], 1 );
 		const rev: ApiRevision = history[ 0 ];
-		this._oldtext = this._text = rev.slots.main.content;
-		this._basetimestamp = rev.timestamp;
-		this._baserevid = rev.revid;
+		this._oldText = this._text = rev.slots.main.content;
+		this._baseTimestamp = rev.timestamp;
+		this._baseRevId = rev.revid;
 	}
 
 	private async _getTemplates(): Promise<void> {
@@ -114,7 +115,7 @@ export class AFCPage {
 		 * the raw text and doing a few choice string replacements to change
 		 * the templates to use wikicode syntax instead. Rather than messing
 		 * with recursion and all that mess, /g is our friend...which is
-		 * pefectly satisfactory for our purposes.
+		 * perfectly satisfactory for our purposes.
 		 *
 		 * @param {JQuery} $v
 		 * @return {string}
@@ -187,10 +188,13 @@ export class AFCPage {
 			}
 			return undefined;
 		}
-		this._submimissions = [];
+		this._submissions = [];
 		this._comments = [];
 
 		function parseTimestamp( str: string ) {
+			if ( !str ) {
+				return false;
+			}
 			let exp: RegExp;
 			if ( !isNaN( +new Date( str ) ) ) {
 				return new Date( str ).toISOString().replace( /[^\d]/g, '' ).slice( 0, 14 );
@@ -223,7 +227,7 @@ export class AFCPage {
 		for ( const template of this._templates ) {
 			const name = template.target.toLowerCase();
 			if ( name === 'afc submission' ) {
-				this._submimissions.push( {
+				this._submissions.push( {
 					status: ( getAndDelete( template.params, '1' ) || '' ).toLowerCase(),
 					timestamp: parseTimestamp( getAndDelete( template.params, 'ts' ) ) || null,
 					params: template.params
@@ -236,7 +240,7 @@ export class AFCPage {
 			}
 		}
 
-		type timestampSortObj = typeof AFCPage.prototype._submimissions[ 0 ] | typeof AFCPage.prototype._comments[ 0 ];
+		type timestampSortObj = typeof AFCPage.prototype._submissions[ 0 ] | typeof AFCPage.prototype._comments[ 0 ];
 
 		function timestampSortHelper( a: timestampSortObj, b: timestampSortObj ) {
 			// If we're passed something that's not a number --
@@ -253,7 +257,7 @@ export class AFCPage {
 		}
 
 		// Sort templates by timestamp; most recent are first
-		this._submimissions.sort( timestampSortHelper );
+		this._submissions.sort( timestampSortHelper );
 		this._comments.sort( timestampSortHelper );
 
 		let isPending = false;
@@ -305,7 +309,7 @@ export class AFCPage {
 		// the oldest. In the process, we remove unneeded templates (for example,
 		// a draft tag when it's already been submitted) and also set various
 		// "isX" properties of the Submission.
-		this._submimissions = this._submimissions.filter( function ( template ) {
+		this._submissions = this._submissions.filter( function ( template ) {
 			let keepTemplate = true;
 
 			if ( Object.prototype.hasOwnProperty.call( statusCases, template.status ) ) {
@@ -365,7 +369,7 @@ export class AFCPage {
 		let hasDeclineTemplate = false;
 
 		// Submission templates go first
-		this._submimissions.forEach( function ( template ) {
+		this._submissions.forEach( function ( template ) {
 			let tout = '{{AFC submission|' + template.status;
 			const paramKeys: string[] = [];
 
@@ -562,7 +566,7 @@ export class AFCPage {
 		// FIXME: Break this out into its own core function? Will it be used
 		// elsewhere?
 		// eslint-disable-next-line no-shadow
-		function convertExternalLinksToWikilinks( text: string ) {
+		function convertExternalLinksToWikiLinks( text: string ) {
 			const linkRegex =
 			/\[{1,2}(?:https?:)?\/\/(?:(?:zh\.wikipedia\.org|zhwp\.org)\/(?:wiki|zh|zh-hans|zh-hant|zh-cn|zh-my|zh-sg|zh-tw|zh-hk|zh-mo)|zhwp\.org)\/([^\s|\][]+)(?:\s|\|)?((?:\[\[[^[\]]*\]\]|[^\][])*)\]{1,2}/ig;
 			let linkMatch = linkRegex.exec( text );
@@ -588,7 +592,7 @@ export class AFCPage {
 			return text;
 		}
 
-		text = convertExternalLinksToWikilinks( text );
+		text = convertExternalLinksToWikiLinks( text );
 
 		this._text = text;
 
@@ -599,8 +603,8 @@ export class AFCPage {
 		this._updateAfcTemplates();
 	}
 
-	public get hasVaildAFCTemplates(): boolean {
-		return !!this._submimissions.length;
+	public get hasValidAFCTemplates(): boolean {
+		return !!this._submissions.length;
 	}
 
 	public get text(): string {
@@ -611,7 +615,7 @@ export class AFCPage {
 	}
 
 	public get isChange(): boolean {
-		return this._text !== this._oldtext;
+		return this._text !== this._oldText;
 	}
 
 	public get isAFCPage(): boolean {
@@ -627,9 +631,9 @@ export class AFCPage {
 		try {
 			const data: ApiEditResponse = await this._page.save( this.text, summary || '自動清理AFC草稿', {
 				bot: true,
-				starttimestamp: this._starttimestamp,
-				basetimestamp: this._basetimestamp,
-				baserevid: this._baserevid,
+				starttimestamp: this._startTimestamp,
+				basetimestamp: this._baseTimestamp,
+				baserevid: this._baseRevId,
 				minor: true,
 				nocreate: true
 			} );
@@ -637,9 +641,9 @@ export class AFCPage {
 			winston.debug( '[afc/util/AFCPage] Edit success:' + JSON.stringify( data ) );
 
 			return data;
-		} catch ( err ) {
-			winston.error( '[afc/util/AFCPage] Edit Error:' + err );
-			throw err;
+		} catch ( error ) {
+			winston.error( '[afc/util/AFCPage] Edit Error:', util.inspect( error ) );
+			throw error;
 		}
 	}
 

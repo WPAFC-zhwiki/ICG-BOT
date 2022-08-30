@@ -44,9 +44,9 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		const output = `${ reqUser !== event.user ? `${ htmllink( `User:${ event.user }`, event.user ) }替` : '' }${ htmllink( `User:${ reqUser }`, reqUser ) }申請成為審核員，請各位前往關注。`;
 
 		const diff = `Special:Diff/${ event.revision.old }/${ event.revision.new }`;
-		const dMsg = new Discord.MessageEmbed( {
+		const dMsg = new Discord.EmbedBuilder( {
 			title: '審核員申請',
-			color: 'BLUE',
+			color: Discord.Colors.Blue,
 			url: `https://zh.wikipedia.org/wiki/${ diff }`,
 			description: turndown( output ),
 			timestamp: event.timestamp * 1000
