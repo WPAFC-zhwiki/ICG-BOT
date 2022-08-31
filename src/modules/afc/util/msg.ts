@@ -231,7 +231,7 @@ export async function editMessage( promises: Promise<Response>[] | Transport, ed
 				}
 			}
 		} catch ( error ) {
-			winston.error( '[afc/util/msg]', util.inspect( error ) );
+			winston.error( '[afc/util/msg]' + util.inspect( error ) );
 		}
 	} );
 }

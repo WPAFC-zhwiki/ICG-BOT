@@ -23,6 +23,6 @@ setCommand( 'backlog', async function ( _args, reply ) {
 			iMsg: output
 		} );
 
-		winston.error( '[afc/commands/backlog]', util.inspect( error ) );
+		winston.error( '[afc/commands/backlog]' + util.inspect( error ) );
 	}
 } );

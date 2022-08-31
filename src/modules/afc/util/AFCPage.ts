@@ -642,7 +642,7 @@ export class AFCPage {
 
 			return data;
 		} catch ( error ) {
-			winston.error( '[afc/util/AFCPage] Edit Error:', util.inspect( error ) );
+			winston.error( '[afc/util/AFCPage] Edit Error:' + util.inspect( error ) );
 			throw error;
 		}
 	}

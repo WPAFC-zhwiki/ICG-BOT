@@ -47,12 +47,12 @@ winston.add( new winston.transports.Console( {
 
 process.on( 'unhandledRejection', function ( _reason, promise ) {
 	promise.catch( function ( error ) {
-		winston.error( 'Unhandled Rejection:', util.inspect( error ) );
+		winston.error( 'Unhandled Rejection:' + util.inspect( error ) );
 	} );
 } );
 
 process.on( 'uncaughtException', function ( error ) {
-	winston.error( 'Uncaught exception:', util.inspect( error ) );
+	winston.error( 'Uncaught exception:' + util.inspect( error ) );
 } );
 
 process.on( 'rejectionHandled', function () {

@@ -47,7 +47,7 @@ ircHandler.on( 'text', async function ( context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( error ) {
-		winston.error( '[transport/processors/IRC]', util.inspect( error ) );
+		winston.error( '[transport/processors/IRC]' + util.inspect( error ) );
 	}
 } );
 

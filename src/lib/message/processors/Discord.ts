@@ -92,7 +92,7 @@ export async function preProcess( context: Context<Discord.Message> ) {
 				promises.push( userInfo.get( at ) );
 			} else {
 				promises.push( discordHandler.fetchUser( at ).catch( function ( error: Error ) {
-					winston.error( `[message/process/Discord] Fail to fetch user ${ at }:`, util.inspect( error ) );
+					winston.error( `[message/process/Discord] Fail to fetch user ${ at }:` + util.inspect( error ) );
 				} ) );
 			}
 		}
@@ -111,7 +111,7 @@ export async function preProcess( context: Context<Discord.Message> ) {
 				}
 			}
 		} catch ( error ) {
-			winston.error( '[message/process/Discord]', util.inspect( error ) );
+			winston.error( '[message/process/Discord]' + util.inspect( error ) );
 		}
 	}
 	return context;

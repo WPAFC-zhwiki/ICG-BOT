@@ -84,7 +84,7 @@ tgHandler.on( 'text', async function ( context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( error ) {
-		winston.error( '[transport/processors/Telegram]', util.inspect( error ) );
+		winston.error( '[transport/processors/Telegram]' + util.inspect( error ) );
 	}
 } );
 
@@ -94,7 +94,7 @@ tgHandler.on( 'richMessage', async function ( context: Context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( error ) {
-		winston.error( '[transport/processors/Telegram]', util.inspect( error ) );
+		winston.error( '[transport/processors/Telegram]' + util.inspect( error ) );
 	}
 } );
 
@@ -193,7 +193,7 @@ if ( config.options.Telegram.forwardChannels ) {
 		try {
 			await bridge.transportMessage( context, false );
 		} catch ( error ) {
-			winston.error( '[transport/processors/Telegram]', util.inspect( error ) );
+			winston.error( '[transport/processors/Telegram]' + util.inspect( error ) );
 		}
 	} );
 
@@ -203,7 +203,7 @@ if ( config.options.Telegram.forwardChannels ) {
 		try {
 			await bridge.transportMessage( context );
 		} catch ( error ) {
-			winston.error( '[transport/processors/Telegram]', util.inspect( error ) );
+			winston.error( '[transport/processors/Telegram]' + util.inspect( error ) );
 		}
 	} );
 }

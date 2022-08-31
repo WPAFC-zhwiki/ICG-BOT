@@ -137,7 +137,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					'/bot$1:<password>/'
 				);
 			}
-			winston.error( 'TelegramBot error:', util.inspect( error ) );
+			winston.error( 'TelegramBot error:' + util.inspect( error ) );
 		} );
 
 		if ( botConfig.webhook && botConfig.webhook.port > 0 ) {

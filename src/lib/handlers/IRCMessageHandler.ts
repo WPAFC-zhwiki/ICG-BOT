@@ -93,7 +93,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		} );
 
 		client.on( 'error', function ( message ) {
-			winston.error( 'IRCBot error:', JSON.stringify( message ) );
+			winston.error( 'IRCBot error:' + JSON.stringify( message ) );
 		} );
 
 		// 加载设置

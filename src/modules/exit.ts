@@ -47,7 +47,7 @@ watcher
 		winston.info( '[exit] chokidar ready.' );
 	} )
 	.on( 'error', function ( error ) {
-		winston.error( '[exit]', util.inspect( error ) );
+		winston.error( '[exit]' + util.inspect( error ) );
 	} )
 	.on( 'change', function ( exit ) {
 		winston.warn( `[exit] watching path "${ exit }" change, exit.` );

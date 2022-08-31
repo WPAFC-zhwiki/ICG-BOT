@@ -57,7 +57,7 @@ discordHandler.on( 'text', async function ( context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( error ) {
-		winston.error( '[transport/processors/Discord]', util.inspect( error ) );
+		winston.error( '[transport/processors/Discord]' + util.inspect( error ) );
 	}
 } );
 

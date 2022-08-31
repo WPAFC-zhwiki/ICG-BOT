@@ -76,7 +76,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		} );
 
 		client.on( 'error', function ( message: Error ): void {
-			winston.error( 'DiscordBot Error:', util.inspect( message ) );
+			winston.error( 'DiscordBot Error:' + util.inspect( message ) );
 		} );
 
 		this._token = botConfig.token;

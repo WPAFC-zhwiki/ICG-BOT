@@ -35,7 +35,7 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 			issues.push( ...resJson.result.issues );
 		} );
 	} catch ( error ) {
-		winston.error( '[afc/util/autoreview]', util.inspect( error ) );
+		winston.error( '[afc/util/autoreview]' + util.inspect( error ) );
 		issues.push( ...( await oldAutoReview( page, wikitext, $parseHTML ) ).issues );
 	}
 

@@ -245,7 +245,7 @@ export async function transportMessage( m: BridgeMsg | Context, bot?: boolean ):
 		await Promise.all( promises );
 	} catch ( error ) {
 		allResolved = false;
-		winston.error( '[transport/bridge] <BotSend> Rejected: ', util.inspect( error ) );
+		winston.error( '[transport/bridge] <BotSend> Rejected: ' + util.inspect( error ) );
 	}
 
 	emitHook( 'bridge.sent', msg );
