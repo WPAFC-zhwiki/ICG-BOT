@@ -89,6 +89,11 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		const that: this = this;
 
 		client.on( 'messageCreate', async function ( rawdata: Discord.Message ): Promise<void> {
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+			if ( rawdata.partial ) {
+				rawdata = await rawdata.fetch();
+			}
+
 			if (
 				!that._enabled ||
 				rawdata.author.id === client.user.id ||
