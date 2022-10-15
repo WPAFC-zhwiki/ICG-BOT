@@ -63,9 +63,10 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 				Discord.GatewayIntentBits.GuildMessages,
 				// Discord.GatewayIntentBits.GuildMessageReactions,
 				// Discord.GatewayIntentBits.GuildMessageTyping,
-				Discord.GatewayIntentBits.DirectMessages
+				Discord.GatewayIntentBits.DirectMessages,
 				// Discord.GatewayIntentBits.DirectMessageReactions,
-				// Discord.GatewayIntentBits.DirectMessageTyping
+				// Discord.GatewayIntentBits.DirectMessageTyping,
+				Discord.GatewayIntentBits.MessageContent
 			]
 		} );
 
