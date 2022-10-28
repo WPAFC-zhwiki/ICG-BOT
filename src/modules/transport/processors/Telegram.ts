@@ -2,7 +2,7 @@ import path = require( 'path' );
 import format = require( 'string-format' );
 import { Context as TContext } from 'telegraf';
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import { Manager } from 'src/init';
 import { ConfigTS } from 'src/config';
@@ -84,7 +84,7 @@ tgHandler.on( 'text', async function ( context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( error ) {
-		winston.error( '[transport/processors/Telegram]' + util.inspect( error ) );
+		winston.error( '[transport/processors/Telegram]' + inspect( error ) );
 	}
 } );
 
@@ -94,7 +94,7 @@ tgHandler.on( 'richMessage', async function ( context: Context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( error ) {
-		winston.error( '[transport/processors/Telegram]' + util.inspect( error ) );
+		winston.error( '[transport/processors/Telegram]' + inspect( error ) );
 	}
 } );
 
@@ -193,7 +193,7 @@ if ( config.options.Telegram.forwardChannels ) {
 		try {
 			await bridge.transportMessage( context, false );
 		} catch ( error ) {
-			winston.error( '[transport/processors/Telegram]' + util.inspect( error ) );
+			winston.error( '[transport/processors/Telegram]' + inspect( error ) );
 		}
 	} );
 
@@ -203,7 +203,7 @@ if ( config.options.Telegram.forwardChannels ) {
 		try {
 			await bridge.transportMessage( context );
 		} catch ( error ) {
-			winston.error( '[transport/processors/Telegram]' + util.inspect( error ) );
+			winston.error( '[transport/processors/Telegram]' + inspect( error ) );
 		}
 	} );
 }

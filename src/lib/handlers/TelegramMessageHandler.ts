@@ -6,7 +6,7 @@ import { ExtraPhoto, ExtraReplyMessage } from 'telegraf/typings/telegram-types';
 import * as TT from 'typegram';
 import Tls = require( 'tls' );
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import { ConfigTS } from 'src/config';
 import { MessageHandler, Command, BaseEvents } from 'src/lib/handlers/MessageHandler';
@@ -137,7 +137,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					'/bot$1:<password>/'
 				);
 			}
-			winston.error( 'TelegramBot error:' + util.inspect( error ) );
+			winston.error( 'TelegramBot error:' + inspect( error ) );
 		} );
 
 		if ( botConfig.webhook && botConfig.webhook.port > 0 ) {

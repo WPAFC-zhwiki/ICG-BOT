@@ -1,5 +1,5 @@
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import { getBacklogInfo, setCommand } from 'src/modules/afc/util';
 
@@ -23,6 +23,6 @@ setCommand( 'backlog', async function ( _args, reply ) {
 			iMsg: output
 		} );
 
-		winston.error( '[afc/commands/backlog]' + util.inspect( error ) );
+		winston.error( '[afc/commands/backlog]' + inspect( error ) );
 	}
 } );

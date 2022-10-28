@@ -1,6 +1,6 @@
 import format = require( 'string-format' );
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import { Manager } from 'src/init';
 import { ConfigTS } from 'src/config';
@@ -57,7 +57,7 @@ discordHandler.on( 'text', async function ( context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( error ) {
-		winston.error( '[transport/processors/Discord]' + util.inspect( error ) );
+		winston.error( '[transport/processors/Discord]' + inspect( error ) );
 	}
 } );
 

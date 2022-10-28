@@ -2,7 +2,7 @@ import format = require( 'string-format' );
 import color = require( 'irc-colors' );
 import irc = require( 'irc-upd' );
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import { Manager } from 'src/init';
 import { ConfigTS } from 'src/config';
@@ -47,7 +47,7 @@ ircHandler.on( 'text', async function ( context ) {
 	try {
 		await bridge.transportMessage( context );
 	} catch ( error ) {
-		winston.error( '[transport/processors/IRC]' + util.inspect( error ) );
+		winston.error( '[transport/processors/IRC]' + inspect( error ) );
 	}
 } );
 

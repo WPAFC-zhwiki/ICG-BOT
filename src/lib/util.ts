@@ -1,3 +1,5 @@
+import util = require( 'util' );
+
 export function getFriendlySize( size: number ): string {
 	if ( size <= 1126 ) {
 		return `${ size.toLocaleString() } B`;
@@ -18,4 +20,12 @@ export function getFriendlyLocation( latitude: number, longitude: number ): stri
 	x = x < 0 ? `${ -x }°W` : `${ x }°E`;
 
 	return `${ y }, ${ x }`;
+}
+
+export function inspect( object: unknown ) {
+	return util.inspect( object, {
+		showHidden: false,
+		colors: false,
+		depth: 1
+	} );
 }

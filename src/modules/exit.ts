@@ -2,7 +2,7 @@ import fs = require( 'fs' );
 import path = require( 'path' );
 import winston = require( 'winston' );
 import chokidar = require( 'chokidar' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import config from 'src/config';
 
@@ -30,7 +30,7 @@ if ( config.exits ) {
 			if ( String( error ).match( 'no such file or directory' ) ) {
 				winston.warn( `[exit] Can't watch ${ isFolder ? 'folder' : 'file' } "${ path.normalize( obj.path ) }": It isn't exist.` );
 			} else {
-				winston.error( `[exit] Can't watch ${ isFolder ? 'folder' : 'file' } "${ path.normalize( obj.path ) }": `, util.inspect( error ) );
+				winston.error( `[exit] Can't watch ${ isFolder ? 'folder' : 'file' } "${ path.normalize( obj.path ) }": `, inspect( error ) );
 			}
 		}
 	} );
@@ -47,7 +47,7 @@ watcher
 		winston.info( '[exit] chokidar ready.' );
 	} )
 	.on( 'error', function ( error ) {
-		winston.error( '[exit]' + util.inspect( error ) );
+		winston.error( '[exit]' + inspect( error ) );
 	} )
 	.on( 'change', function ( exit ) {
 		winston.warn( `[exit] watching path "${ exit }" change, exit.` );

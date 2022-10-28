@@ -12,7 +12,7 @@ import request = require( 'request' );
 import sharp = require( 'sharp' );
 import stream = require( 'stream' );
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import { Manager } from 'src/init';
 import { ConfigTS, version, repository } from 'src/config';
@@ -345,7 +345,7 @@ const fileUploader = {
 					winston.debug( `[file] <FileUploader> #${ context.msgId } File ${ index + 1 }/${ fileCount }: Size limit exceeded. Ignore.` );
 				} else {
 					promises.push( uploadFile( file ).catch( function ( error ) {
-						winston.error( '[file] Error on processing files:' + util.inspect( error ) );
+						winston.error( '[file] Error on processing files:' + inspect( error ) );
 						return null;
 					} ) );
 				}

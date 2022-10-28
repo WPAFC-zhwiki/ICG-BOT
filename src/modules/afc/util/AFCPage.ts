@@ -3,7 +3,7 @@ import { ApiQueryRevisionsParams } from 'mwn/build/api_params';
 import { MwnError } from 'mwn/build/error';
 import removeExcessiveNewline = require( 'remove-excessive-newline' );
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import { mwbot, $ } from 'src/modules/afc/util/index';
 import { isReviewer } from 'src/modules/afc/util/reviewer';
@@ -642,7 +642,7 @@ export class AFCPage {
 
 			return data;
 		} catch ( error ) {
-			winston.error( '[afc/util/AFCPage] Edit Error:' + util.inspect( error ) );
+			winston.error( '[afc/util/AFCPage] Edit Error:' + inspect( error ) );
 			throw error;
 		}
 	}

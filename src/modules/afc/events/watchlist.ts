@@ -3,7 +3,7 @@ import Discord = require( 'discord.js' );
 import { MwnPage } from 'mwn';
 import winston = require( 'winston' );
 import crypto = require( 'crypto' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import { $, AFCPage, autoReview, encodeURI, getIssusData, htmlToIRC, mwbot,
 	recentChange, RecentChangeEvent, registerEvent, turndown, send } from 'src/modules/afc/util';
@@ -344,7 +344,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			iMsg
 		}, 'watchlist' );
 	} catch ( error ) {
-		winston.error( '[afc/event/watchlist] RecentChange Error: (Throw by Async Function) ', util.inspect( error ) );
+		winston.error( '[afc/event/watchlist] RecentChange Error: (Throw by Async Function) ', inspect( error ) );
 	}
 } );
 

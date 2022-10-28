@@ -6,7 +6,7 @@
 import moduleAlias from 'module-alias';
 import path = require( 'path' );
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 moduleAlias.addAliases( {
 	'src': __dirname,
@@ -27,7 +27,7 @@ for ( const module of Manager.config.modules ) {
 		winston.info( `Loading module: ${ module }` );
 		require( `src/modules/${ module }` );
 	} catch ( error ) {
-		winston.error( `Error while loading plugin ${ module }: ` + util.inspect( error ) );
+		winston.error( `Error while loading plugin ${ module }: ` + inspect( error ) );
 	}
 }
 

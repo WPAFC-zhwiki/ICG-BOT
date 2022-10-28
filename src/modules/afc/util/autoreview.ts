@@ -1,7 +1,7 @@
 import { MwnPage } from 'mwn';
 import fetch from 'node-fetch';
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import issuesData from 'src/modules/afc/util/issuesData.json';
 import { oldAutoReview } from 'src/modules/afc/util/autoreview-old';
@@ -35,7 +35,7 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 			issues.push( ...resJson.result.issues );
 		} );
 	} catch ( error ) {
-		winston.error( '[afc/util/autoreview]' + util.inspect( error ) );
+		winston.error( '[afc/util/autoreview]' + inspect( error ) );
 		issues.push( ...( await oldAutoReview( page, wikitext, $parseHTML ) ).issues );
 	}
 

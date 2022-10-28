@@ -1,6 +1,6 @@
 import Discord = require( 'discord.js' );
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import { ConfigTS } from 'src/config';
 import { BaseEvents, MessageHandler } from 'src/lib/handlers/MessageHandler';
@@ -77,7 +77,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		} );
 
 		client.on( 'error', function ( message: Error ): void {
-			winston.error( 'DiscordBot Error:' + util.inspect( message ) );
+			winston.error( 'DiscordBot Error:' + inspect( message ) );
 		} );
 
 		this._token = botConfig.token;

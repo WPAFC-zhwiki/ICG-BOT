@@ -3,7 +3,7 @@
  */
 
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
@@ -169,7 +169,7 @@ async function processlinky( from: string, to: string, text: string, context: Co
 			}
 		}
 	} catch ( error ) {
-		winston.error( '[wikilinkly] error:' + util.inspect( error ) );
+		winston.error( '[wikilinkly] error:' + inspect( error ) );
 	}
 }
 

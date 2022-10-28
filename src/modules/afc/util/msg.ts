@@ -1,7 +1,7 @@
 import { Message as TMessage } from 'typegram';
 import { Message as DMessage, EmbedBuilder as DMessageEmbed, MessageEditOptions as DMessageEditOptions } from 'discord.js';
 import winston = require( 'winston' );
-import util = require( 'util' );
+import { inspect } from 'src/lib/util';
 
 import { Manager } from 'src/init';
 import { Context } from 'src/lib/handlers/Context';
@@ -231,7 +231,7 @@ export async function editMessage( promises: Promise<Response>[] | Transport, ed
 				}
 			}
 		} catch ( error ) {
-			winston.error( '[afc/util/msg]' + util.inspect( error ) );
+			winston.error( '[afc/util/msg]' + inspect( error ) );
 		}
 	} );
 }
