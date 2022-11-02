@@ -6,7 +6,6 @@
 import moduleAlias from 'module-alias';
 import path = require( 'path' );
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
 moduleAlias.addAliases( {
 	'src': __dirname,
@@ -15,6 +14,7 @@ moduleAlias.addAliases( {
 } );
 
 import { Manager } from 'src/init';
+import { inspect } from 'src/lib/util';
 import 'src/lib/message';
 
 /**
