@@ -10,8 +10,8 @@ import { isReviewer } from 'src/modules/afc/util/reviewer';
 
 const categoryRegex = /\[\[:?(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):([^[\]]+)\]\]/gi;
 
-async function revisionRequest( title: string, props: ApiQueryRevisionsParams[ 'rvprop' ],
-	limit: number, customOptions?: ApiQueryRevisionsParams ): Promise<ApiRevision[]> {
+async function fetchPageAndRevisions( title: string, props: ApiQueryRevisionsParams[ 'rvprop' ],
+	limit: number, customOptions?: ApiQueryRevisionsParams ) {
 	const data = await mwbot.request( {
 		action: 'query',
 		prop: 'revisions',
@@ -25,7 +25,10 @@ async function revisionRequest( title: string, props: ApiQueryRevisionsParams[ '
 	if ( page.missing ) {
 		throw new MwnError.MissingPage();
 	}
-	return page.revisions;
+	return {
+		page,
+		revisions: page.revisions
+	};
 }
 
 export type ApiEditResponse = {
@@ -41,13 +44,25 @@ export type ApiEditResponse = {
 
 export class AFCPage {
 	private _page: MwnPage;
-
-	get mwnPage(): MwnPage {
+	public get mwnPage(): MwnPage {
 		return this._page;
+	}
+
+	private _isInitialed = false;
+	private _checkIsInitialed( method: string ) {
+		if ( !this._isInitialed ) {
+			throw new Error( `AFCPage#${ method }: method must call after initialed.` );
+		}
 	}
 
 	private _oldText: string;
 	private _text: string;
+
+	private _pageId: number;
+	public get pageId(): number {
+		this._checkIsInitialed( '[getter pageId]' );
+		return this._pageId;
+	}
 
 	private _startTimestamp: string = new Date().toISOString();
 	private _baseTimestamp: string;
@@ -75,13 +90,12 @@ export class AFCPage {
 	}
 
 	private async _init(): Promise<void> {
-		this._page.history = function ( props: ApiQueryRevisionsParams[ 'rvprop' ],
-			limit: number, customOptions?: ApiQueryRevisionsParams ) {
-			return revisionRequest( this.toString(), props, limit, customOptions );
-		};
-
+		if ( this._isInitialed ) {
+			return;
+		}
 		await this._getPageText();
 		await this._getTemplates();
+		this._isInitialed = true;
 	}
 
 	public static async new( title: string ): Promise<AFCPage> {
@@ -91,8 +105,9 @@ export class AFCPage {
 	}
 
 	private async _getPageText(): Promise<void> {
-		const history: ApiRevision[] = await this._page.history( [ 'content', 'ids' ], 1 );
-		const rev: ApiRevision = history[ 0 ];
+		const { page, revisions } = await fetchPageAndRevisions( this._page.getPrefixedText(), [ 'content', 'ids' ], 1 );
+		this._pageId = page.pageid;
+		const rev: ApiRevision = revisions[ 0 ];
 		this._oldText = this._text = rev.slots.main.content;
 		this._baseTimestamp = rev.timestamp;
 		this._baseRevId = rev.revid;
@@ -477,6 +492,8 @@ export class AFCPage {
 	}
 
 	public updateCategories( categories?: string[] ): void {
+		this._checkIsInitialed( 'updateCategories' );
+
 		this._parseCategories();
 
 		if ( categories ) {
@@ -497,6 +514,8 @@ export class AFCPage {
 	}
 
 	public cleanUp(): void {
+		this._checkIsInitialed( 'cleanUp' );
+
 		let text = this._text;
 		const commentsToRemove = [
 			'请不要移除这一行代码', '請勿刪除此行，並由下一行開始編輯'
@@ -604,17 +623,21 @@ export class AFCPage {
 	}
 
 	public get hasValidAFCTemplates(): boolean {
+		this._checkIsInitialed( '[getter hasValidAFCTemplates]' );
 		return !!this._submissions.length;
 	}
 
 	public get text(): string {
+		this._checkIsInitialed( '[getter text]' );
 		return this._text;
 	}
 	public set text( str: string ) {
+		this._checkIsInitialed( '[setter text]' );
 		this._text = str;
 	}
 
 	public get isChange(): boolean {
+		this._checkIsInitialed( '[getter isChange]' );
 		return this._text !== this._oldText;
 	}
 
@@ -624,6 +647,8 @@ export class AFCPage {
 	}
 
 	public async postEdit( summary?: string ): Promise<ApiEditResponse> {
+		this._checkIsInitialed( 'postEdit' );
+
 		if ( !mwbot.loggedIn && !mwbot.usingOAuth ) {
 			throw new Error( 'You must login to edit.' );
 		}

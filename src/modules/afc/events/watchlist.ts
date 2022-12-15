@@ -146,7 +146,8 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		const tgTags: string[] = [
 			'#' + crypto.createHash( 'shake256', {
 				outputLength: 10
-			} ).update( page.toText() ).digest( 'hex' )
+			} ).update( page.toText() ).digest( 'hex' ),
+			'#' + afcPage.pageId
 		];
 
 		if ( !$submissionBox.length && page.namespace === 0 && user !== creator && AFCPage.isReviewer( user ) ) {
