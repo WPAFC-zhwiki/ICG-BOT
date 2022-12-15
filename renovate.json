@@ -12,7 +12,6 @@
 	"branchConcurrentLimit": 5,
 	"bumpVersion": "patch",
 	"cloneSubmodules": true,
-	"draftPR": true,
 	"lockFileMaintenance": {
 		"enabled": true
 	},
