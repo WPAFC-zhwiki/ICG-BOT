@@ -5,8 +5,7 @@
 		":gitSignOff"
 	],
 	"automerge": true,
-	"automergeType": "pr-comment",
-	"automergeComment": "@renovate:merge",
+	"automergeType": "pr",
 	"baseBranches": [
 		"master"
 	],
