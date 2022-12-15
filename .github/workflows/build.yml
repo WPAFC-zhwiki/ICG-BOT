@@ -17,13 +17,13 @@ jobs:
         submodules: true
 
     - name: Install dependencies
-      run: npm install
+      run: pnpm install
 
     - name: Create temp config
       run: cp config/config.example.ts config/config.ts
 
     - name: Lint
-      run: npm run lint
+      run: pnpm run lint
 
     - name: Build
-      run: npm run build
+      run: pnpm run build
