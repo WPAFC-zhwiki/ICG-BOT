@@ -1,6 +1,6 @@
 {
 	"name": "afc-icg-bot",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "中文維基百科建立條目專題互聯群機器人",
 	"repository": "git+https://github.com/WPAFC-zhwiki/ICG-Bot",
 	"author": {
@@ -23,7 +23,7 @@
 		"url": "https://github.com/WPAFC-zhwiki/ICG-Bot/issues"
 	},
 	"private": true,
-	"packageManager": "pnpm@7.0.0",
+	"packageManager": "pnpm@7.18.2",
 	"dependencies": {
 		"@sunafterrainwm/winston-format-remove-telegram-apitoken": "file:lib\\winston-format-remove-telegram-apitoken",
 		"chokidar": "^3.5.3",
