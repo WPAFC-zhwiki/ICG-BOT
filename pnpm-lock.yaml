@@ -43,7 +43,7 @@ specifiers:
   node-gyp: ^8.4.1
   remove-excessive-newline: ^1.0.0
   request: ~2.88.2
-  sharp: ^0.29.3
+  sharp: 0.31.2
   string-format: ^2.0.0
   telegraf: ^4.8.6
   ts-node: ^10.9.1
@@ -56,7 +56,7 @@ specifiers:
   winston: ^3.8.1
 
 dependencies:
-  '@sunafterrainwm/winston-format-remove-telegram-apitoken': file:lib/winston-format-remove-telegram-apitoken_lo6yswagpchyngaz2llbma4y24
+  '@sunafterrainwm/winston-format-remove-telegram-apitoken': file:lib/winston-format-remove-telegram-apitoken
   chokidar: 3.5.3
   cron: 1.8.2
   discord.js: 14.2.0
@@ -74,7 +74,7 @@ dependencies:
   node-fetch: 2.6.7
   remove-excessive-newline: 1.0.0
   request: 2.88.2
-  sharp: 0.29.3
+  sharp: 0.31.2
   string-format: 2.0.0
   telegraf: 4.8.6
   turndown: 7.1.1
@@ -1269,8 +1269,8 @@ packages:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
 
-  /chardet/1.4.0:
-    resolution: {integrity: sha512-NpwMDdSIprbYx1CLnfbxEIarI0Z+s9MssEgggMNheGM+WD68yOhV7IEA/3r6tr0yTRgQD0HuZJDw32s99i6L+A==}
+  /chardet/1.5.0:
+    resolution: {integrity: sha512-Nj3VehbbFs/1ZnJJJaL3ztEf3Nu5Fs6YV/NBs6lyz/iDDHUU+X9QNk5QgPy1/5Rjtb/cGVf+NyazP7kVEJqKRg==}
     requiresBuild: true
     dev: false
     optional: true
@@ -1535,12 +1535,6 @@ packages:
   /detect-file/1.0.0:
     resolution: {integrity: sha512-DtCOLG98P007x7wiiOmfI0fi3eIKyWiLTGJ2MDnVi/E04lWGbf+JzrRHMm0rgIIZJGtHpKpbVgLWHrv8xXpc3Q==}
     engines: {node: '>=0.10.0'}
-    dev: false
-
-  /detect-libc/1.0.3:
-    resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
-    engines: {node: '>=0.10'}
-    hasBin: true
     dev: false
 
   /detect-libc/2.0.1:
@@ -2955,7 +2949,7 @@ packages:
     dependencies:
       irc-colors: 1.5.0
     optionalDependencies:
-      chardet: 1.4.0
+      chardet: 1.5.0
       iconv-lite: 0.6.3
     dev: false
 
@@ -3587,11 +3581,11 @@ packages:
     resolution: {integrity: sha512-YPG3Co0luSu6GwOBsmIdGW6Wx0NyNDLg/hriIyDllVsNwnI6UeqaWShxC3lbH4LtEQUgoLP3XR1ndXiDAWvmRw==}
     engines: {node: '>=10'}
     dependencies:
-      semver: 7.3.7
+      semver: 7.3.8
     dev: false
 
-  /node-addon-api/4.3.0:
-    resolution: {integrity: sha512-73sE9+3UaLYYFmDsFZnqCInzPyh3MqIwZO9cw58yIqAZhONrrabrYyYe3TuIqtIiOuTXVhsGau8hcrhhwSsDIQ==}
+  /node-addon-api/5.0.0:
+    resolution: {integrity: sha512-CvkDw2OEnme7ybCykJpVcKH+uAOLV2qLqiyla128dN9TkEWfrYmxG6C2boDe5KcNQqZF3orkqzGgOMvZ/JNekA==}
     dev: false
 
   /node-fetch/2.6.7:
@@ -4259,21 +4253,30 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+    dev: true
+
+  /semver/7.3.8:
+    resolution: {integrity: sha512-NB1ctGL5rlHrPJtFDVIVzTyQylMLu9N9VICA6HSFJo8MCGVTMW6gfpicwKmmK/dAjTOrqu5l63JJOpDSrAis3A==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dependencies:
+      lru-cache: 6.0.0
+    dev: false
 
   /set-blocking/2.0.0:
     resolution: {integrity: sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw==}
     dev: true
 
-  /sharp/0.29.3:
-    resolution: {integrity: sha512-fKWUuOw77E4nhpyzCCJR1ayrttHoFHBT2U/kR/qEMRhvPEcluG4BKj324+SCO1e84+knXHwhJ1HHJGnUt4ElGA==}
-    engines: {node: '>=12.13.0'}
+  /sharp/0.31.2:
+    resolution: {integrity: sha512-DUdNVEXgS5A97cTagSLIIp8dUZ/lZtk78iNVZgHdHbx1qnQR7JAHY0BnXnwwH39Iw+VKhO08CTYhIg0p98vQ5Q==}
+    engines: {node: '>=14.15.0'}
     requiresBuild: true
     dependencies:
       color: 4.2.3
-      detect-libc: 1.0.3
-      node-addon-api: 4.3.0
+      detect-libc: 2.0.1
+      node-addon-api: 5.0.0
       prebuild-install: 7.1.1
-      semver: 7.3.7
+      semver: 7.3.8
       simple-get: 4.0.1
       tar-fs: 2.1.1
       tunnel-agent: 0.6.0
@@ -5066,15 +5069,8 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  file:lib/winston-format-remove-telegram-apitoken_lo6yswagpchyngaz2llbma4y24:
+  file:lib/winston-format-remove-telegram-apitoken:
     resolution: {directory: lib/winston-format-remove-telegram-apitoken, type: directory}
-    id: file:lib/winston-format-remove-telegram-apitoken
-    name: '@sunafterrainwm/winston-format-remove-telegram-apitoken'
-    version: 1.0.0
-    peerDependencies:
-      lodash: '>3.0.0'
-      winston: '>3.0.0'
-    dependencies:
-      lodash: 4.17.21
-      winston: 3.8.1
+    name: winston-format-remove-telegram-apitoken
+    version: 0.0.0
     dev: false
