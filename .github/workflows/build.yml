@@ -16,8 +16,14 @@ jobs:
       with:
         submodules: true
 
-    - name: Install dependencies
-      run: pnpm install
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    - uses: pnpm/action-setup@v2
+      with:
+        run_install: |
+          - args: [--frozen-lockfile]
 
     - name: Create temp config
       run: cp config/config.example.ts config/config.ts
