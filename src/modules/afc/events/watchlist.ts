@@ -147,7 +147,8 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			'#' + crypto.createHash( 'shake256', {
 				outputLength: 10
 			} ).update( page.toText() ).digest( 'hex' ),
-			'#' + afcPage.pageId
+			'#p' + String( afcPage.pageId ),
+			'#r' + String( afcPage.baseRevId )
 		];
 
 		if ( !$submissionBox.length && page.namespace === 0 && user !== creator && AFCPage.isReviewer( user ) ) {

@@ -67,6 +67,10 @@ export class AFCPage {
 	private _startTimestamp: string = new Date().toISOString();
 	private _baseTimestamp: string;
 	private _baseRevId: number;
+	public get baseRevId(): number {
+		this._checkIsInitialed( '[getter baseRevId]' );
+		return this._baseRevId;
+	}
 
 	private _templates: {
 		target: string;
