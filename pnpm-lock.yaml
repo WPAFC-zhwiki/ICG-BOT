@@ -13,7 +13,7 @@ specifiers:
   '@types/node': ^17.0.45
   '@types/node-fetch': ^2.6.2
   '@types/request': ^2.48.8
-  '@types/sharp': ^0.29.5
+  '@types/sharp': ^0.31.0
   '@types/string-format': ^2.0.0
   '@types/triple-beam': ^1.3.2
   '@types/turndown': ^5.0.1
@@ -56,7 +56,7 @@ specifiers:
   winston: ^3.8.1
 
 dependencies:
-  '@sunafterrainwm/winston-format-remove-telegram-apitoken': file:lib/winston-format-remove-telegram-apitoken
+  '@sunafterrainwm/winston-format-remove-telegram-apitoken': file:lib/winston-format-remove-telegram-apitoken_lo6yswagpchyngaz2llbma4y24
   chokidar: 3.5.3
   cron: 1.8.2
   discord.js: 14.2.0
@@ -93,7 +93,7 @@ devDependencies:
   '@types/node': 17.0.45
   '@types/node-fetch': 2.6.2
   '@types/request': 2.48.8
-  '@types/sharp': 0.29.5
+  '@types/sharp': 0.31.0
   '@types/string-format': 2.0.0
   '@types/triple-beam': 1.3.2
   '@types/turndown': 5.0.1
@@ -683,8 +683,8 @@ packages:
       form-data: 2.5.1
     dev: true
 
-  /@types/sharp/0.29.5:
-    resolution: {integrity: sha512-3TC+S3H5RwnJmLYMHrcdfNjz/CaApKmujjY9b6PU/pE6n0qfooi99YqXGWoW8frU9EWYj/XTI35Pzxa+ThAZ5Q==}
+  /@types/sharp/0.31.0:
+    resolution: {integrity: sha512-nwivOU101fYInCwdDcH/0/Ru6yIRXOpORx25ynEOc6/IakuCmjOAGpaO5VfUl4QkDtUC6hj+Z2eCQvgXOioknw==}
     dependencies:
       '@types/node': 17.0.45
     dev: true
@@ -5069,8 +5069,15 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  file:lib/winston-format-remove-telegram-apitoken:
+  file:lib/winston-format-remove-telegram-apitoken_lo6yswagpchyngaz2llbma4y24:
     resolution: {directory: lib/winston-format-remove-telegram-apitoken, type: directory}
-    name: winston-format-remove-telegram-apitoken
-    version: 0.0.0
+    id: file:lib/winston-format-remove-telegram-apitoken
+    name: '@sunafterrainwm/winston-format-remove-telegram-apitoken'
+    version: 1.0.0
+    peerDependencies:
+      lodash: '>3.0.0'
+      winston: '>3.0.0'
+    dependencies:
+      lodash: 4.17.21
+      winston: 3.8.1
     dev: false
