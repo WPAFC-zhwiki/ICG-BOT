@@ -40,7 +40,7 @@
 		"lru-cache": "^6.0.0",
 		"module-alias": "^2.2.2",
 		"mwn": "^1.11.4",
-		"node-fetch": "^2.6.7",
+		"node-fetch": "^3.0.0",
 		"remove-excessive-newline": "^1.0.0",
 		"request": "~2.88.2",
 		"sharp": "0.31.2",
