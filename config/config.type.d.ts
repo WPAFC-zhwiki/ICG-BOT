@@ -90,19 +90,14 @@ export interface ConfigTS {
 			 */
 			webhook: {
 				/**
-				* Webhook 埠，為 0 時不啟用 Webhook
-				*/
-				port: 0;
-			} | {
-				/**
 				 * Webhook 埠，為 0 時不啟用 Webhook
 				 */
 				port: number;
 
 				/**
-				 * Webhook 網域
+				 * Webhook 網域，啟用 Webhook 時必填
 				 */
-				domain: string;
+				domain?: string;
 
 				/**
 				 * Webhook 路徑
