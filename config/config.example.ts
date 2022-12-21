@@ -50,8 +50,8 @@ const config: ConfigTS = {
 			// 使用 Webhook 模式，參見 https://core.telegram.org/bots/webhooks
 			webhook: {
 				port: 0, // Webhook 埠，為 0 時不啟用 Webhook
-				path: '', // Webhook 路徑
-				url: '', // Webhook 最終的完整 URL，可被外部存取，用於呼叫 Telegram 介面自動設定網址
+				domain: '', // Webhook 網域
+				path: '', // Webhook 路徑，選填
 				ssl: {
 					certPath: '', // SSL 憑證，為空時使用 HTTP 協定
 					keyPath: '', // SSL 金鑰
