@@ -95,14 +95,14 @@ export interface ConfigTS {
 				port: number;
 
 				/**
+				 * Webhook 網域，啟用 Webhook 時必填
+				 */
+				domain?: string;
+
+				/**
 				 * Webhook 路徑
 				 */
 				path?: string;
-
-				/**
-				 * Webhook 最終的完整 URL，可被外部存取，用於呼叫 Telegram 介面自動設定網址
-				 */
-				url?: string;
 
 				ssl?: {
 					/**
@@ -284,7 +284,7 @@ export interface ConfigTS {
 		 * 如果希望把同一軟體的多個群組連接到一起，可為不同的群組設定不同的別名，
 		 * 這樣互聯機器人在轉發訊息時會採用自訂群組名，以免混淆
 		 */
-		aliases?: Record<string, string | [ string, string ]>;
+		aliases?: Record<string, string | [string, string]>;
 
 		/**
 		 * 設定單向轉發/不轉發
@@ -426,7 +426,7 @@ export interface ConfigTS {
 				 * 而不是顯示機器人的名稱。格式為 「機器人名稱」「機器人discriminator編號」。
 				 * 參數「[]」、「<>」指真正發訊息者暱稱兩邊的括號樣式，目前只支援這兩種括號。
 				 */
-				forwardBots: Record<string, [ string | number, '[]' | '<>' ]>;
+				forwardBots: Record<string, [string | number, '[]' | '<>']>;
 			};
 
 			/**
@@ -505,8 +505,8 @@ export interface ConfigTS {
 		 * 3. 自建伺服器請使用 80 或 443 埠（中國國內伺服器需備案），否則圖片可能無法正常轉發。
 		 */
 		servemedia: TransportServemediaNone |
-			TransportServemediaImgur | TransportServemediaVimCn | TransportServemediaSmMs |
-			TransportServemediaSelf | TransportServemediaLinx | TransportServemediaUguu;
+		TransportServemediaImgur | TransportServemediaVimCn | TransportServemediaSmMs |
+		TransportServemediaSelf | TransportServemediaLinx | TransportServemediaUguu;
 	};
 
 	ircquery?: {
@@ -550,7 +550,7 @@ export interface ConfigTS {
 		/**
 		 * 在這些群啟用事件通報
 		 */
-		enableEvents?: ( string | AFCEventEnableType )[];
+		enableEvents?: (string | AFCEventEnableType)[];
 
 		/**
 		 * 在這些群啟用命令
@@ -577,10 +577,10 @@ export interface ConfigTS {
 	 * 建議使用絕對路徑
 	 */
 	exits?: {
-		paths: ( {
+		paths: ({
 			type?: '' | 'file' | 'folder',
 			path: string;
-		} )[];
+		})[];
 		usePolling?: boolean
 	}
 }

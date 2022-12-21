@@ -65,7 +65,8 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 	readonly #start: {
 		mode: 'webhook';
 		params: {
-			path: string;
+			domain: string;
+			path?: string;
 			tlsOptions: Tls.TlsOptions;
 			port: string | number;
 		};
@@ -142,18 +143,6 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 		if ( botConfig.webhook && botConfig.webhook.port > 0 ) {
 			const webhookConfig = botConfig.webhook;
-			// 自动设置Webhook网址
-			if ( webhookConfig.url ) {
-				if ( webhookConfig.ssl.certPath ) {
-					client.telegram.setWebhook( webhookConfig.url, {
-						certificate: {
-							source: webhookConfig.ssl.certPath
-						}
-					} );
-				} else {
-					client.telegram.setWebhook( webhookConfig.url );
-				}
-			}
 
 			// 启动Webhook服务器
 			let tlsOptions: Tls.TlsOptions = null;
@@ -172,6 +161,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			this.#start = {
 				mode: 'webhook',
 				params: {
+					domain: webhookConfig.domain,
 					path: webhookConfig.path,
 					tlsOptions: tlsOptions,
 					port: webhookConfig.port
@@ -626,6 +616,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			if ( this.#start.mode === 'webhook' ) {
 				this._client.launch( {
 					webhook: {
+						domain: this.#start.params.domain,
 						hookPath: this.#start.params.path,
 						tlsOptions: this.#start.params.tlsOptions,
 						port: Number( this.#start.params.port )
