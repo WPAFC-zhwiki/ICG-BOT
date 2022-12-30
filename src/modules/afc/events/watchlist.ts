@@ -247,6 +247,9 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			tMsg += '\n\n<b>自動檢測問題</b>';
 
 			if ( issues && issues.length > 0 ) {
+				if ( issues.include( 'autoreview-api-unreach' ) ) {
+					tgTags.push( '#自動審核後端錯誤' );
+				}
 				tMsg += issues.map( function ( x ) {
 					return `\n• ${ getIssusData( x, true ) }`;
 				} ).join( '' );
