@@ -4,7 +4,6 @@ import winston = require( 'winston' );
 import { inspect } from 'src/lib/util';
 
 import issuesData from 'src/modules/afc/util/issuesData.json';
-import { oldAutoReview } from 'src/modules/afc/util/autoreview-old';
 
 interface ApiResult {
 	statue: number;
@@ -36,7 +35,7 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 		} );
 	} catch ( error ) {
 		winston.error( '[afc/util/autoreview]' + inspect( error ) );
-		issues.push( ...( await oldAutoReview( page, wikitext, $parseHTML ) ).issues );
+		issues.push( 'autoreview-api-unreach' );
 	}
 
 	if ( $parseHTML.find( '.afc-submission' ) ) {
