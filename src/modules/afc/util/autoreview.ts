@@ -24,7 +24,7 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 
 	try {
 		await fetch(
-			`https://zhwp-afc-bot.toolforge.org/api/autoreview.njs?title=${ encodeURIComponent( page.toString() ) }`
+			`https://zhwp-afc-bot.toolforge.org/api/autoreview.njs?title=${ encodeURIComponent( page.toString() ) }&apiversion=2022v01`
 		).then( async function ( res ): Promise<ApiResult> {
 			if ( res.status !== 200 ) {
 				throw new Error( `Request fail, response: ${ await res.text() }` );
