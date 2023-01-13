@@ -11,6 +11,13 @@ function mdlink( title: string, text?: string ) {
 	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
+function filterWikitext( wt: string ) {
+	return wt
+		// escape math & chem
+		.replace( /(<(math|chem)\b)/gi, '<nowiki>$1' )
+		.replace( /(<\/(math|chem)\b([^>]*)>)/gi, '$1</nowiki>' );
+}
+
 recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	if (
 		event.type === 'edit' &&
@@ -36,7 +43,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		diffText += $( ele ).text() + '\n';
 	} );
 
-	const parse = await mwbot.parseWikitext( diffText );
+	const parse = await mwbot.parseWikitext( filterWikitext( diffText ) );
 	const $parse = $( $.parseHTML( parse ) );
 	$parse.find( 'a' ).each( function ( _i, a ) {
 		const $a: JQuery<HTMLAnchorElement> = $( a );
