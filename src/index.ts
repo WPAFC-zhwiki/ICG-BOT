@@ -9,7 +9,7 @@ import moduleAlias = require( 'module-alias' );
 import winston = require( 'winston' );
 
 moduleAlias.addAliases( {
-	'@src': __dirname,
+	'@app': __dirname,
 	'@config': path.join( __dirname, '../config' ),
 	'@package.json': path.join( __dirname, '../package.json' )
 } );
@@ -27,7 +27,7 @@ winston.info( 'Loading modules...' );
 for ( const module of Manager.config.modules ) {
 	try {
 		winston.info( `Loading module: ${ module }` );
-		require( `src/modules/${ module }` );
+		require( `@app/modules/${ module }` );
 	} catch ( error ) {
 		winston.error( `Error while loading plugin ${ module }: ` + inspect( error ) );
 	}

@@ -10,7 +10,7 @@ const commandFiles = fs
 	.filter( ( file ) => file.match( /\.[jt]s$/ ) );
 
 for ( const file of commandFiles ) {
-	require( `src/modules/afc/commands/${ file }` );
+	require( `@app/modules/afc/commands/${ file }` );
 	winston.debug( `[afc] - ${ path.parse( file ).name }` );
 }
 
@@ -21,7 +21,7 @@ const eventFiles = fs
 	.filter( ( file ) => file.match( /\.[jt]s$/ ) );
 
 for ( const file of eventFiles ) {
-	require( `src/modules/afc/events/${ file }` );
+	require( `@app/modules/afc/events/${ file }` );
 	winston.debug( `[afc] - ${ path.parse( file ).name }` );
 }
 
