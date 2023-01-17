@@ -4,10 +4,12 @@
 
 import winston = require( 'winston' );
 
-import { Manager } from 'src/init';
-import { prepareBridgeMsg } from 'src/modules/transport';
-import { Context } from 'src/lib/handlers/Context';
-import { addCommand, parseUID } from 'src/lib/message';
+import { Manager } from '@app/init';
+
+import { Context } from '@app/lib/handlers/Context';
+import { addCommand, parseUID } from '@app/lib/message';
+
+import { prepareBridgeMsg } from '@app/modules/transport';
 
 const ircHandler = Manager.handlers.get( 'IRC' );
 

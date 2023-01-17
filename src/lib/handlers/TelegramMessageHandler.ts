@@ -1,18 +1,19 @@
-import fs = require( 'fs' );
-import https = require( 'https' );
+import fs = require( 'node:fs' );
+import https = require( 'node:https' );
+import Tls = require( 'node:tls' );
+
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import { cloneDeep as copyObject } from 'lodash';
 import { Telegraf, Context as TContext, Telegram } from 'telegraf';
 import { ExtraPhoto, ExtraReplyMessage } from 'telegraf/typings/telegram-types';
 import * as TT from 'typegram';
-import Tls = require( 'tls' );
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import { ConfigTS } from 'src/config';
-import { MessageHandler, Command, BaseEvents } from 'src/lib/handlers/MessageHandler';
-import { Context } from 'src/lib/handlers/Context';
-import { getFriendlySize, getFriendlyLocation } from 'src/lib/util';
-import { HttpsProxyAgent } from 'https-proxy-agent';
+import { ConfigTS } from '@app/config';
+
+import { Context } from '@app/lib/handlers/Context';
+import { MessageHandler, Command, BaseEvents } from '@app/lib/handlers/MessageHandler';
+import { inspect, getFriendlySize, getFriendlyLocation } from '@app/lib/util';
 
 export type TelegramFallbackBots = 'Link Channel' | 'Group' | 'Channel' | false;
 

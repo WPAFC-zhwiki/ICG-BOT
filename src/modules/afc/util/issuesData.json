@@ -59,7 +59,7 @@
 		"short": "可能包含侵權內容",
 		"long": "'''草稿可能包含[[WP:COPYVIO|侵犯版權]]的內容。'''一旦確認後，侵權內容將被刪除。請移除侵權內容，並以自己的文字重寫內容。"
 	},
-	"autoreview-api-unreach": {
+	"autoreview-api-unreached": {
 		"short": "後端API失敗",
 		"long": ""
 	},
@@ -73,6 +73,10 @@
 	},
 	"default-wikitext": {
 		"short": "頁面尚有預設內容",
+		"long": ""
+	},
+	"afc-test": {
+		"short": "測試提交",
 		"long": ""
 	}
 }

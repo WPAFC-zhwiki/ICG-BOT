@@ -1,8 +1,9 @@
-import { Manager } from 'src/init';
-import { Context } from 'src/lib/handlers/Context';
 import { IMessage } from 'irc-upd';
 
-import msgManage from 'src/lib/message/msgManage';
+import { Manager } from '@app/init';
+
+import { Context } from '@app/lib/handlers/Context';
+import msgManage from '@app/lib/message/msgManage';
 
 const ircHandler = Manager.handlers.get( 'IRC' );
 

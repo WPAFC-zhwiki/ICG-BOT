@@ -1,8 +1,8 @@
-import Discord from 'discord.js';
-import winston from 'winston';
+import Discord = require( 'discord.js' );
+import winston = require( 'winston' );
 
 import { $, encodeURI, htmlToIRC, mwbot, pinMessage, recentChange,
-	RecentChangeEvent, registerEvent, send, turndown } from 'src/modules/afc/util';
+	RecentChangeEvent, registerEvent, send, turndown } from '@app/modules/afc/util';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
@@ -38,7 +38,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	const $req = $parse.find( '.reviewer-request' );
 	winston.debug( `[afc/events/reviewer-request] comment: ${ event.comment }, fire: true` );
 	if ( $req.length ) {
-		const reqUser = $req.get( 0 ).dataset.username;
+		const reqUser = $req.eq( 0 ).attr( 'data-username' );
 		winston.debug( `[afc/events/reviewer-request] comment: ${ event.comment }, diff: ${ event.revision.old } -> ${ event.revision.new }, user: ${ reqUser }, by: ${ event.user }` );
 
 		const output = `${ reqUser !== event.user ? `${ htmllink( `User:${ event.user }`, event.user ) }替` : '' }${ htmllink( `User:${ reqUser }`, reqUser ) }申請成為審核員，請各位前往關注。`;

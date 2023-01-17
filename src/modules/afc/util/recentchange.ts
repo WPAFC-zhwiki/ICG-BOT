@@ -1,7 +1,7 @@
 import { ApiParams, MwnDate } from 'mwn';
 import { ApiQueryRecentChangesParams } from 'types-mediawiki/api_params';
 
-import { mwbot } from 'src/modules/afc/util/index';
+import { mwbot } from '@app/modules/afc/util/index';
 
 type OneOrMore<T> = T | T[];
 

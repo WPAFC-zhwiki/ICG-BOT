@@ -4,7 +4,7 @@
 
 import winston = require( 'winston' );
 
-import { Manager } from 'src/init';
+import { Manager } from '@app/init';
 
 const tg = Manager.handlers.get( 'Telegram' );
 

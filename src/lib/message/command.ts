@@ -1,8 +1,9 @@
 import winston = require( 'winston' );
 
-import { Manager } from 'src/init';
-import { Context } from 'src/lib/handlers/Context';
-import { parseUID, getUIDFromContext } from 'src/lib/message/uid';
+import { Manager } from '@app/init';
+
+import { Context } from '@app/lib/handlers/Context';
+import { parseUID, getUIDFromContext } from '@app/lib/message/uid';
 
 type commandTS = {
 	options: {

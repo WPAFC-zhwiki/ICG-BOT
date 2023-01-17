@@ -26,6 +26,7 @@
 	"packageManager": "pnpm@7.24.3",
 	"dependencies": {
 		"@sunafterrainwm/winston-format-remove-telegram-apitoken": "file:lib\\winston-format-remove-telegram-apitoken",
+		"cheerio": "1.0.0-rc.12",
 		"chokidar": "^3.5.3",
 		"cron": "^1.8.2",
 		"discord.js": "14.2.0",

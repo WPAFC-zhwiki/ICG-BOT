@@ -1,7 +1,8 @@
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import { getBacklogInfo, setCommand } from 'src/modules/afc/util';
+import { inspect } from '@app/lib/util';
+
+import { getBacklogInfo, setCommand } from '@app/modules/afc/util';
 
 setCommand( 'backlog', async function ( _args, reply ) {
 	try {

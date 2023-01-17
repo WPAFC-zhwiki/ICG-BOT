@@ -1,7 +1,10 @@
+import cheerio = require( 'cheerio' );
 import Discord = require( 'discord.js' );
+import { ApiParams } from 'mwn';
+import type AP from 'types-mediawiki/api_params';
 import winston = require( 'winston' );
 
-import { $, encodeURI, htmlToIRC, mwbot, recentChange, RecentChangeEvent, registerEvent, send, turndown } from 'src/modules/afc/util';
+import { $, encodeURI, htmlEscape, htmlToIRC, mwbot, recentChange, RecentChangeEvent, registerEvent, send, turndown } from '@app/modules/afc/util';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
@@ -33,8 +36,9 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		action: 'compare',
 		format: 'json',
 		fromrev: event.revision.old,
-		torev: event.revision.new
-	} );
+		torev: event.revision.new,
+		formatversion: '2'
+	} as AP.ApiComparePagesParams as ApiParams );
 
 	const $diff = $( '<table>' ).append( compare.body );
 	let diffText = '';
@@ -44,15 +48,13 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	} );
 
 	const parse = await mwbot.parseWikitext( filterWikitext( diffText ) );
-	const $parse = $( $.parseHTML( parse ) );
-	$parse.find( 'a' ).each( function ( _i, a ) {
-		const $a: JQuery<HTMLAnchorElement> = $( a );
+	const $parse = cheerio.load( parse, {}, false );
+	$parse( 'a' ).each( function ( _i, a ) {
+		const $a = $( a );
 		const url = new URL( $a.attr( 'href' ), 'https://zh.wikipedia.org/WikiProject:建立條目/詢問桌' );
-		$a.text( `<a href="${ url.href }">${ $a.text() }</a>` );
+		$a.text( `<a href="${ url.href }">${ htmlEscape( $a.text() ) }</a>` );
 	} );
-	$parse.find( '.mwe-math-element' ).each( function ( _i, ele ) {
-		$( ele ).text( `<math>${ $( ele ).find( 'math' ).attr( 'alttext' ) }</math>` );
-	} );
+	$parse( 'style' ).remove();
 	const parseHtml = $parse.text();
 	const parseMarkDown = turndown( parseHtml );
 

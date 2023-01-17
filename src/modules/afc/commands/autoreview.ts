@@ -1,8 +1,9 @@
-import { MwnPage } from 'mwn';
 import Discord = require( 'discord.js' );
+import { MwnPage } from 'mwn';
 import winston = require( 'winston' );
 
-import { mwbot, $, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, setCommand } from 'src/modules/afc/util';
+import { mwbot, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, setCommand, AFCPage } from '@app/modules/afc/util';
+
 import { editMessage } from '../util/msg';
 
 function htmllink( title: string, text?: string ) {
@@ -97,14 +98,7 @@ setCommand( 'autoreview', async function ( args, reply ) {
 		iMsg: '正在解析中，請稍後......'
 	} ); // editMessage
 
-	const wikitext: string = await page.text();
-
-	const html: string = await mwbot.parseTitle( title, {
-		uselang: 'zh-hant'
-	} );
-	const $parseHTML: JQuery<JQuery.Node[]> = $( $.parseHTML( html ) );
-
-	const issues = await autoReview( page, wikitext, $parseHTML );
+	const { warning, issues } = await autoReview( await AFCPage.init( page.getPrefixedText() ) );
 
 	winston.debug( `[afc/commands/autoreview] title: ${ title }, rdrFrom: ${ rdrFrom }, issues: ${ issues.join( ', ' ) }` );
 
@@ -127,9 +121,9 @@ setCommand( 'autoreview', async function ( args, reply ) {
 				} ).join( '\n' )
 			}
 		] );
-		output += issues.map( function ( x ) {
-			return `\n• ${ getIssusData( x, true ) }`;
-		} ).join( '' );
+		output += '\n' + issues.map( function ( x ) {
+			return `• ${ getIssusData( x, true ) }`;
+		} ).join( '\n' );
 	} else {
 		dMsg.addFields( [
 			{
@@ -139,15 +133,25 @@ setCommand( 'autoreview', async function ( args, reply ) {
 		] );
 		output += '，沒有發現顯著的問題。';
 	}
-
-	let tMsg = `<b>自動審閱系統</b>\n${ output }`;
-
-	if ( $parseHTML.find( '#disambigbox' ).length ) {
-		dMsg.setFooter( {
-			text: '提醒：本頁為消歧義頁，審閱結果可能不準確。'
-		} );
-		tMsg += '\n<b>提醒</b>：本頁為消歧義頁，審閱結果可能不準確。';
+	if ( warning.length ) {
+		if ( warning.length === 1 ) {
+			output += '\n<b>警告：</b>' + warning[ 0 ];
+			dMsg.setFooter( {
+				text: '警告：' + warning[ 0 ]
+			} );
+		} else {
+			output += '\n<b>警告：</b>\n' + warning.map( function ( x ) {
+				return `• ${ x }`;
+			} ).join( '\n' );
+			dMsg.setFooter( {
+				text: '警告：' + warning.map( function ( x ) {
+					return `• ${ x }`;
+				} ).join( '\n' )
+			} );
+		}
 	}
+
+	const tMsg = `<b>自動審閱系統</b>\n${ output }`;
 
 	const iMsg = htmlToIRC( tMsg );
 

@@ -1,11 +1,12 @@
+import Discord = require( 'discord.js' );
 import LRU = require( 'lru-cache' );
 import winston = require( 'winston' );
-import Discord = require( 'discord.js' );
-import { inspect } from 'src/lib/util';
 
-import { Manager } from 'src/init';
-import { Context } from 'src/lib/handlers/Context';
-import msgManage from 'src/lib/message/msgManage';
+import { Manager } from '@app/init';
+
+import { Context } from '@app/lib/handlers/Context';
+import msgManage from '@app/lib/message/msgManage';
+import { inspect } from '@app/lib/util';
 
 const userInfo = new LRU<string, Discord.User>( {
 	max: 500,

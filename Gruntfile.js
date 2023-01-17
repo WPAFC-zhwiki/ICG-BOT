@@ -1,5 +1,5 @@
 const { exec } = require( 'child_process' );
-let path = require( 'path' );
+let path = require( 'node:path' );
 const fs = require( 'fs-extra' );
 
 function getFullPath( ...paths ) {

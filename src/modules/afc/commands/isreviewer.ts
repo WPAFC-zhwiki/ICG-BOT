@@ -1,7 +1,7 @@
 import Discord = require( 'discord.js' );
 import winston = require( 'winston' );
 
-import { rebuildReviewerCaches, hasReviewerCaches, isReviewer, encodeURI, turndown, htmlToIRC, setCommand } from 'src/modules/afc/util';
+import { rebuildReviewerCaches, hasReviewerCaches, isReviewer, encodeURI, turndown, htmlToIRC, setCommand } from '@app/modules/afc/util';
 
 function upperFirst( str: string ) {
 	return str.slice( 0, 1 ).toUpperCase() + str.slice( 1, str.length );

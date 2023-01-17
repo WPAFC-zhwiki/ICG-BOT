@@ -3,13 +3,15 @@
  */
 
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import { Manager } from 'src/init';
-import { Context } from 'src/lib/handlers/Context';
-import { getUIDFromContext, msgManage, parseUID } from 'src/lib/message';
-import delay from 'src/lib/delay';
-import { transportMessage, BridgeMsg } from 'src/modules/transport';
+import { Manager } from '@app/init';
+
+import delay from '@app/lib/delay';
+import { Context } from '@app/lib/handlers/Context';
+import { getUIDFromContext, msgManage, parseUID } from '@app/lib/message';
+import { inspect } from '@app/lib/util';
+
+import { transportMessage, BridgeMsg } from '@app/modules/transport';
 
 const options = Manager.config.wikilinky;
 

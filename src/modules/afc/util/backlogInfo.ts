@@ -1,6 +1,6 @@
 import Discord = require( 'discord.js' );
 
-import { mwbot, $, IRCBold as iB } from 'src/modules/afc/util/index';
+import { mwbot, $, IRCBold as iB } from '@app/modules/afc/util/index';
 
 type ApiPageInfo = {
 	pageid: number;

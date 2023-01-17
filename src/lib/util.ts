@@ -1,4 +1,4 @@
-import util = require( 'util' );
+import util = require( 'node:util' );
 
 export function getFriendlySize( size: number ): string {
 	if ( size <= 1126 ) {

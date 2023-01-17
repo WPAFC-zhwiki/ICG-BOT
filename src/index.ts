@@ -3,19 +3,21 @@
  * AFC-ICG-BOT
  * https://github.com/WPAFC-zhwiki/ICG-BOT
  */
-import moduleAlias from 'module-alias';
-import path = require( 'path' );
+import path = require( 'node:path' );
+
+import moduleAlias = require( 'module-alias' );
 import winston = require( 'winston' );
 
 moduleAlias.addAliases( {
-	'src': __dirname,
-	'config': path.join( __dirname, '../config' ),
-	'package.json': path.join( __dirname, '../package.json' )
+	'@src': __dirname,
+	'@config': path.join( __dirname, '../config' ),
+	'@package.json': path.join( __dirname, '../package.json' )
 } );
 
-import { Manager } from 'src/init';
-import { inspect } from 'src/lib/util';
-import 'src/lib/message';
+import { Manager } from '@app/init';
+
+import '@app/lib/message';
+import { inspect } from '@app/lib/util';
 
 /**
  * 載入擴充套件

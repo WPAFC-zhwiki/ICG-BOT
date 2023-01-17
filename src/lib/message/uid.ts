@@ -1,6 +1,7 @@
-import { Manager } from 'src/init';
-import { Context } from 'src/lib/handlers/Context';
-import { MessageHandler } from 'src/lib/handlers/MessageHandler';
+import { Manager } from '@app/init';
+
+import { Context } from '@app/lib/handlers/Context';
+import { MessageHandler } from '@app/lib/handlers/MessageHandler';
 
 const clientFullNames: Record<string, string> = {};
 for ( const [ type, handler ] of Manager.handlers ) {

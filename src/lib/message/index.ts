@@ -1,10 +1,10 @@
 import winston = require( 'winston' );
 
-import { Manager } from 'src/init';
+import { Manager } from '@app/init';
 
-export { default as hook, default as msgManage } from 'src/lib/message/msgManage';
-export * from 'src/lib/message/command';
-export * from 'src/lib/message/uid';
+export { default as hook, default as msgManage } from '@app/lib/message/msgManage';
+export * from '@app/lib/message/command';
+export * from '@app/lib/message/uid';
 
 for ( const [ type ] of Manager.handlers ) {
 	require( `src/lib/message/processors/${ type }` );

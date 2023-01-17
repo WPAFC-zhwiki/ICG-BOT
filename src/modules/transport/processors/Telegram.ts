@@ -1,20 +1,23 @@
-import path = require( 'path' );
+import path = require( 'node:path' );
+
+import cheerio = require( 'cheerio' );
 import format = require( 'string-format' );
 import { Context as TContext } from 'telegraf';
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import { Manager } from 'src/init';
-import { ConfigTS } from 'src/config';
-import { Context } from 'src/lib/handlers/Context';
-import { TelegramSendMessageOpipons } from 'src/lib/handlers/TelegramMessageHandler';
-import jQuery from 'src/lib/jquery';
-import delay from 'src/lib/delay';
-import * as bridge from 'src/modules/transport/bridge';
-import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
+import { ConfigTS } from '@app/config';
+import { Manager } from '@app/init';
+
+import delay from '@app/lib/delay';
+import { Context } from '@app/lib/handlers/Context';
+import { TelegramSendMessageOpipons } from '@app/lib/handlers/TelegramMessageHandler';
+import { inspect } from '@app/lib/util';
+
+import * as bridge from '@app/modules/transport/bridge';
+import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
 
 function htmlEscape( str: string ): string {
-	return jQuery( '<div>' ).text( str ).html();
+	return cheerio.load( '' )( '<div>' ).text( str ).html();
 }
 
 function truncate( str: string, maxLen = 20 ) {

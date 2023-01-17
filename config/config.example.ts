@@ -1,5 +1,5 @@
-import { ConfigTS } from 'config/config.type';
-// import path = require( 'path' );
+// import path = require( 'node:path' );
+import { ConfigTS } from '@config/config.type';
 
 /*
  * 機器人的設定檔

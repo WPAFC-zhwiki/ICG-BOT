@@ -1,10 +1,12 @@
-import fs = require( 'fs' );
-import path = require( 'path' );
-import winston = require( 'winston' );
-import chokidar = require( 'chokidar' );
-import { inspect } from 'src/lib/util';
+import fs = require( 'node:fs' );
+import path = require( 'node:path' );
 
-import config from 'src/config';
+import chokidar = require( 'chokidar' );
+import winston = require( 'winston' );
+
+import config from '@app/config';
+
+import { inspect } from '@app/lib/util';
 
 const exits: string[] = [];
 

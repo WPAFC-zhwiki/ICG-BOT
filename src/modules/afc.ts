@@ -1,5 +1,6 @@
-import fs = require( 'fs' );
-import path = require( 'path' );
+import fs = require( 'node:fs' );
+import path = require( 'node:path' );
+
 import winston = require( 'winston' );
 
 winston.debug( '[afc] Loading commands:' );
@@ -24,6 +25,6 @@ for ( const file of eventFiles ) {
 	winston.debug( `[afc] - ${ path.parse( file ).name }` );
 }
 
-import { checkRegister } from 'src/modules/afc/util';
+import { checkRegister } from '@app/modules/afc/util';
 
 checkRegister();

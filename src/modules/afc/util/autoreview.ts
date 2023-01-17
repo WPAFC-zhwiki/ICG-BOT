@@ -1,9 +1,11 @@
-import { MwnPage } from 'mwn';
+import cheerio = require( 'cheerio' );
 import fetch from 'node-fetch';
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import issuesData from 'src/modules/afc/util/issuesData.json';
+import { inspect } from '@app/lib/util';
+
+import { AFCPage, mwbot } from '@app/modules/afc/util';
+import issuesData from '@app/modules/afc/util/issuesData.json';
 
 interface ApiResult {
 	statue: number;
@@ -15,12 +17,34 @@ interface ApiResult {
 	}
 }
 
-// eslint-disable-next-line max-len
-export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: JQuery<JQuery.Node[]|HTMLElement>, { user, creator }: {
-	user?: string;
-	creator?: string;
-} = {} ): Promise<string[]> {
+export async function autoReview(
+	page: AFCPage,
+	{ user, creator, rev: revId }: {
+		user?: string;
+		creator?: string;
+		rev?: number;
+	} = {}
+): Promise<{
+	warning: string[];
+	issues: string[];
+}> {
+	const warning: string[] = [];
 	const issues: string[] = [];
+
+	const wikitext: string = page.text;
+
+	const html: string = await mwbot.parseTitle( page.toString(), {
+		uselang: 'zh-hant',
+		oldid: revId
+	} );
+	const $parseHTML = cheerio.load( html );
+
+	if ( $parseHTML( '.afc-submission-ignore-content' ).length ) {
+		return {
+			warning,
+			issues: [ 'afc-test' ]
+		};
+	}
 
 	try {
 		await fetch(
@@ -34,19 +58,19 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 			issues.push( ...resJson.result.issues );
 		} );
 	} catch ( error ) {
-		winston.error( '[afc/util/autoreview]' + inspect( error ) );
-		issues.push( 'autoreview-api-unreach' );
+		winston.error( '[afc/util/autoreview] ' + inspect( error ) );
+		warning.push( '後端API出現錯誤。' );
 	}
 
-	if ( $parseHTML.find( '.afc-submission' ) ) {
-		let title = page.getMainText();
+	let title = page.mwnPage.getMainText();
+	if ( $parseHTML( '.afc-submission' ).length ) {
 
 		if ( title === user ) {
 			issues.push( 'same-name' );
 		} else if ( title === creator ) {
 			issues.push( 'same-name-creator' );
 		} else {
-			if ( page.namespace === 2 ) {
+			if ( page.mwnPage.namespace === 2 ) {
 				const split = title.split( '/' );
 				split.shift();
 
@@ -70,13 +94,20 @@ export async function autoReview( page: MwnPage, wikitext: string, $parseHTML: J
 		if ( regexp.exec( wikitext ) ) {
 			issues.push( 'default-wikitext' );
 		}
-
-		if ( /AFC.*(?:[测測]試|沙盒)/i.exec( title ) || /{{(?:Template:)?Afctest(?:\||}})/i.exec( wikitext ) ) {
-			issues.push( 'afc-test' );
-		}
 	}
 
-	return issues;
+	if ( /AFC.*(?:[测測]試|沙盒)/i.exec( title ) || $parseHTML( '.afc-submission-only-test' ).length ) {
+		issues.push( 'afc-test' );
+	}
+
+	if ( $parseHTML( '#disambigbox' ).length ) {
+		warning.push( '本頁為消歧義頁，審閱結果可能不準確。' );
+	}
+
+	return {
+		warning,
+		issues
+	};
 }
 
 export function getIssusData( key: string, notice?: boolean ): string {

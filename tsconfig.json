@@ -20,13 +20,13 @@
 		"strictBindCallApply": true,
 		"target": "es2020",
 		"paths": {
-			"src/*": [
+			"@app/*": [
 				"./*"
 			],
-			"config/*": [
+			"@config/*": [
 				"../config/*"
 			],
-			"package.json": [
+			"@package.json": [
 				"../package.json"
 			]
 		},

@@ -1,10 +1,12 @@
-import { ConfigTS } from 'config/config.type';
-import { repository as Repository } from 'package.json';
-// import winston = require( 'winston' );
-import path = require( 'path' );
+import path = require( 'node:path' );
 
-export { ConfigTS } from 'config/config.type';
-export { version } from 'package.json';
+// import winston = require( 'winston' );
+
+import { ConfigTS } from '@config/config.type';
+import { repository as Repository } from '@package.json';
+
+export { ConfigTS } from '@config/config.type';
+export { version } from '@package.json';
 export const repository: string = Repository.replace( /^git\+/, '' );
 
 declare global {

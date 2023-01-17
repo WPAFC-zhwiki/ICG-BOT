@@ -1,9 +1,10 @@
+import cheerio = require( 'cheerio' );
 import { mwn } from 'mwn';
-import { Manager } from 'src/init';
-import { version, repository } from 'src/config';
-
 import TurndownService from 'turndown';
 import winston = require( 'winston' );
+
+import { version, repository } from '@app/config';
+import { Manager } from '@app/init';
 
 const service = new TurndownService();
 
@@ -38,7 +39,7 @@ export function decodeURI( encodedURI: string ): string {
 		.replace( /\s/g, '_' );
 }
 
-export { default as jQuery, default as $ } from 'src/lib/jquery';
+export const $ = cheerio.load( '' );
 
 export const mwbot = ( function (): mwn {
 	const mwnconfig = Manager.config.afc.mwn;

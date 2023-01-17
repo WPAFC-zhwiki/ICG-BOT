@@ -8,7 +8,6 @@
 		"wikimedia",
 		"wikimedia/node",
 		"wikimedia/language/es2019",
-		"wikimedia/jquery",
 		"plugin:import/recommended"
 	],
 	"globals": {
@@ -81,9 +80,6 @@
 	},
 	"settings": {
 		"jsdoc": {
-			"preferredTypes": [
-				"JQuery"
-			],
 			"mode": "typescript"
 		}
 	},
@@ -104,7 +100,49 @@
 				"node/no-missing-import": "off",
 				"deprecation/deprecation": [
 					"warn"
+				],
+				"import/order": [
+					"error",
+					{
+						"groups": [
+							"builtin",
+							"external",
+							"internal",
+							[
+								"parent",
+								"sibling"
+							],
+							"index",
+							"unknown"
+						],
+						"newlines-between": "always",
+						"alphabetize": {
+							"order": "asc",
+							"caseInsensitive": true
+						},
+						"warnOnUnassignedImports": true,
+						"pathGroups": [
+							{
+								"pattern": "@app/lib/**",
+								"group": "internal",
+								"position": "after"
+							},
+							{
+								"pattern": "@app/modules/**",
+								"group": "internal",
+								"position": "after"
+							}
+						]
+					}
 				]
+			},
+			"settings": {
+				"import/resolver": {
+					"typescript": {
+						"alwaysTryTypes": true,
+						"project": "tsconfig.json"
+					}
+				}
 			}
 		},
 		{

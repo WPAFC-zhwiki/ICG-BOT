@@ -1,12 +1,13 @@
-import lodash = require( 'lodash' );
-import irc = require( 'irc-upd' );
 import color = require( 'irc-colors' );
+import irc = require( 'irc-upd' );
+import lodash = require( 'lodash' );
 import winston = require( 'winston' );
 
-import { ConfigTS } from 'src/config';
-import { BaseEvents, MessageHandler } from 'src/lib/handlers/MessageHandler';
-import { Context } from 'src/lib/handlers/Context';
-import delay from 'src/lib/delay';
+import { ConfigTS } from '@app/config';
+
+import delay from '@app/lib/delay';
+import { Context } from '@app/lib/handlers/Context';
+import { BaseEvents, MessageHandler } from '@app/lib/handlers/MessageHandler';
 
 export interface IRCEvents extends BaseEvents<irc.IMessage> {
 	join( channel: string, nick: string, message: irc.IMessage ): void;

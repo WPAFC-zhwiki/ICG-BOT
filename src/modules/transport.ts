@@ -4,15 +4,16 @@
 
 import winston = require( 'winston' );
 
-import { Manager } from 'src/init';
-import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
-import * as bridge from 'src/modules/transport/bridge';
-import 'src/modules/transport/file';
-import 'src/modules/transport/paeeye';
+import { Manager } from '@app/init';
 
-export * from 'src/modules/transport/BridgeMsg';
-export * from 'src/modules/transport/bridge';
-export * from 'src/modules/transport/command';
+import * as bridge from '@app/modules/transport/bridge';
+import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
+import '@app/modules/transport/file';
+import '@app/modules/transport/paeeye';
+
+export * from '@app/modules/transport/BridgeMsg';
+export * from '@app/modules/transport/bridge';
+export * from '@app/modules/transport/command';
 
 const options = Manager.config.transport;
 

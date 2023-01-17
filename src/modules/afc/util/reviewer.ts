@@ -1,7 +1,7 @@
 import winston = require( 'winston' );
 
-import { mwbot } from 'src/modules/afc/util/index';
-import { recentChange, RecentChangeEvent } from 'src/modules/afc/util/recentchange';
+import { mwbot } from '@app/modules/afc/util/index';
+import { recentChange, RecentChangeEvent } from '@app/modules/afc/util/recentchange';
 
 let caches: string[] = [];
 

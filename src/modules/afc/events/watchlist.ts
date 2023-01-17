@@ -1,19 +1,18 @@
-/* eslint-disable no-jquery/no-class-state */
+import crypto = require( 'crypto' );
+
+import cheerio = require( 'cheerio' );
 import Discord = require( 'discord.js' );
 import { MwnPage } from 'mwn';
 import winston = require( 'winston' );
-import crypto = require( 'crypto' );
-import { inspect } from 'src/lib/util';
+
+import { inspect } from '@app/lib/util';
 
 import { $, AFCPage, autoReview, encodeURI, getIssusData, htmlToIRC, mwbot,
-	recentChange, RecentChangeEvent, registerEvent, turndown, send } from 'src/modules/afc/util';
+	recentChange, RecentChangeEvent, registerEvent, turndown, send } from '@app/modules/afc/util';
 
-function getReason( $e: JQuery, title: string ) {
-	$e.find( ':contains(<), :contains(>)' ).html( function ( _i, html ) {
-		return html.replace( /&([lg]t);/, '&amp;$1;' );
-	} );
+function getReason( $e: cheerio.Cheerio<cheerio.Element>, title: string ) {
 	$e.find( 'a' ).each( function ( _i, a ) {
-		const $a: JQuery<HTMLAnchorElement> = $( a );
+		const $a = $( a );
 		const url = new URL( $a.attr( 'href' ), `https://zh.wikipedia.org/wiki/${ title }` );
 		$a.text( `<a href="${ url.href }">${ $a.text() }</a>` );
 	} );
@@ -80,7 +79,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 
 		const { user }: { user: string } = event;
 
-		const afcPage: AFCPage = await AFCPage.new( title );
+		const afcPage: AFCPage = await AFCPage.init( title );
 
 		const page: MwnPage = afcPage.mwnPage;
 		const creator: string = await page.getCreator();
@@ -94,10 +93,10 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		const html: string = await mwbot.parseTitle( title, {
 			uselang: 'zh-hant'
 		} );
-		const $parseHTML: JQuery<JQuery.Node[]> = $( $.parseHTML( html ) );
-		const $submissionBox: JQuery<HTMLElement> = $parseHTML.find( '.afc-submission-pending' ).length ?
-			$parseHTML.find( '.afc-submission-pending' ).first() :
-			$parseHTML.find( '.afc-submission' ).first();
+		const $parseHTML = cheerio.load( html.replace( /&([lg]t);/, '&amp;$1;' ) );
+		const $submissionBox = $parseHTML( '.afc-submission-pending' ).length ?
+			$parseHTML( '.afc-submission-pending' ).first() :
+			$parseHTML( '.afc-submission' ).first();
 
 		let submitter = user;
 
@@ -122,7 +121,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。 #監視錯誤`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
 			}, 'debug' );
-		} else if ( !$parseHTML.find( '.afc-submission-pending' ).length && /已添加至分类/.exec( event.comment ) ) {
+		} else if ( !$parseHTML( '.afc-submission-pending' ).length && /已添加至分类/.exec( event.comment ) ) {
 			send( {
 				dMsg: new Discord.EmbedBuilder( {
 					timestamp: new Date(),
@@ -131,8 +130,8 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。 #監視錯誤`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
 			}, 'debug' );
-		} else if ( $parseHTML.find( '.afc-submission-pending' ).length && /已从分类中移除/.exec( event.comment ) ) {
-			const $pending = $parseHTML.find( '.afc-submission-pending' );
+		} else if ( $parseHTML( '.afc-submission-pending' ).length && /已从分类中移除/.exec( event.comment ) ) {
+			const $pending = $parseHTML( '.afc-submission-pending' );
 			send( {
 				dMsg: new Discord.EmbedBuilder( {
 					timestamp: new Date(),
@@ -238,7 +237,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			}
 			tMsg += `草稿${ pageLink }。`;
 
-			const issues = await autoReview( page, wikitext, $parseHTML, { user, creator } );
+			const { warning, issues } = await autoReview( afcPage, { user, creator } );
 
 			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, action: submit, issues: ${ issues.join( ', ' ) }` );
 
@@ -269,6 +268,23 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 						name: '自動檢測問題',
 						value: '• 沒有發現顯著問題。'
 					} ] );
+			}
+			if ( warning.length ) {
+				if ( warning.length === 1 ) {
+					tMsg += '\n<b>警告：</b>' + warning[ 0 ];
+					dMsg.setFooter( {
+						text: '警告：' + warning[ 0 ]
+					} );
+				} else {
+					tMsg += '\n<b>警告：</b>\n' + warning.map( function ( x ) {
+						return `• ${ x }`;
+					} ).join( '\n' );
+					dMsg.setFooter( {
+						text: '警告：' + warning.map( function ( x ) {
+							return `• ${ x }`;
+						} ).join( '\n' )
+					} );
+				}
 			}
 		} else if ( $submissionBox.hasClass( 'afc-submission-declined' ) || $submissionBox.hasClass( 'afc-submission-rejected' ) ) {
 			tgTags.push( '#拒絕草稿' );

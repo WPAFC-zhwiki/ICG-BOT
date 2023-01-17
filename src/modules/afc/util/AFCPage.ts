@@ -1,17 +1,23 @@
-import { ApiPage, ApiRevision, MwnPage } from 'mwn';
-import { ApiQueryRevisionsParams } from 'mwn/build/api_params';
+import cheerio = require( 'cheerio' );
+import { ApiPage, ApiParams, ApiRevision, MwnPage } from 'mwn';
+import { ApiEditPageParams, ApiQueryRevisionsParams } from 'mwn/build/api_params';
 import { MwnError } from 'mwn/build/error';
 import removeExcessiveNewline = require( 'remove-excessive-newline' );
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import { mwbot, $ } from 'src/modules/afc/util/index';
-import { isReviewer } from 'src/modules/afc/util/reviewer';
+import { inspect } from '@app/lib/util';
+
+import { mwbot, $ } from '@app/modules/afc/util/index';
+import { isReviewer } from '@app/modules/afc/util/reviewer';
 
 const categoryRegex = /\[\[:?(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):([^[\]]+)\]\]/gi;
 
-async function fetchPageAndRevisions( title: string, props: ApiQueryRevisionsParams[ 'rvprop' ],
-	limit: number, customOptions?: ApiQueryRevisionsParams ) {
+async function fetchPageAndRevisions(
+	title: string,
+	props: ApiQueryRevisionsParams[ 'rvprop' ],
+	limit: number,
+	customOptions?: ApiQueryRevisionsParams
+) {
 	const data = await mwbot.request( {
 		action: 'query',
 		prop: 'revisions',
@@ -19,8 +25,9 @@ async function fetchPageAndRevisions( title: string, props: ApiQueryRevisionsPar
 		rvprop: props || 'ids|timestamp|flags|comment|user',
 		rvlimit: limit || 50,
 		rvslots: 'main',
+		formatversion: '2',
 		...customOptions
-	} );
+	} as ApiQueryRevisionsParams as ApiParams );
 	const page: ApiPage = data.query.pages[ 0 ];
 	if ( page.missing ) {
 		throw new MwnError.MissingPage();
@@ -29,6 +36,27 @@ async function fetchPageAndRevisions( title: string, props: ApiQueryRevisionsPar
 		page,
 		revisions: page.revisions
 	};
+}
+
+async function fetchRevisions(
+	revId: number,
+	props: ApiQueryRevisionsParams[ 'rvprop' ],
+	customOptions?: ApiQueryRevisionsParams
+) {
+	const data = await mwbot.request( {
+		action: 'query',
+		prop: 'revisions',
+		revids: revId,
+		rvprop: props || 'ids|timestamp|flags|comment|user',
+		rvslots: 'main',
+		formatversion: '2',
+		...customOptions
+	} as ApiQueryRevisionsParams as ApiParams );
+	const page: ApiPage = data.query.pages[ 0 ];
+	if ( page.missing ) {
+		throw new MwnError.MissingPage();
+	}
+	return page.revisions[ 0 ];
 }
 
 export type ApiEditResponse = {
@@ -66,6 +94,7 @@ export class AFCPage {
 
 	private _startTimestamp: string = new Date().toISOString();
 	private _baseTimestamp: string;
+	private _lastRevId: number;
 	private _baseRevId: number;
 	public get baseRevId(): number {
 		this._checkIsInitialed( '[getter baseRevId]' );
@@ -93,33 +122,76 @@ export class AFCPage {
 		this._page = new mwbot.page( title );
 	}
 
-	private async _init(): Promise<void> {
+	public toString() {
+		return this._page.getPrefixedText();
+	}
+
+	private async _init( revId?: number ): Promise<void> {
 		if ( this._isInitialed ) {
 			return;
 		}
-		await this._getPageText();
+		await this._getPageText( revId );
 		await this._getTemplates();
 		this._isInitialed = true;
 	}
 
-	public static async new( title: string ): Promise<AFCPage> {
+	public static async init( title: string, revId?: number ): Promise<AFCPage> {
 		const page = new AFCPage( title );
-		await page._init();
+		await page._init( revId );
 		return page;
 	}
 
-	private async _getPageText(): Promise<void> {
+	public static async forceInit( title: string, revId?: number ): Promise<AFCPage> {
+		const page = new AFCPage( title );
+		try {
+			await page._init( revId );
+		} catch ( error ) {
+			winston.error( '[afc/util/AFCPage] ', error );
+			page._pageId = 0;
+			page._lastRevId = 0;
+			page._oldText = page._text = '';
+			page._baseTimestamp = new Date().toISOString();
+			page._baseRevId = 0;
+			page._templates = [];
+			page._submissions = [];
+			page._comments = [];
+			page._isInitialed = true;
+		}
+		return page;
+	}
+
+	public static async initWithContent( title: string, content: string ): Promise<AFCPage> {
+		const page = new AFCPage( title );
+		page._pageId = 0;
+		page._lastRevId = 0;
+		page._oldText = page._text = content;
+		page._baseTimestamp = new Date().toISOString();
+		page._baseRevId = 0;
+		page._getTemplates();
+		page._isInitialed = true;
+		return page;
+	}
+
+	private async _getPageText( revId?: number ): Promise<void> {
 		const { page, revisions } = await fetchPageAndRevisions( this._page.getPrefixedText(), [ 'content', 'ids' ], 1 );
 		this._pageId = page.pageid;
 		const rev: ApiRevision = revisions[ 0 ];
-		this._oldText = this._text = rev.slots.main.content;
-		this._baseTimestamp = rev.timestamp;
-		this._baseRevId = rev.revid;
+		this._lastRevId = rev.revid;
+		if ( revId && this._lastRevId !== revId ) {
+			const exactRev = await fetchRevisions( revId, [ 'content', 'ids' ] );
+			this._oldText = this._text = exactRev.slots.main.content;
+			this._baseTimestamp = exactRev.timestamp;
+			this._baseRevId = revId;
+		} else {
+			this._oldText = this._text = rev.slots.main.content;
+			this._baseTimestamp = rev.timestamp;
+			this._baseRevId = rev.revid;
+		}
 	}
 
 	private async _getTemplates(): Promise<void> {
 		if ( !this._text ) {
-			throw new ReferenceError( 'You must call method _getPageText before call method _getTemplates !' );
+			throw new ReferenceError( 'You must call method `_getPageText` before call method `_getTemplates`!' );
 		}
 
 		const templates: {
@@ -136,10 +208,10 @@ export class AFCPage {
 		 * with recursion and all that mess, /g is our friend...which is
 		 * perfectly satisfactory for our purposes.
 		 *
-		 * @param {JQuery} $v
+		 * @param {cheerio.Cheerio<cheerio.Element>} $v
 		 * @return {string}
 		 */
-		function parseValue( $v: JQuery ): string {
+		function parseValue( $v: cheerio.Cheerio<cheerio.Element> ): string {
 			let text: string = $( '<div>' ).append( $v.clone() ).html();
 
 			// Convert templates to look more template-y
@@ -175,7 +247,9 @@ export class AFCPage {
 			prop: 'parsetree'
 		} ) );
 
-		const $templateDom = $( $.parseXML( expandtemplates.parsetree ) ).find( 'root' );
+		const $templateDom = cheerio.load( expandtemplates.parsetree, {
+			xmlMode: true
+		} )( 'root' );
 
 		$templateDom.children( 'template' ).each( function () {
 			const $el = $( this ),
@@ -650,21 +724,27 @@ export class AFCPage {
 		/* || this._page.namespace === 102 && !!this._page.getMainText().match( /^建立條目\// ) */
 	}
 
-	public async postEdit( summary?: string ): Promise<ApiEditResponse> {
+	public async postEdit( summary: string, extraOptions: ApiEditPageParams = {} ): Promise<ApiEditResponse> {
 		this._checkIsInitialed( 'postEdit' );
+
+		if ( this._baseRevId !== this._lastRevId ) {
+			throw new Error( 'Can\'t post edit to history version.' );
+		}
 
 		if ( !mwbot.loggedIn && !mwbot.usingOAuth ) {
 			throw new Error( 'You must login to edit.' );
 		}
 
 		try {
-			const data: ApiEditResponse = await this._page.save( this.text, summary || '自動清理AFC草稿', {
+			const data: ApiEditResponse = await this._page.save( this.text, summary, {
 				bot: true,
 				starttimestamp: this._startTimestamp,
 				basetimestamp: this._baseTimestamp,
 				baserevid: this._baseRevId,
 				minor: true,
-				nocreate: true
+				nocreate: !!this._pageId,
+				createonly: !this._pageId,
+				...extraOptions
 			} );
 
 			winston.debug( '[afc/util/AFCPage] Edit success:' + JSON.stringify( data ) );

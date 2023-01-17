@@ -1,16 +1,18 @@
-import { Message as TMessage } from 'typegram';
 import { Message as DMessage, EmbedBuilder as DMessageEmbed, MessageEditOptions as DMessageEditOptions } from 'discord.js';
+import { Message as TMessage } from 'typegram';
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import { Manager } from 'src/init';
-import { Context } from 'src/lib/handlers/Context';
-import { DiscordSendMessage } from 'src/lib/handlers/DiscordMessageHandler';
-import { parseUID, getUIDFromContext, addCommand, getUIDFromHandler } from 'src/lib/message';
-import * as moduleTransport from 'src/modules/transport';
-import { IRCBold, $, decodeURI } from 'src/modules/afc/util/index';
+import { Manager } from '@app/init';
 
-function htmlEscape( str: string ) {
+import { Context } from '@app/lib/handlers/Context';
+import { DiscordSendMessage } from '@app/lib/handlers/DiscordMessageHandler';
+import { parseUID, getUIDFromContext, addCommand, getUIDFromHandler } from '@app/lib/message';
+import { inspect } from '@app/lib/util';
+
+import { IRCBold, $, decodeURI } from '@app/modules/afc/util/index';
+import * as moduleTransport from '@app/modules/transport';
+
+export function htmlEscape( str: string ) {
 	return $( '<div>' ).text( str ).html();
 }
 
@@ -18,14 +20,14 @@ export function htmlToIRC( text: string ): string {
 	const $ele = $( '<div>' ).append( $.parseHTML( text ) );
 
 	$ele.find( 'a' ).each( function ( _i, a ) {
-		const $a: JQuery<HTMLAnchorElement> = $( a );
+		const $a = $( a );
 		const href = decodeURI( $a.attr( 'href' ) ).replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
 
 		$a.html( ` ${ $a.html() } &lt;${ htmlEscape( href ) }&gt;` );
 	} );
 
-	$ele.find( 'b' ).each( function ( _i: number, b: HTMLElement ): void {
-		const $b: JQuery<HTMLElement> = $( b );
+	$ele.find( 'b' ).each( function ( _i, b ): void {
+		const $b = $( b );
 
 		$b.html( `${ IRCBold }${ $b.html() }${ IRCBold }` );
 	} );

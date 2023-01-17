@@ -1,13 +1,13 @@
-import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
-
 import removeToken = require( '@sunafterrainwm/winston-format-remove-telegram-apitoken' );
+import winston = require( 'winston' );
 
-import { default as config, version } from 'src/config';
+import { default as config, version } from '@app/config';
 
-import { Context } from 'src/lib/handlers/Context';
-import { MessageHandler } from 'src/lib/handlers/MessageHandler';
-import { ifEnable, isEnable } from 'src/modules/enable';
+import { Context } from '@app/lib/handlers/Context';
+import { MessageHandler } from '@app/lib/handlers/MessageHandler';
+import { inspect } from '@app/lib/util';
+
+import { ifEnable, isEnable } from '@app/modules/enable';
 
 export interface ExtendsMap<T extends string, S, M extends Record<T, S>> extends Map<T, S> {
 	get<K extends keyof M>( key: K ): M[ K ];
@@ -87,22 +87,22 @@ if ( config.logging && config.logging.logfile ) {
 }
 
 export type handlers = {
-	IRC: import( 'src/lib/handlers/IRCMessageHandler' ).IRCMessageHandler;
-	Telegram: import( 'src/lib/handlers/TelegramMessageHandler' ).TelegramMessageHandler;
-	Discord: import( 'src/lib/handlers/DiscordMessageHandler' ).DiscordMessageHandler;
+	IRC: import( '@app/lib/handlers/IRCMessageHandler' ).IRCMessageHandler;
+	Telegram: import( '@app/lib/handlers/TelegramMessageHandler' ).TelegramMessageHandler;
+	Discord: import( '@app/lib/handlers/DiscordMessageHandler' ).DiscordMessageHandler;
 }
 
 type handlerClasses = {
 	IRC: {
-		object: typeof import( 'src/lib/handlers/IRCMessageHandler' ).IRCMessageHandler;
+		object: typeof import( '@app/lib/handlers/IRCMessageHandler' ).IRCMessageHandler;
 		options: typeof config.IRC;
 	};
 	Telegram: {
-		object: typeof import( 'src/lib/handlers/TelegramMessageHandler' ).TelegramMessageHandler;
+		object: typeof import( '@app/lib/handlers/TelegramMessageHandler' ).TelegramMessageHandler;
 		options: typeof config.Telegram;
 	};
 	Discord: {
-		object: typeof import( 'src/lib/handlers/DiscordMessageHandler' ).DiscordMessageHandler;
+		object: typeof import( '@app/lib/handlers/DiscordMessageHandler' ).DiscordMessageHandler;
 		options: typeof config.Discord;
 	};
 }

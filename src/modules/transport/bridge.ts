@@ -1,9 +1,11 @@
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import { Manager } from 'src/init';
-import { Context, rawmsg } from 'src/lib/handlers/Context';
-import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
+import { Manager } from '@app/init';
+
+import { Context, rawmsg } from '@app/lib/handlers/Context';
+import { inspect } from '@app/lib/util';
+
+import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
 
 function checkEnable(): void {
 	if ( !Manager.global.isEnable( 'transport' ) ) {

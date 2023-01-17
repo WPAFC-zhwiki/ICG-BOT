@@ -1,12 +1,14 @@
 import format = require( 'string-format' );
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import { Manager } from 'src/init';
-import { ConfigTS } from 'src/config';
-import * as bridge from 'src/modules/transport/bridge';
-import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
-import { preProcess } from 'src/lib/message/processors/Discord';
+import { ConfigTS } from '@app/config';
+import { Manager } from '@app/init';
+
+import { preProcess } from '@app/lib/message/processors/Discord';
+import { inspect } from '@app/lib/util';
+
+import * as bridge from '@app/modules/transport/bridge';
+import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
 
 function truncate( str: string, maxLen = 20 ) {
 	str = str.replace( /\n/gu, '' );

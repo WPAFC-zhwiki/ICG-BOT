@@ -1,8 +1,9 @@
 import { CronJob } from 'cron';
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import { getBacklogInfo, registerEvent, send } from 'src/modules/afc/util';
+import { inspect } from '@app/lib/util';
+
+import { getBacklogInfo, registerEvent, send } from '@app/modules/afc/util';
 
 const backlogCronJob = new CronJob( '0 0 */4 * * *', async function () {
 	try {

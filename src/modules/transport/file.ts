@@ -5,20 +5,23 @@
  * Telegram 音訊使用 ogg 格式，QQ 則使用 amr 和 silk，這個可以考慮互相轉換一下
  *
  */
-import crypto = require( 'crypto' );
-import fs = require( 'fs' );
-import path = require( 'path' );
+import crypto = require( 'node:crypto' );
+import fs = require( 'node:fs' );
+import path = require( 'node:path' );
+import stream = require( 'node:stream' );
+
 import request = require( 'request' );
 import sharp = require( 'sharp' );
-import stream = require( 'stream' );
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import { Manager } from 'src/init';
-import { ConfigTS, version, repository } from 'src/config';
-import { file as fileTS } from 'src/lib/handlers/Context';
-import * as bridge from 'src/modules/transport/bridge';
-import { BridgeMsg } from 'src/modules/transport/BridgeMsg';
+import { ConfigTS, version, repository } from '@app/config';
+import { Manager } from '@app/init';
+
+import { file as fileTS } from '@app/lib/handlers/Context';
+import { inspect } from '@app/lib/util';
+
+import * as bridge from '@app/modules/transport/bridge';
+import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
 
 const servemedia: ConfigTS[ 'transport' ][ 'servemedia' ] = Manager.config.transport.servemedia;
 

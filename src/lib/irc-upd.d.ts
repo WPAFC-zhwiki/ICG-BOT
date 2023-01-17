@@ -8,7 +8,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 declare module 'irc-upd/internal-types/event' {
-	import InternalEventEmitter from 'events';
+	import InternalEventEmitter from 'node:events';
 
 	export interface EventEmitterOptions {
 		/**
@@ -35,9 +35,10 @@ declare module 'irc-upd/internal-types/event' {
 }
 
 declare module 'irc-upd' {
+	import net = require( 'node:net' );
+	import tls = require( 'node:tls' );
+
 	import EventEmitter, { Events } from 'irc-upd/internal-types/event';
-	import net = require( 'net' );
-	import tls = require( 'tls' );
 
 	export type IChans = Record<string, {
 		key: string;

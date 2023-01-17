@@ -1,11 +1,11 @@
 import Discord = require( 'discord.js' );
 import winston = require( 'winston' );
-import { inspect } from 'src/lib/util';
 
-import { ConfigTS } from 'src/config';
-import { BaseEvents, MessageHandler } from 'src/lib/handlers/MessageHandler';
-import { Context, ContextExtra as ContextExtra } from 'src/lib/handlers/Context';
-import { getFriendlySize } from 'src/lib/util';
+import { ConfigTS } from '@app/config';
+
+import { Context, ContextExtra as ContextExtra } from '@app/lib/handlers/Context';
+import { BaseEvents, MessageHandler } from '@app/lib/handlers/MessageHandler';
+import { inspect, getFriendlySize } from '@app/lib/util';
 
 export interface DiscordEvents extends BaseEvents<Discord.Message> {
 	pin( info: {
@@ -90,7 +90,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		const that: this = this;
 
 		client.on( 'messageCreate', async function ( rawdata: Discord.Message ): Promise<void> {
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+
 			if ( rawdata.partial ) {
 				rawdata = await rawdata.fetch();
 			}

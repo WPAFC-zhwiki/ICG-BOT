@@ -1,9 +1,9 @@
-import { Message as DMessage } from 'discord.js';
-import { IMessage } from 'irc-upd';
-import { Context as TContext } from 'telegraf';
+import type { Message as DMessage } from 'discord.js';
+import type { IMessage } from 'irc-upd';
+import type { Context as TContext } from 'telegraf';
 
-import EventEmitter, { Events } from 'src/lib/eventemitter2';
-import { Context, rawmsg } from 'src/lib/handlers/Context';
+import EventEmitter, { type Events } from '@app/lib/eventemitter2';
+import type { Context, rawmsg } from '@app/lib/handlers/Context';
 
 export default new EventEmitter<Events & {
 	irc( from: string, to: string, text: string, msg: Context<IMessage> ): void;

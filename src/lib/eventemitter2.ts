@@ -6,7 +6,7 @@
  * Copyright (c) 2013 hij1nx
  * Licensed under the MIT license.
  */
-import NodeJSEventEmitter from 'events';
+import NodeJSEventEmitter from 'node:events';
 
 const hasOwnProperty = Object.hasOwnProperty;
 const defaultMaxListeners = 10;

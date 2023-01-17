@@ -1,7 +1,8 @@
-import { ExtendsMap, handlers } from 'src/init';
-import { Context, rawmsg, ContextExtra, ContextOptin } from 'src/lib/handlers/Context';
-import { MessageHandler } from 'src/lib/handlers/MessageHandler';
-import { getUIDFromContext, parseUID } from 'src/lib/message';
+import { ExtendsMap, handlers } from '@app/init';
+
+import { Context, rawmsg, ContextExtra, ContextOptin } from '@app/lib/handlers/Context';
+import { MessageHandler } from '@app/lib/handlers/MessageHandler';
+import { getUIDFromContext, parseUID } from '@app/lib/message';
 
 let clientFullNames: Record<string, string> = {};
 
