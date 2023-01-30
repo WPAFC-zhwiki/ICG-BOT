@@ -13,7 +13,7 @@
 		"build": "grunt",
 		"build:no-relad": "grunt build:noReloadFlag",
 		"build-start": "grunt built && node bin/index",
-		"lint": "eslint src/*.ts src/**/*.ts",
+		"lint": "eslint src config --ext .ts",
 		"forever": "forever start -c bash -o logs/forever.log main.sh",
 		"forever-win": "forever start -c cmd -o logs/forever.log main.bat"
 	},

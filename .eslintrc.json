@@ -7,7 +7,7 @@
 		"eslint:recommended",
 		"wikimedia",
 		"wikimedia/node",
-		"wikimedia/language/es2019",
+		"wikimedia/language/es2021",
 		"plugin:import/recommended"
 	],
 	"globals": {
@@ -97,6 +97,7 @@
 				"deprecation"
 			],
 			"rules": {
+				"es-x/no-class-fields": "off",
 				"node/no-missing-import": "off",
 				"deprecation/deprecation": [
 					"warn"
