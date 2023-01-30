@@ -550,7 +550,7 @@ export interface ConfigTS {
 		/**
 		 * 在這些群啟用事件通報
 		 */
-		enableEvents?: (string | AFCEventEnableType)[];
+		enableEvents?: ( string | AFCEventEnableType )[];
 
 		/**
 		 * 在這些群啟用命令
@@ -577,10 +577,10 @@ export interface ConfigTS {
 	 * 建議使用絕對路徑
 	 */
 	exits?: {
-		paths: ({
+		paths: ( {
 			type?: '' | 'file' | 'folder',
 			path: string;
-		})[];
+		} )[];
 		usePolling?: boolean
 	}
 }
