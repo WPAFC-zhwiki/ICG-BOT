@@ -18,7 +18,7 @@ export interface DiscordEvents extends BaseEvents<Discord.Message> {
 	ready( client: Discord.Client ): void;
 }
 
-export type DiscordSendMessage = string | Discord.MessageOptions;
+export type DiscordSendMessage = string | Discord.MessageCreateOptions;
 
 /**
  * 使用通用介面處理 Discord 訊息
