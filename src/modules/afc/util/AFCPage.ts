@@ -736,9 +736,14 @@ export class AFCPage {
 
 	public async parseToHTML() {
 		this._checkIsInitialed( 'parseToHTML' );
-		this._html ??= await mwbot.parseTitle( this._page.toString(), {
+		this._html ??= await mwbot.request( {
+			formatversion: 2,
+			action: 'parse',
+			contentmodel: 'wikitext',
 			uselang: 'zh-hant',
 			oldid: this._baseRevId
+		} ).then( function ( data ) {
+			return ( data as { parse: { text: string } } ).parse.text;
 		} );
 
 		return cheerio.load( this._html );
