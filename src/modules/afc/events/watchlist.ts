@@ -73,27 +73,24 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	}
 
 	return false;
-}, async function ( event: RecentChangeEvent ) {
+}, async function ( event: RecentChangeEvent.CategorizeEvent ) {
 	try {
 		const title: string = event.comment.replace( /^\[\[:?([^[\]]+)\]\].*$/, '$1' );
 
-		const { user }: { user: string } = event;
+		const { user, revid } = event;
 
-		const afcPage: AFCPage = await AFCPage.init( title );
+		const afcPage: AFCPage = await AFCPage.init( title, revid );
 
 		const page: MwnPage = afcPage.mwnPage;
 		const creator: string = await page.getCreator();
 		await page.purge();
 		let tMsg: string = htmlLink( `User:${ user }`, user );
 		const dMsg: Discord.EmbedBuilder = new Discord.EmbedBuilder( {
-			timestamp: event.timestamp * 1000
+			timestamp: new Date( event.timestamp ).getTime()
 		} );
 
 		const wikitext: string = afcPage.text;
-		const html: string = await mwbot.parseTitle( title, {
-			uselang: 'zh-hant'
-		} );
-		const $parseHTML = cheerio.load( html.replace( /&([lg]t);/, '&amp;$1;' ) );
+		const $parseHTML = await afcPage.parseToHTML();
 		const $submissionBox = $parseHTML( '.afc-submission-pending' ).length ?
 			$parseHTML( '.afc-submission-pending' ).first() :
 			$parseHTML( '.afc-submission' ).first();

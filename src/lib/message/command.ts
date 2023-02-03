@@ -21,12 +21,16 @@ for ( const [ type, handler ] of Manager.handlers ) {
 	clientFullNames[ type.toLowerCase() ] = type;
 }
 
-export function addCommand( command: string, callback: ( msg: Context ) => void, opts: {
-	allowedClients?: string[];
-	disallowedClients?: string[];
-	enables?: string[];
-	disables?: string[];
-} = {} ): void {
+export function addCommand(
+	command: string | string[],
+	callback: ( msg: Context ) => void,
+	opts: {
+		allowedClients?: string[];
+		disallowedClients?: string[];
+		enables?: string[];
+		disables?: string[];
+	} = {}
+): void {
 	const clients: string[] = [];
 	if ( opts.allowedClients ) {
 		for ( const client of opts.allowedClients ) {
@@ -45,12 +49,17 @@ export function addCommand( command: string, callback: ( msg: Context ) => void,
 		}
 	}
 
-	if ( !commands.has( command ) ) {
-		for ( const client of clients ) {
-			if ( clientFullNames[ client ] && Manager.handlers.has( clientFullNames[ client ] ) ) {
-				Manager.handlers.get<'IRC'|'Telegram'|'Discord'>( clientFullNames[ client ] ).addCommand( command, emitCommand );
-			} else {
-				winston.info( `[command] Can't bind "${ command }" to client ${ clientFullNames[ client ] }: You didn't enable it.` );
+	if ( !Array.isArray( command ) ) {
+		command = [ command ];
+	}
+	for ( const c of command ) {
+		if ( !commands.has( c ) ) {
+			for ( const client of clients ) {
+				if ( clientFullNames[ client ] && Manager.handlers.has( clientFullNames[ client ] ) ) {
+					Manager.handlers.get<'IRC'|'Telegram'|'Discord'>( clientFullNames[ client ] ).addCommand( c, emitCommand );
+				} else {
+					winston.info( `[command] Can't bind "${ command }" to client ${ clientFullNames[ client ] }: You didn't enable it.` );
+				}
 			}
 		}
 	}
@@ -84,7 +93,9 @@ export function addCommand( command: string, callback: ( msg: Context ) => void,
 		callback
 	};
 
-	commands.set( command, cmd );
+	for ( const c of command ) {
+		commands.set( c, cmd );
+	}
 }
 
 export function deleteCommand( command: string ): void {
@@ -98,8 +109,8 @@ export function deleteCommand( command: string ): void {
 }
 
 function emitCommand( context: Context, cmd: string ) {
-	const Fcmd = commands.get( cmd );
-	const { disables, enables } = Fcmd.options;
+	const fCmd = commands.get( cmd );
+	const { disables, enables } = fCmd.options;
 	let func: ( msg: Context ) => void = null;
 
 	const to_uid = getUIDFromContext( context, context.to );
@@ -110,7 +121,7 @@ function emitCommand( context: Context, cmd: string ) {
 	}
 
 	if ( !enables || ( enables && enables.includes( to_uid ) ) ) {
-		func = Fcmd.callback;
+		func = fCmd.callback;
 	} else {
 		winston.debug( `[command] Msg #${ context.msgId } command ignored (not in enables).` );
 	}

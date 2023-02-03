@@ -1248,6 +1248,6 @@ declare module 'irc-upd' {
 			reset: string;
 		};
 
-		function wrap( color: keyof typeof codes, text: string, resetColor: keyof typeof codes ): string;
+		function wrap( color: keyof typeof codes, text: string, resetColor?: keyof typeof codes ): string;
 	}
 }

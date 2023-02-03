@@ -1,10 +1,8 @@
 import Discord = require( 'discord.js' );
-import { MwnPage } from 'mwn';
 import winston = require( 'winston' );
 
-import { mwbot, autoReview, getIssusData, encodeURI, turndown, htmlToIRC, setCommand, AFCPage } from '@app/modules/afc/util';
-
-import { editMessage } from '../util/msg';
+import { mwbot, autoReview, getIssusData, encodeURI, turndown,
+	htmlToIRC, setCommand, AFCPage, CommandReplyFunc, editMessage } from '@app/modules/afc/util';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
@@ -14,10 +12,8 @@ function mdlink( title: string, text?: string ) {
 	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
-setCommand( 'autoreview', async function ( args, reply ) {
-	let title = args.join( ' ' ).split( '#' )[ 0 ];
-
-	title = title.slice( 0, 1 ).toUpperCase() + title.slice( 1, title.length );
+setCommand( [ 'autoreview', 'autoreviewp' ], async function ( args, reply ) {
+	let [ title ] = args.join( ' ' ).split( '#', 1 );
 
 	if ( !title.length ) {
 		reply( {
@@ -32,28 +28,29 @@ setCommand( 'autoreview', async function ( args, reply ) {
 		return;
 	}
 
-	let page: MwnPage;
 	try {
-		page = new mwbot.page( title );
+		title = new mwbot.title( title ).getPrefixedText();
 	} catch ( e ) {
 		reply( {
-			tMsg: `標題<b>${ htmllink( title ) }</b>不合法或是頁面不存在。`,
+			tMsg: '標題不合法。',
 			dMsg: new Discord.EmbedBuilder( {
 				color: Discord.Colors.Red,
-				description: `標題**${ mdlink( title ) }**不合法或是頁面不存在。`
+				description: '標題不合法。'
 			} ),
-			iMsg: `標題 ${ title }<https://zhwp.org/${ encodeURI( title ) }> 不合法或是頁面不存在。`
+			iMsg: '標題不合法。'
 		} );
 		winston.debug( `[afc/commands/autoreview] title: ${ title }, badTitle: true` );
 		return;
 	}
 
+	let page: AFCPage;
 	let redirect = false;
 	let rdrTgt = '';
 	let rdrFrom: string;
 	try {
-		redirect = await page.isRedirect();
-		rdrTgt = await page.getRedirectTarget();
+		page = await AFCPage.init( title );
+		redirect = await page.mwnPage.isRedirect();
+		rdrTgt = await page.mwnPage.getRedirectTarget();
 	} catch ( e ) {
 		reply( {
 			tMsg: `頁面<b>${ htmllink( title ) }</b>不存在。`,
@@ -68,13 +65,13 @@ setCommand( 'autoreview', async function ( args, reply ) {
 	}
 
 	if ( redirect ) {
-		page = new mwbot.page( rdrTgt );
+		page = await AFCPage.init( rdrTgt );
 		rdrFrom = `${ title }`;
 		title = `${ rdrTgt }`;
 	}
 
-	if ( ![ 0, 2, 118 ].includes( page.namespace ) ) {
-		if ( redirect && page.namespace >= 0 ) {
+	if ( ![ 0, 2, 118 ].includes( page.mwnPage.namespace ) ) {
+		if ( redirect && page.mwnPage.namespace >= 0 ) {
 			reply( {
 				tMsg: `頁面${ htmllink( title ) }${ redirect ? `（重新導向自${ htmllink( rdrFrom ) }）` : '' }不在條目命名空間、使用者命名空間或草稿命名空間，不予解析。`,
 				dMsg: new Discord.EmbedBuilder( {
@@ -83,26 +80,81 @@ setCommand( 'autoreview', async function ( args, reply ) {
 				} ),
 				iMsg: `頁面 ${ title }<https://zhwp.org/${ encodeURI( title ) }> ${ redirect ? `（重新導向自 ${ rdrFrom }<https://zhwp.org/${ encodeURI( rdrFrom ) }> ）` : '' }不在條目命名空間、使用者命名空間或草稿命名空間，不予解析。`
 			} );
-			winston.debug( `[afc/commands/autoreview] title: ${ title }, rdrFrom: ${ rdrFrom }, namespace: ${ page.namespace }` );
+			winston.debug( `[afc/commands/autoreview] title: ${ title }, rdrFrom: ${ rdrFrom }, namespace: ${ page.mwnPage.namespace }` );
 			return;
 		}
 	}
 
+	await doAutoReview( reply, page, redirect ? rdrFrom : null );
+} );
+
+setCommand( 'autoreviewr', async function ( args, reply ) {
+	const rawRevId = args.join( ' ' ).trim();
+
+	if ( !rawRevId.length ) {
+		reply( {
+			tMsg: '請輸入修訂版本！',
+			dMsg: new Discord.EmbedBuilder( {
+				color: Discord.Colors.Red,
+				description: '請輸入修訂版本！'
+			} ),
+			iMsg: '請輸入修訂版本！'
+		} );
+		winston.debug( '[afc/commands/autoreview/revision] revId: null' );
+		return;
+	}
+
+	const revId = Number.parseInt( rawRevId, 10 );
+	if ( !revId || !Number.isInteger( revId ) ) {
+		reply( {
+			tMsg: '修訂版本不合法。',
+			dMsg: new Discord.EmbedBuilder( {
+				color: Discord.Colors.Red,
+				description: '修訂版本不合法或是頁面不存在。'
+			} ),
+			iMsg: '修訂版本不合法。'
+		} );
+		winston.debug( `[afc/commands/autoreview/revision] revId: ${ rawRevId }, badRevId: true` );
+		return;
+	}
+
+	let page: AFCPage;
+	try {
+		page = await AFCPage.revInit( revId );
+	} catch ( e ) {
+		reply( {
+			tMsg: `修訂版本<b>${ htmllink( 'Special:PermaLink/' + String( revId ), String( revId ) ) }</b>不存在。`,
+			dMsg: new Discord.EmbedBuilder( {
+				color: Discord.Colors.Red,
+				description: `修訂版本**${ mdlink( 'Special:PermaLink/' + String( revId ), String( revId ) ) }**不存在。`
+			} ),
+			iMsg: `修訂版本 ${ revId }<https://zhwp.org/Special:PermaLink/${ revId }> 不存在。`
+		} );
+		winston.debug( `[afc/commands/autoreview] revId: ${ revId }, exists: false` );
+		return;
+	}
+
+	await doAutoReview( reply, page );
+} );
+
+async function doAutoReview( reply: CommandReplyFunc, page: AFCPage, rdrFrom: string | null = null ) {
 	const waitMsg = reply( {
-		tMsg: '正在解析中，請稍後\nConnect to https://zhwp-afc-bot.toolforge.org/api/autoreview.njs ......',
+		tMsg: '正在解析中，請稍後......',
 		dMsg: new Discord.EmbedBuilder( {
 			color: Discord.Colors.Blue,
-			description: '正在解析中，請稍後\nConnect to https://zhwp-afc-bot.toolforge.org/api/autoreview.njs ......',
+			description: '正在解析中，請稍後......',
 			timestamp: Date.now()
 		} ),
 		iMsg: '正在解析中，請稍後......'
-	} ); // editMessage
+	} );
 
-	const { warning, issues } = await autoReview( await AFCPage.init( page.getPrefixedText() ) );
+	const { warning, issues } = await autoReview( page );
+
+	const title = page.mwnPage.getPrefixedText();
 
 	winston.debug( `[afc/commands/autoreview] title: ${ title }, rdrFrom: ${ rdrFrom }, issues: ${ issues.join( ', ' ) }` );
 
-	let output = `系統剛剛自動審閱了頁面${ htmllink( title ) }${ redirect ? `（重新導向自${ htmllink( rdrFrom ) }）` : '' }`;
+	let output = `系統剛剛自動審閱了頁面${ htmllink( title ) } [<code>${ page.baseRevId }</code>] ${ rdrFrom ? `（重新導向自${ htmllink( rdrFrom ) }）` : '' }`;
 
 	const dMsg = new Discord.EmbedBuilder( {
 		title: '自動審閱系統',
@@ -167,4 +219,4 @@ setCommand( 'autoreview', async function ( args, reply ) {
 	reply( {
 		iMsg // IRC Message 不能編輯
 	} );
-} );
+}

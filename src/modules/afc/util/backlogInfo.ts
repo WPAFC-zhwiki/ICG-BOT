@@ -1,6 +1,7 @@
 import Discord = require( 'discord.js' );
+import irc = require( 'irc-upd' );
 
-import { mwbot, $, IRCBold as iB } from '@app/modules/afc/util/index';
+import { mwbot, $ } from '@app/modules/afc/util/index';
 
 type ApiPageInfo = {
 	pageid: number;
@@ -75,10 +76,10 @@ export async function getBacklogInfo(): Promise<{
 <b>工具欄</b>
 <a href="https://zh.wikipedia.org/wiki/Category:正在等待審核的草稿">待審草稿</a> · <a href="https://zh.wikipedia.org/wiki/Special:RandomInCategory/Category:正在等待審核的草稿">隨機跳轉</a>`;
 
-	const iMsg = `${ iB }條目審核積壓${ iB }
-現時建立條目專題共有 ${ iB }${ cnt }${ iB } 個積壓草稿需要審核，積壓約 ${ iB }${ lvl }${ iB } 週。
+	const iMsg = `${ irc.colors.wrap( 'bold', '條目審核積壓' ) }
+現時建立條目專題共有 ${ irc.colors.wrap( 'bold', String( cnt ) ) } 個積壓草稿需要審核，積壓約 ${ irc.colors.wrap( 'bold', String( lvl ) ) } 週。
 ———
-${ iB }工具欄${ iB }
+${ irc.colors.wrap( 'bold', '工具欄' ) }
 待審草稿 <https://w.wiki/3cUm>\n隨機跳轉 <https://w.wiki/3cUo>`;
 
 	return {

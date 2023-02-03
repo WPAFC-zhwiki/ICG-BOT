@@ -1,10 +1,9 @@
-import cheerio = require( 'cheerio' );
 import fetch from 'node-fetch';
 import winston = require( 'winston' );
 
 import { inspect } from '@app/lib/util';
 
-import { AFCPage, mwbot } from '@app/modules/afc/util';
+import { AFCPage } from '@app/modules/afc/util';
 import issuesData from '@app/modules/afc/util/issuesData.json';
 
 interface ApiResult {
@@ -19,10 +18,9 @@ interface ApiResult {
 
 export async function autoReview(
 	page: AFCPage,
-	{ user, creator, rev: revId }: {
+	{ user, creator }: {
 		user?: string;
 		creator?: string;
-		rev?: number;
 	} = {}
 ): Promise<{
 	warning: string[];
@@ -33,11 +31,7 @@ export async function autoReview(
 
 	const wikitext: string = page.text;
 
-	const html: string = await mwbot.parseTitle( page.toString(), {
-		uselang: 'zh-hant',
-		oldid: revId
-	} );
-	const $parseHTML = cheerio.load( html );
+	const $parseHTML = await page.parseToHTML();
 
 	if ( $parseHTML( '.afc-submission-ignore-content' ).length ) {
 		return {

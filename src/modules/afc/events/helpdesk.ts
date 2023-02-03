@@ -25,18 +25,18 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	if (
 		event.type === 'edit' &&
 		event.title === 'WikiProject:建立條目/詢問桌' &&
-		( event.length?.old || 0 ) < ( event.length?.new || 0 ) + 10
+		( event.oldlen || 0 ) < ( event.newlen || 0 ) + 10
 	) {
 		return true;
 	}
 
 	return false;
-}, async function ( event: RecentChangeEvent ) {
+}, async function ( event: RecentChangeEvent.EditEvent ) {
 	const { compare } = await mwbot.request( {
 		action: 'compare',
 		format: 'json',
-		fromrev: event.revision.old,
-		torev: event.revision.new,
+		fromrev: event.old_revid,
+		torev: event.revid,
 		formatversion: '2'
 	} as AP.ApiComparePagesParams as ApiParams );
 
@@ -58,9 +58,9 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	const parseHtml = $parse.text();
 	const parseMarkDown = turndown( parseHtml );
 
-	winston.debug( `[afc/events/helpdesk] comment: ${ event.comment }, diff: ${ event.revision.old } -> ${ event.revision.new }, user: ${ event.user }, title: ${ event.title }, new: ${ parseHtml }` );
+	winston.debug( `[afc/events/helpdesk] comment: ${ event.comment }, diff: ${ event.old_revid } -> ${ event.revid }, user: ${ event.user }, title: ${ event.title }, new: ${ parseHtml }` );
 
-	const diff = `Special:Diff/${ event.revision.old }/${ event.revision.new }`;
+	const diff = `Special:Diff/${ event.old_revid }/${ event.revid }`;
 	const dMsg = new Discord.EmbedBuilder( {
 		title: '詢問桌有新留言！',
 		color: Discord.Colors.Blue,
@@ -70,7 +70,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			name: '留言內容',
 			value: parseMarkDown.length > 1024 ? parseMarkDown.slice( 0, 1021 ) + '...' : parseMarkDown
 		} ],
-		timestamp: event.timestamp * 1000
+		timestamp: new Date( event.timestamp ).getTime()
 	} );
 
 	let tMsg = `${ htmllink( diff, '<b>詢問桌有新留言！</b>' ) }

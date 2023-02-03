@@ -1,4 +1,6 @@
+import cheerio = require( 'cheerio' );
 import { Message as DMessage, EmbedBuilder as DMessageEmbed, MessageEditOptions as DMessageEditOptions } from 'discord.js';
+import mIrc = require( 'irc-upd' );
 import { Message as TMessage } from 'typegram';
 import winston = require( 'winston' );
 
@@ -9,7 +11,7 @@ import { DiscordSendMessage } from '@app/lib/handlers/DiscordMessageHandler';
 import { parseUID, getUIDFromContext, addCommand, getUIDFromHandler } from '@app/lib/message';
 import { inspect } from '@app/lib/util';
 
-import { IRCBold, $, decodeURI } from '@app/modules/afc/util/index';
+import { $, decodeURI } from '@app/modules/afc/util/index';
 import * as moduleTransport from '@app/modules/transport';
 
 export function htmlEscape( str: string ) {
@@ -17,19 +19,25 @@ export function htmlEscape( str: string ) {
 }
 
 export function htmlToIRC( text: string ): string {
-	const $ele = $( '<div>' ).append( $.parseHTML( text ) );
+	const $ele = cheerio.load( text );
 
-	$ele.find( 'a' ).each( function ( _i, a ) {
+	$ele( 'a' ).each( function ( _i, a ) {
 		const $a = $( a );
 		const href = decodeURI( $a.attr( 'href' ) ).replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
 
 		$a.html( ` ${ $a.html() } &lt;${ htmlEscape( href ) }&gt;` );
 	} );
 
-	$ele.find( 'b' ).each( function ( _i, b ): void {
+	$ele( 'b' ).each( function ( _i, b ): void {
 		const $b = $( b );
 
-		$b.html( `${ IRCBold }${ $b.html() }${ IRCBold }` );
+		$b.html( mIrc.colors.wrap( 'bold', $b.html() ) );
+	} );
+
+	$ele( 'code' ).each( function ( _i, code ): void {
+		const $code = $( code );
+
+		$code.html( `\`${ $code.html() }\`` );
 	} );
 
 	return $ele.text();
@@ -47,15 +55,15 @@ function discordEmbedToOption( dMsg: DiscordSendMessage | DMessageEmbed ): Disco
 	} : dMsg;
 }
 
-// eslint-disable-next-line no-shadow
-type command = ( args: string[], replyfunc: ( msg: {
+export type CommandReplyFunc = ( msg: {
 	dMsg?: DiscordSendMessage | DMessageEmbed;
 	tMsg?: string;
 	iMsg?: string;
-} ) => Promise<Transport>, msg: Context ) => void;
+} ) => Promise<Transport>;
+export type Command = ( args: string[], replyfunc: CommandReplyFunc, msg: Context ) => void;
 
-export function setCommand( cmd: string, func: command ): void {
-	addCommand( `${ cmd }`, function ( context ) {
+export function setCommand( cmd: string | string[], func: Command ): void {
+	addCommand( cmd, function ( context ) {
 		func( context.param.split( ' ' ), function ( msg: {
 			dMsg?: DiscordSendMessage | DMessageEmbed;
 			tMsg?: string;

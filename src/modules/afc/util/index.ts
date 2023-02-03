@@ -8,9 +8,9 @@ import { Manager } from '@app/init';
 
 const service = new TurndownService();
 
-export const turndown: typeof TurndownService.prototype.turndown = service.turndown.bind( service );
-
-export const IRCBold = '\x02';
+export function turndown( html: string | TurndownService.Node ) {
+	return service.turndown( html );
+}
 
 /**
  * Encodes a text string as a valid Uniform Resource Identifier (URI)

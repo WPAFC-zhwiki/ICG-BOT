@@ -12,18 +12,18 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	if (
 		event.type === 'edit' &&
 		event.title === 'WikiProject:建立條目/參與者/申請' &&
-		( event.length?.old || 0 ) < ( event.length?.new || 0 ) + 10
+		( event.oldlen || 0 ) < ( event.newlen || 0 ) + 10
 	) {
 		return true;
 	}
 
 	return false;
-}, async function ( event: RecentChangeEvent ) {
+}, async function ( event: RecentChangeEvent.EditEvent ) {
 	const { compare } = await mwbot.request( {
 		action: 'compare',
 		format: 'json',
-		fromrev: event.revision.old,
-		torev: event.revision.new
+		fromrev: event.old_revid,
+		torev: event.revid
 	} );
 
 	const $diff = $( '<table>' ).append( compare.body );
@@ -39,17 +39,17 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	winston.debug( `[afc/events/reviewer-request] comment: ${ event.comment }, fire: true` );
 	if ( $req.length ) {
 		const reqUser = $req.eq( 0 ).attr( 'data-username' );
-		winston.debug( `[afc/events/reviewer-request] comment: ${ event.comment }, diff: ${ event.revision.old } -> ${ event.revision.new }, user: ${ reqUser }, by: ${ event.user }` );
+		winston.debug( `[afc/events/reviewer-request] comment: ${ event.comment }, diff: ${ event.old_revid } -> ${ event.revid }, user: ${ reqUser }, by: ${ event.user }` );
 
 		const output = `${ reqUser !== event.user ? `${ htmllink( `User:${ event.user }`, event.user ) }替` : '' }${ htmllink( `User:${ reqUser }`, reqUser ) }申請成為審核員，請各位前往關注。`;
 
-		const diff = `Special:Diff/${ event.revision.old }/${ event.revision.new }`;
+		const diff = `Special:Diff/${ event.old_revid }/${ event.revid }`;
 		const dMsg = new Discord.EmbedBuilder( {
 			title: '審核員申請',
 			color: Discord.Colors.Blue,
 			url: `https://zh.wikipedia.org/wiki/${ diff }`,
 			description: turndown( output ),
-			timestamp: event.timestamp * 1000
+			timestamp: new Date( event.timestamp ).getTime()
 		} );
 
 		const tMsg = `${ output } （${ htmllink( diff, '<b>查看申請</b>' ) }）

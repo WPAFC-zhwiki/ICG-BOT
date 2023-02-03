@@ -1,5 +1,5 @@
 import cheerio = require( 'cheerio' );
-import { ApiPage, ApiParams, ApiRevision, MwnPage } from 'mwn';
+import { ApiPage, ApiParams, ApiRevision, MwnPage, MwnTitle } from 'mwn';
 import { ApiEditPageParams, ApiQueryRevisionsParams } from 'mwn/build/api_params';
 import { MwnError } from 'mwn/build/error';
 import removeExcessiveNewline = require( 'remove-excessive-newline' );
@@ -12,7 +12,7 @@ import { isReviewer } from '@app/modules/afc/util/reviewer';
 
 const categoryRegex = /\[\[:?(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):([^[\]]+)\]\]/gi;
 
-async function fetchPageAndRevisions(
+async function fetchRevisionsByTitle(
 	title: string,
 	props: ApiQueryRevisionsParams[ 'rvprop' ],
 	limit: number,
@@ -38,7 +38,7 @@ async function fetchPageAndRevisions(
 	};
 }
 
-async function fetchRevisions(
+async function fetchRevisionByRevId(
 	revId: number,
 	props: ApiQueryRevisionsParams[ 'rvprop' ],
 	customOptions?: ApiQueryRevisionsParams
@@ -56,7 +56,10 @@ async function fetchRevisions(
 	if ( page.missing ) {
 		throw new MwnError.MissingPage();
 	}
-	return page.revisions[ 0 ];
+	return {
+		page,
+		revision: page.revisions[ 0 ]
+	};
 }
 
 export type ApiEditResponse = {
@@ -86,6 +89,8 @@ export class AFCPage {
 	private _oldText: string;
 	private _text: string;
 
+	private _html: string;
+
 	private _pageId: number;
 	public get pageId(): number {
 		this._checkIsInitialed( '[getter pageId]' );
@@ -94,7 +99,7 @@ export class AFCPage {
 
 	private _startTimestamp: string = new Date().toISOString();
 	private _baseTimestamp: string;
-	private _lastRevId: number;
+	private _lastRevId: number | false;
 	private _baseRevId: number;
 	public get baseRevId(): number {
 		this._checkIsInitialed( '[getter baseRevId]' );
@@ -118,7 +123,7 @@ export class AFCPage {
 
 	private categories: Record<string, string | false>;
 
-	private constructor( title: string ) {
+	private constructor( title: string | MwnTitle ) {
 		this._page = new mwbot.page( title );
 	}
 
@@ -135,14 +140,14 @@ export class AFCPage {
 		this._isInitialed = true;
 	}
 
-	public static async init( title: string, revId?: number ): Promise<AFCPage> {
-		const page = new AFCPage( title );
+	public static async init( title: string | MwnTitle, revId?: number ): Promise<AFCPage> {
+		const page = new this( title );
 		await page._init( revId );
 		return page;
 	}
 
-	public static async forceInit( title: string, revId?: number ): Promise<AFCPage> {
-		const page = new AFCPage( title );
+	public static async forceInit( title: string | MwnTitle, revId?: number ): Promise<AFCPage> {
+		const page = new this( title );
 		try {
 			await page._init( revId );
 		} catch ( error ) {
@@ -160,8 +165,13 @@ export class AFCPage {
 		return page;
 	}
 
+	public static async revInit( revId: number ): Promise<AFCPage> {
+		const { page } = await fetchRevisionByRevId( revId, [ 'content', 'ids' ] );
+		return await this.init( page.title, revId );
+	}
+
 	public static async initWithContent( title: string, content: string ): Promise<AFCPage> {
-		const page = new AFCPage( title );
+		const page = new this( title );
 		page._pageId = 0;
 		page._lastRevId = 0;
 		page._oldText = page._text = content;
@@ -173,12 +183,12 @@ export class AFCPage {
 	}
 
 	private async _getPageText( revId?: number ): Promise<void> {
-		const { page, revisions } = await fetchPageAndRevisions( this._page.getPrefixedText(), [ 'content', 'ids' ], 1 );
+		const { page, revisions } = await fetchRevisionsByTitle( this._page.getPrefixedText(), [ 'content', 'ids' ], 1 );
 		this._pageId = page.pageid;
 		const rev: ApiRevision = revisions[ 0 ];
 		this._lastRevId = rev.revid;
 		if ( revId && this._lastRevId !== revId ) {
-			const exactRev = await fetchRevisions( revId, [ 'content', 'ids' ] );
+			const { revision: exactRev } = await fetchRevisionByRevId( revId, [ 'content', 'ids' ] );
 			this._oldText = this._text = exactRev.slots.main.content;
 			this._baseTimestamp = exactRev.timestamp;
 			this._baseRevId = revId;
@@ -724,8 +734,22 @@ export class AFCPage {
 		/* || this._page.namespace === 102 && !!this._page.getMainText().match( /^建立條目\// ) */
 	}
 
+	public async parseToHTML() {
+		this._checkIsInitialed( 'parseToHTML' );
+		this._html ??= await mwbot.parseTitle( this._page.toString(), {
+			uselang: 'zh-hant',
+			oldid: this._baseRevId
+		} );
+
+		return cheerio.load( this._html );
+	}
+
 	public async postEdit( summary: string, extraOptions: ApiEditPageParams = {} ): Promise<ApiEditResponse> {
 		this._checkIsInitialed( 'postEdit' );
+
+		if ( this._lastRevId === false ) {
+			throw new Error( 'Can\'t post edit to unknown version.' );
+		}
 
 		if ( this._baseRevId !== this._lastRevId ) {
 			throw new Error( 'Can\'t post edit to history version.' );

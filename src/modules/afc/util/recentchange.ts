@@ -48,80 +48,114 @@ export declare type RecentChangeFilter = {
 	>;
 };
 
-export declare type RecentChangeResponse = {
-	type: 'edit' | 'log' | 'categorize' | 'new';
-	rcid: number;
-	timestamp?: string;
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export declare namespace RecentChangeEvent {
+	interface BaseEvent {
+		rcid: number;
+		timestamp?: string;
 
-	comment: string;
-	parsedcomment: string;
+		/** summary */
+		comment?: string;
+		/** parsed-summary */
+		parsedcomment?: string;
+	}
 
-	user: string;
-	userid: number;
-	bot?: '';
+	interface UserEvent {
+		user: string;
+		userid: number;
+		bot: boolean;
+	}
 
-	ns: number;
-	title: string;
-	pageid: number;
-	revid: number;
-	old_revid: number;
-	oldlen: number;
-	newlen: number;
-	minor?: '';
-	new?: '';
+	interface TitleEvent {
+		ns: number;
+		title: string;
+		pageid: number;
+		revid: number;
+		old_revid: number;
+		oldlen: number;
+		newlen: number;
+		redirect?: boolean;
+		minor?: boolean;
+		new?: boolean;
+	}
 
-	tags: string[];
-	sha1?: string;
-	oresscores?: {
-		damaging: {
-			true: number;
-			false: number;
-		},
-		goodfaith: {
-			true: number;
-			false: number;
-		}
-	};
-	logid?: number;
-    logtype?: string;
-    logaction?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    logparams: any;
-};
+	interface RevisionEvent extends BaseEvent, UserEvent {
+		ns: number;
+		title: string;
+		pageid: number;
+		revid: number;
+		old_revid: number;
+		oldlen: number;
+		newlen: number;
+		redirect?: boolean;
+		minor?: boolean;
+		new?: boolean;
 
-export declare type RecentChangeEvent = {
-	type: 'edit' | 'log' | 'categorize' | 'new';
-	id: number;
-	timestamp?: number;
+		tags: string[];
+		sha1?: string;
+	}
 
-	comment: string;
-	parsedcomment: string;
+	interface OresScoresEvent {
+		oresscores?: {
+			damaging: {
+				true: number;
+				false: number;
+			},
+			goodfaith: {
+				true: number;
+				false: number;
+			}
+		};
+	}
 
-	user: string;
-	bot: boolean;
+	export interface NewEvent extends RevisionEvent, OresScoresEvent {
+		/**
+		 * type of event
+		 */
+		type: 'new';
+	}
 
-	namespace: number;
-	title: string;
-	revision?: {
-		old?: number;
-		new: number;
-	};
-	length?: {
-		old?: number;
-		new: number;
-	};
-	minor: boolean;
+	export interface EditEvent extends RevisionEvent, OresScoresEvent {
+		/**
+		 * type of event
+		 */
+		type: 'edit';
 
-	log_id?: number;
-	log_type?: string;
-	log_action?: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	log_params?: any;
-};
+		old_revid: 0;
+		oldlen: 0;
+	}
 
-type RCFunction<T> = ( event: RecentChangeEvent, rawresponse: RecentChangeResponse ) => T;
-type RCFilterFunction = RCFunction<boolean>;
-type RCProcessFunction = RCFunction<void>;
+	export interface CategorizeEvent extends RevisionEvent {
+		/**
+		 * type of event
+		 */
+		type: 'categorize';
+
+		ns: 14;
+	}
+
+	export interface LogEvent extends BaseEvent, UserEvent {
+		/**
+		 * type of event
+		 */
+		type: 'log';
+
+		logid?: number;
+		logtype?: string;
+		logaction?: string;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		logparams: any;
+	}
+}
+export declare type RecentChangeEvent =
+	| RecentChangeEvent.NewEvent
+	| RecentChangeEvent.EditEvent
+	| RecentChangeEvent.CategorizeEvent
+	| RecentChangeEvent.LogEvent;
+
+type RCFunction<E, T> = ( event: E ) => T;
+type RCFilterFunction = RCFunction<RecentChangeEvent, boolean>;
+type RCProcessFunction<E = RecentChangeEvent> = RCFunction<E, void>;
 
 class RecentChanges {
 	private _filter: ApiParams & ApiQueryRecentChangesParams = {
@@ -194,69 +228,18 @@ class RecentChanges {
 		}
 	}
 
-	public addProcessFunction( filter: RCFilterFunction, func: RCProcessFunction ) {
+	private _mayStartProcess() {
 		if ( !this._timeOut ) {
 			this._startTimestamp = new Date();
 			this._timeOut = setInterval( ( function ( this: RecentChanges ) {
 				this._request();
 			} ).bind( this ), 5000 );
 		}
-
-		this._processer.set( filter, func );
 	}
 
-	private _buildRcEvent( rc: RecentChangeResponse ): RecentChangeEvent {
-		const event: RecentChangeEvent = {
-			type: rc.type,
-			title: rc.title,
-			namespace: rc.ns,
-			comment: rc.comment,
-			parsedcomment: rc.parsedcomment,
-			user: rc.user,
-			id: rc.rcid,
-			bot: 'bot' in rc,
-			minor: 'minor' in rc,
-			timestamp: +new Date( rc.timestamp ) / 1000
-		};
-
-		switch ( rc.type ) {
-			case 'new':
-				event.length = {
-					new: rc.newlen
-				};
-
-				event.revision = {
-					new: rc.revid
-				};
-				break;
-
-			case 'edit':
-				event.length = {
-					old: rc.oldlen,
-					new: rc.newlen
-				};
-
-				event.revision = {
-					old: rc.old_revid,
-					new: rc.revid
-				};
-				break;
-
-			case 'categorize':
-				break;
-
-			case 'log':
-				event.log_id = rc.logid;
-				event.log_type = rc.logtype;
-				event.log_action = rc.logaction;
-				event.log_params = rc.logparams;
-				break;
-
-			default:
-				break;
-		}
-
-		return event;
+	public addProcessFunction<E = RecentChangeEvent>( filter: RCFilterFunction, func: RCProcessFunction<E> ) {
+		this._mayStartProcess();
+		this._processer.set( filter, func as RCProcessFunction );
 	}
 
 	private async _request(): Promise<void> {
@@ -267,7 +250,7 @@ class RecentChanges {
 		}
 		const data = await mwbot.request( this._filter );
 
-		const recentchanges: RecentChangeResponse[] = data.query.recentchanges;
+		const recentchanges: RecentChangeEvent[] = data.query.recentchanges;
 
 		if ( recentchanges.length ) {
 			for ( const rc of recentchanges ) {
@@ -275,15 +258,15 @@ class RecentChanges {
 					continue;
 				}
 				this._fired.push( rc.rcid );
-				this._fire( this._buildRcEvent( rc ), rc );
+				this._fire( rc );
 			}
 		}
 	}
 
-	private _fire( event: RecentChangeEvent, res: RecentChangeResponse ): void {
+	private _fire( event: RecentChangeEvent ): void {
 		this._processer.forEach( function ( func, fliter ): void {
-			if ( fliter( event, res ) ) {
-				func( event, res );
+			if ( fliter( event ) ) {
+				func( event );
 			}
 		} );
 	}
