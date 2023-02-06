@@ -394,6 +394,7 @@ Manager.global.ifEnable( 'transport', function () {
 				);
 				url.search = '';
 				url.hash = '';
+				processedUrl = url.href;
 			} catch ( error ) {
 				msg.reply( `${ msg.param.trim() ? '檔案網址無效。' : '' }\n使用方法：\n/delfile <url>` );
 				return;
