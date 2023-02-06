@@ -22,6 +22,7 @@ import { inspect } from '@app/lib/util';
 
 import * as bridge from '@app/modules/transport/bridge';
 import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
+import * as command from '@app/modules/transport/command';
 
 const servemedia: ConfigTS[ 'transport' ][ 'servemedia' ] = Manager.config.transport.servemedia;
 
@@ -373,4 +374,58 @@ Manager.global.ifEnable( 'transport', function () {
 	bridge.addHook( 'bridge.send', async ( msg: BridgeMsg ) => {
 		msg.extra.uploads = await fileUploader.process( msg );
 	} );
+
+	if ( Manager.config.transport.manageAdmins && Manager.config.transport.servemedia.type === 'self' ) {
+		const admin = Manager.config.transport.manageAdmins
+			.map( BridgeMsg.parseUID )
+			.map( ( v ) => v.uid )
+			.filter( ( v ) => v );
+
+		command.addCommand( 'delfile', async ( msg ) => {
+			winston.debug( '[file/del] %s: %s', msg.from_uid, msg.text );
+			if ( !admin.includes( msg.from_uid ) ) {
+				return;
+			}
+			let processedUrl: string;
+			try {
+				const url = new URL(
+					msg.param.trim().replace( /^https?:\/\//, '//' ),
+					Manager.config.transport.servemedia.serveUrl
+				);
+				url.search = '';
+				url.hash = '';
+			} catch ( error ) {
+				msg.reply( `${ msg.param.trim() ? '檔案網址無效。' : '' }\n使用方法：\n/delfile <url>` );
+				return;
+			}
+			if ( !processedUrl.startsWith( Manager.config.transport.servemedia.serveUrl ) ) {
+				msg.reply( '這網址我也無法處理呀...' );
+				return;
+			}
+			const fileName = processedUrl.slice( Manager.config.transport.servemedia.serveUrl.length );
+			if ( fileName.match( /^\.|\.$/ ) || !fileName.match( /^[\da-z.]+$/ ) ) {
+				msg.reply( '這網址看起來就不會存在...' );
+				return;
+			}
+			winston.debug( '[file/del] %s try to delete %s.', msg.from_uid, fileName );
+			const realPath = path.join( Manager.config.transport.servemedia.cachePath, fileName );
+			try {
+				// eslint-disable-next-line no-bitwise
+				await fs.promises.access( realPath, fs.constants.R_OK | fs.constants.W_OK );
+			} catch ( error ) {
+				winston.warn( '[file/del] %s delete %s fail: ', msg.from_uid, realPath, inspect( error ) );
+				msg.reply( `刪除 ${ fileName } 失敗：檔案不存在或不可能被機器人刪除` );
+				return;
+			}
+			try {
+				await fs.promises.rm( realPath );
+			} catch ( error ) {
+				msg.reply( `刪除 ${ fileName }失敗：${ error }` );
+				winston.error( '[file/del] %s delete %s fail: %s', msg.from_uid, realPath, inspect( error ) );
+				return;
+			}
+			winston.info( '[file/del] %s delete %s success.', msg.from_uid, realPath );
+			msg.reply( `已刪除 ${ fileName }` );
+		} );
+	}
 } );

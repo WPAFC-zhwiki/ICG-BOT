@@ -507,6 +507,11 @@ export interface ConfigTS {
 		servemedia: TransportServemediaNone |
 		TransportServemediaImgur | TransportServemediaVimCn | TransportServemediaSmMs |
 		TransportServemediaSelf | TransportServemediaLinx | TransportServemediaUguu;
+
+		/**
+		 * 有權利刪除檔案的管理員
+		 */
+		manageAdmins?: string[];
 	};
 
 	ircquery?: {
