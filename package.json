@@ -30,7 +30,7 @@
 		"chokidar": "^3.5.3",
 		"cron": "^2.0.0",
 		"discord.js": "14.7.1",
-		"fs-extra": "^10.1.0",
+		"fs-extra": "^11.0.0",
 		"grunt": "^1.5.3",
 		"https-proxy-agent": "^5.0.1",
 		"irc-colors": "~1.5.0",
@@ -51,7 +51,7 @@
 	},
 	"devDependencies": {
 		"@types/cron": "^2.0.0",
-		"@types/fs-extra": "^9.0.13",
+		"@types/fs-extra": "^11.0.0",
 		"@types/irc": "^0.5.1",
 		"@types/lodash": "^4.14.182",
 		"@types/lru-cache": "^5.1.1",
