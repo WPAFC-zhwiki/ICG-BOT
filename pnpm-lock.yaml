@@ -20,7 +20,7 @@ specifiers:
   cheerio: 1.0.0-rc.12
   chokidar: ^3.5.3
   cron: ^2.0.0
-  discord.js: 14.8.0
+  discord.js: 14.9.0
   eslint: ^8.22.0
   eslint-config-wikimedia: ^0.24.0
   eslint-import-resolver-typescript: ^3.0.0
@@ -55,7 +55,7 @@ dependencies:
   cheerio: 1.0.0-rc.12
   chokidar: 3.5.3
   cron: 2.3.0
-  discord.js: 14.8.0
+  discord.js: 14.9.0
   fs-extra: 11.1.1
   grunt: 1.6.1
   https-proxy-agent: 5.0.1
@@ -161,13 +161,6 @@ packages:
   /@discordjs/collection/1.5.0:
     resolution: {integrity: sha512-suyVndkEAAWrGxyw/CPGdtXoRRU6AUNkibtnbJevQzpelkJh3Q1gQqWDpqf5i39CnAn5+LrN0YS+cULeEjq2Yw==}
     engines: {node: '>=16.9.0'}
-    dev: false
-
-  /@discordjs/formatters/0.2.0:
-    resolution: {integrity: sha512-vn4oMSXuMZUm8ITqVOtvE7/fMMISj4cI5oLsR09PEQXHKeKDAMLltG/DWeeIs7Idfy6V8Fk3rn1e69h7NfzuNA==}
-    engines: {node: '>=16.9.0'}
-    dependencies:
-      discord-api-types: 0.37.37
     dev: false
 
   /@discordjs/formatters/0.3.0:
@@ -1220,13 +1213,13 @@ packages:
     resolution: {integrity: sha512-LDMBKzl/zbvHO/yCzno5hevuA6lFIXJwdKSJZQrB+1ToDpFfN9thK+xxgZNR4aVkI7GHRDja0p4Sl2oYVPnHYg==}
     dev: false
 
-  /discord.js/14.8.0:
-    resolution: {integrity: sha512-UOxYtc/YnV7jAJ2gISluJyYeBw4e+j8gWn+IoqG8unaHAVuvZ13DdYN0M1f9fbUgUvSarV798inIrYFtDNDjwQ==}
+  /discord.js/14.9.0:
+    resolution: {integrity: sha512-ygGms5xP4hG+QrrY9k7d/OYCzMltSMtdl/2Snzq/nLCiZo+Sna91Ulv9l0+B5Jd/Czcq37B7wJAnmja7GOa+bg==}
     engines: {node: '>=16.9.0'}
     dependencies:
       '@discordjs/builders': 1.6.1
       '@discordjs/collection': 1.5.0
-      '@discordjs/formatters': 0.2.0
+      '@discordjs/formatters': 0.3.0
       '@discordjs/rest': 1.7.0
       '@discordjs/util': 0.2.0
       '@sapphire/snowflake': 3.4.0
