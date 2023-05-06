@@ -37,7 +37,7 @@ specifiers:
   node-fetch: ^2.6.7
   remove-excessive-newline: ^1.0.0
   request: ~2.88.2
-  sharp: 0.32.0
+  sharp: 0.32.1
   string-format: ^2.0.0
   telegraf: ^4.11.2
   ts-node: ^10.9.1
@@ -67,7 +67,7 @@ dependencies:
   node-fetch: 2.6.9
   remove-excessive-newline: 1.0.0
   request: 2.88.2
-  sharp: 0.32.0
+  sharp: 0.32.1
   string-format: 2.0.0
   telegraf: 4.12.2
   turndown: 7.1.2
@@ -3626,8 +3626,8 @@ packages:
     dependencies:
       lru-cache: 6.0.0
 
-  /sharp/0.32.0:
-    resolution: {integrity: sha512-yLAypVcqj1toSAqRSwbs86nEzfyZVDYqjuUX8grhFpeij0DDNagKJXELS/auegDBRDg1XBtELdOGfo2X1cCpeA==}
+  /sharp/0.32.1:
+    resolution: {integrity: sha512-kQTFtj7ldpUqSe8kDxoGLZc1rnMFU0AO2pqbX6pLy3b7Oj8ivJIdoKNwxHVQG2HN6XpHPJqCSM2nsma2gOXvOg==}
     engines: {node: '>=14.15.0'}
     requiresBuild: true
     dependencies:
