@@ -158,9 +158,15 @@ type RCFilterFunction = RCFunction<RecentChangeEvent, boolean>;
 type RCProcessFunction<E = RecentChangeEvent> = RCFunction<E, void>;
 
 class RecentChanges {
-	private _filter: ApiParams & ApiQueryRecentChangesParams = {
-		action: 'query',
-		list: 'recentchanges',
+	private get _params(): ApiParams & ApiQueryRecentChangesParams {
+		return Object.assgin( {
+			action: 'query',
+			list: 'recentchanges',
+			...this._filter
+		} );
+	}
+
+	private _filter: Partial<ApiQueryRecentChangesParams> = {
 		rcprop: [
 			'comment', 'flags', 'ids', 'loginfo',
 			'parsedcomment', 'redirect', 'sha1',
@@ -248,7 +254,7 @@ class RecentChanges {
 		} catch ( e ) {
 			await mwbot.getSiteInfo();
 		}
-		const data = await mwbot.request( this._filter );
+		const data = await mwbot.request( this._params );
 
 		const recentchanges: RecentChangeEvent[] = data.query.recentchanges;
 
