@@ -159,7 +159,7 @@ type RCProcessFunction<E = RecentChangeEvent> = RCFunction<E, void>;
 
 class RecentChanges {
 	private get _params(): ApiParams & ApiQueryRecentChangesParams {
-		return Object.assgin( {
+		return Object.assign( {
 			action: 'query',
 			list: 'recentchanges',
 			...this._filter
