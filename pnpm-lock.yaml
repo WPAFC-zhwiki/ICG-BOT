@@ -3,7 +3,7 @@ lockfileVersion: '6.0'
 dependencies:
   '@sunafterrainwm/winston-format-remove-telegram-apitoken':
     specifier: file:lib/winston-format-remove-telegram-apitoken
-    version: file:lib/winston-format-remove-telegram-apitoken
+    version: file:lib/winston-format-remove-telegram-apitoken(lodash@4.17.21)(winston@3.8.2)
   cheerio:
     specifier: 1.0.0-rc.12
     version: 1.0.0-rc.12
@@ -16,6 +16,9 @@ dependencies:
   discord.js:
     specifier: 14.9.0
     version: 14.9.0
+  dotenv:
+    specifier: ^16.0.3
+    version: 16.0.3
   fs-extra:
     specifier: ^11.0.0
     version: 11.1.1
@@ -1315,6 +1318,11 @@ packages:
       dom-serializer: 2.0.0
       domelementtype: 2.3.0
       domhandler: 5.0.3
+    dev: false
+
+  /dotenv@16.0.3:
+    resolution: {integrity: sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==}
+    engines: {node: '>=12'}
     dev: false
 
   /ecc-jsbn@0.1.2:
@@ -4328,7 +4336,7 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  file:lib/winston-format-remove-telegram-apitoken:
+  file:lib/winston-format-remove-telegram-apitoken(lodash@4.17.21)(winston@3.8.2):
     resolution: {directory: lib/winston-format-remove-telegram-apitoken, type: directory}
     id: file:lib/winston-format-remove-telegram-apitoken
     name: '@sunafterrainwm/winston-format-remove-telegram-apitoken'

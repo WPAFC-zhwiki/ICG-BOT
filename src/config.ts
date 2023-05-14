@@ -1,6 +1,8 @@
+import fs = require( 'node:fs' );
 import path = require( 'node:path' );
 
 // import winston = require( 'winston' );
+import dotenv = require( 'dotenv' );
 
 import { ConfigTS } from '@config/config.type';
 import { repository as Repository } from '@package.json';
@@ -35,6 +37,12 @@ if ( process.argv.includes( '--icconfig' ) ) {
 	}
 } else {
 	global.configPath = require.resolve( path.join( __dirname, '../config', 'config' ) );
+}
+
+if ( fs.existsSync( path.join( __dirname, '../config', '.env' ) ) ) {
+	dotenv.config( {
+		path: path.join( __dirname, '../config', '.env' )
+	} );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
