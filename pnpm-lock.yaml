@@ -121,8 +121,8 @@ devDependencies:
     specifier: ^8.22.0
     version: 8.39.0
   eslint-config-wikimedia:
-    specifier: ^0.24.0
-    version: 0.24.0
+    specifier: ^0.25.0
+    version: 0.25.0
   eslint-import-resolver-typescript:
     specifier: ^3.0.0
     version: 3.5.5(@typescript-eslint/parser@5.59.1)(eslint-plugin-import@2.27.5)(eslint@8.39.0)
@@ -913,8 +913,8 @@ packages:
     dependencies:
       fill-range: 7.0.1
 
-  /browserslist-config-wikimedia@0.4.0:
-    resolution: {integrity: sha512-U/fmsaGlCKOqRIjKqXwQ44qFqiStngRTphj1Cf6IHV6J8OK8T0gu9dKc7Ljq4v7bwhnhN+YCCa4fA3nZlPNivQ==}
+  /browserslist-config-wikimedia@0.5.0:
+    resolution: {integrity: sha512-t+tvSnTeVhVF2lNRxoAlE51/ZCfUs5SNNZUnWu2N8xXOGMPTMyKk5l4mayvDdm+5L8oqmnALU+TjnN2Z+ZTCTw==}
     dev: true
 
   /browserslist@4.21.5:
@@ -1467,20 +1467,21 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /eslint-config-wikimedia@0.24.0:
-    resolution: {integrity: sha512-8oH/YhJ87ONSmuRfATgx8U7Jcwz3tBemrh6YOezIfj9f2QfE71ZhaKZrNPdfS7vIklLor/cB9vX7sxN10nz8xw==}
+  /eslint-config-wikimedia@0.25.0:
+    resolution: {integrity: sha512-xLvXPyPmBLMPCE/FDy69ViFNsA3+uvFpH63IKtiqS9Olv1kWU2TWFlpJMFFEu0RWVnbciUKFOoLy3P36UvNHag==}
     dependencies:
-      browserslist-config-wikimedia: 0.4.0
+      browserslist-config-wikimedia: 0.5.0
       eslint: 8.39.0
       eslint-plugin-compat: 4.1.4(eslint@8.39.0)
       eslint-plugin-es-x: 5.4.0(eslint@8.39.0)
       eslint-plugin-jsdoc: 39.2.2(eslint@8.39.0)
       eslint-plugin-json-es: 1.5.7(eslint@8.39.0)
-      eslint-plugin-mediawiki: 0.4.0(eslint@8.39.0)
+      eslint-plugin-mediawiki: 0.5.0(eslint@8.39.0)
       eslint-plugin-mocha: 9.0.0(eslint@8.39.0)
       eslint-plugin-no-jquery: 2.7.0(eslint@8.39.0)
       eslint-plugin-node: 11.1.0(eslint@8.39.0)
       eslint-plugin-qunit: 7.3.4(eslint@8.39.0)
+      eslint-plugin-security: 1.7.1
       eslint-plugin-unicorn: 42.0.0(eslint@8.39.0)
       eslint-plugin-vue: 8.7.1(eslint@8.39.0)
       eslint-plugin-wdio: 7.25.3
@@ -1668,8 +1669,8 @@ packages:
       espree: 9.5.1
     dev: true
 
-  /eslint-plugin-mediawiki@0.4.0(eslint@8.39.0):
-    resolution: {integrity: sha512-Eufptb8lrElYwIONvgxlMBnPD6PYT4xAFprWlBxV5brCmUh8MZ41+lMxt2TPwEC6C85ngflkVez8BV8tWS9RyQ==}
+  /eslint-plugin-mediawiki@0.5.0(eslint@8.39.0):
+    resolution: {integrity: sha512-rjkHFyv3VDan/dmu7YpD1Rl9h64NOlz4mqqesRN316R+571+ymmb6lXVOdNMbT8H1iPhmtHc+nijVLVkn7pYDw==}
     peerDependencies:
       eslint: '>=5.0.0'
     dependencies:
@@ -1722,6 +1723,12 @@ packages:
       requireindex: 1.2.0
     transitivePeerDependencies:
       - eslint
+    dev: true
+
+  /eslint-plugin-security@1.7.1:
+    resolution: {integrity: sha512-sMStceig8AFglhhT2LqlU5r+/fn9OwsA72O5bBuQVTssPCdQAOQzL+oMn/ZcpeUY6KcNfLJArgcrsSULNjYYdQ==}
+    dependencies:
+      safe-regex: 2.1.1
     dev: true
 
   /eslint-plugin-unicorn@42.0.0(eslint@8.39.0):
@@ -2239,7 +2246,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.0.8
+      minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
     dev: false
@@ -3012,7 +3019,6 @@ packages:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
     dependencies:
       brace-expansion: 1.1.11
-    dev: true
 
   /minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
