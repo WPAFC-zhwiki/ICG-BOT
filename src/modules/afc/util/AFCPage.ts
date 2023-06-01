@@ -225,6 +225,7 @@ export class AFCPage {
 			let text: string = $( '<div>' ).append( $v.clone() ).html();
 
 			// Convert templates to look more template-y
+			// eslint-disable-next-line security/detect-unsafe-regex
 			text = text.replace( /<template([^>]+)?>/g, '{{' );
 			text = text.replace( /<\/template>/g, '}}' );
 			text = text.replace( /<part>/g, '|' );
@@ -611,14 +612,18 @@ export class AFCPage {
 
 		// Assemble a master regexp and remove all now-unneeded comments
 		// (commentsToRemove)
+		// eslint-disable-next-line security/detect-non-literal-regexp
 		const commentRegex = new RegExp(
-			'<!-{2,}\\s*(' + commentsToRemove.join( '|' ) + ')\\s*-{2,}>', 'gi' );
+			'<!-{2,}\\s*(' + commentsToRemove.join( '|' ) + ')\\s*-{2,}>',
+			'gi'
+		);
 
 		text = text
 			.replace( commentRegex, '' )
 
 			// Remove sandbox templates
 			.replace(
+				// eslint-disable-next-line security/detect-unsafe-regex
 				/\{\{(userspacedraft|userspace draft|user sandbox|用戶沙盒|用户沙盒|draft copyvio|七日草稿|7D draft|Draft|草稿|Please leave this line alone \(sandbox heading\))(?:\{\{[^{}]*\}\}|[^}{])*\}\}/ig,
 				''
 			)
@@ -631,10 +636,12 @@ export class AFCPage {
 
 			.replace( /==\s*章节标题\s*==/, '' )
 
+			// eslint-disable-next-line security/detect-unsafe-regex
 			.replace( /<([A-Za-z]+)(\s+([^>]+))?>/g, function ( _all: string, tagName: string, args: string ) {
 				return `<${ tagName.toLowerCase() }${ args ? ` ${ args.trim() }` : '' }>`;
 			} )
 
+			// eslint-disable-next-line security/detect-unsafe-regex
 			.replace( /<\/([A-Za-z]+)(?:\s+[^>]+)?>/g, function ( _all: string, tagName: string ) {
 				return `</${ tagName.toLowerCase() }>`;
 			} )
@@ -645,19 +652,23 @@ export class AFCPage {
 
 			// Remove html comments (<!--) that surround categories
 			// categoryRegex
+			// eslint-disable-next-line security/detect-non-literal-regexp
 			.replace( new RegExp( '<!--[\\s\\r\\t\\n]*((' + categoryRegex.source + '[\\s\\r\\t\\n]*)+)-->', 'gi' ), '$1' )
 
 			// Remove spaces/commas between <ref> tags
 			.replace(
+				// eslint-disable-next-line security/detect-unsafe-regex
 				/\s*(<\/\s*ref\s*>)\s*[,]*\s*(<\s*ref\s*(name\s*=|group\s*=)*\s*[^/]*>)[ \t]*$/gim,
 				'$1$2\n\n'
 			)
 
 			// Remove whitespace before <ref> tags
+			// eslint-disable-next-line security/detect-unsafe-regex
 			.replace( /[\s\t]*(<\s*ref\s*(name\s*=|group\s*=)*\s*.*[^/]+>)[\s\t]*$/gim, '$1\n\n' )
 
 			// Move punctuation before <ref> tags
 			.replace(
+				// eslint-disable-next-line security/detect-unsafe-regex
 				/\s*((<\s*ref\s*(name\s*=|group\s*=)*\s*.*[/]{1}>)|(<\s*ref\s*(name\s*=|group\s*=)*\s*[^/]*>(?:<[^<>\n]*>|[^<>\n])*<\/\s*ref\s*>))[\s\t]*([.。!！?？,，;；:：])+$/gim,
 				'$6$1\n\n'
 			)
@@ -675,6 +686,7 @@ export class AFCPage {
 		// eslint-disable-next-line no-shadow
 		function convertExternalLinksToWikiLinks( text: string ) {
 			const linkRegex =
+			// eslint-disable-next-line security/detect-unsafe-regex
 			/\[{1,2}(?:https?:)?\/\/(?:(?:zh\.wikipedia\.org|zhwp\.org)\/(?:wiki|zh|zh-hans|zh-hant|zh-cn|zh-my|zh-sg|zh-tw|zh-hk|zh-mo)|zhwp\.org)\/([^\s|\][]+)(?:\s|\|)?((?:\[\[[^[\]]*\]\]|[^\][])*)\]{1,2}/ig;
 			let linkMatch = linkRegex.exec( text );
 			let title: string;

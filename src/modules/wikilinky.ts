@@ -59,8 +59,10 @@ function linky( string: string, articlepath: string ) {
 
 		$txt = $txt.replace( /^{{\s*(?:subst:|safesubst:)?\s*/, '{{' );
 
-		if ( /^\[\[([^|#]+)(?:#([^|]+))?.*?\]\]$/.exec( $txt ) ) {
-			$m = $txt.match( /^\[\[([^|#]+)(?:#([^|]+))?.*?\]\]$/ );
+		// eslint-disable-next-line security/detect-unsafe-regex
+		if ( /^\[\[([^|#[\]]+)(?:#([^|[\]]+))?(?:\|[^[\]]+)?\]\]$/.exec( $txt ) ) {
+			// eslint-disable-next-line security/detect-unsafe-regex
+			$m = $txt.match( /^\[\[([^|#[\]]+)(?:#([^|[\]]+))?(?:\|[^[\]]+)?\]\]$/ );
 			$page = $m[ 1 ].trim();
 			if ( $m[ 2 ] ) {
 				$section = '#' + $m[ 2 ].trimEnd();
@@ -115,13 +117,18 @@ function linky( string: string, articlepath: string ) {
 			'|formatnum|#dateformat|#formatdate|padleft|padright|plural):.+}}$'
 		).exec( $txt ) ) {
 			$title = 'Help:魔术字#格式';
+		// eslint-disable-next-line security/detect-unsafe-regex
 		} else if ( /^{{\s*(plural|grammar|gender|int)(:.+)?}}$/.exec( $txt ) ) {
 			$title = 'Help:魔术字#杂项';
+		// eslint-disable-next-line security/detect-unsafe-regex
 		} else if ( /^{{\s*(msg|raw|msgnw|subst|safesubst)(:.+)?}}$/.exec( $txt ) ) {
 			$title = 'Help:魔术字#杂项';
+		// eslint-disable-next-line security/detect-unsafe-regex
 		} else if ( /^{{\s*(#language|#special|#tag)(:.+)?}}$/.exec( $txt ) ) {
 			$title = 'Help:魔术字#杂项';
+		// eslint-disable-next-line security/detect-unsafe-regex
 		} else if ( /^{{\s*([^|]+)(?:|.+)?}}$/.exec( $txt ) ) {
+			// eslint-disable-next-line security/detect-unsafe-regex
 			$m = $txt.match( /^{{\s*([^|]+)(?:|.+)?}}$/ );
 			$page = $m[ 1 ].trim();
 			$title = `${ $page.startsWith( ':' ) ? $page.replace( /^:/, '' ) : `Template:${ $page }` }`;

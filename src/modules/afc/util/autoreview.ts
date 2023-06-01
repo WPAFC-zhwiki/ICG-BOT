@@ -108,6 +108,7 @@ export async function autoReview(
 			'\'\'\'此处改为条目主题\'\'\'(?:是一个)?',
 			'==\\s*章节标题\\s*=='
 		];
+		// eslint-disable-next-line security/detect-non-literal-regexp
 		const regexp = new RegExp( `(${ defaults.join( '|' ) })` );
 		if ( regexp.exec( wikitext ) ) {
 			issues.push( 'default-wikitext' );

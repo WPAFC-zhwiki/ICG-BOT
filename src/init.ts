@@ -156,7 +156,7 @@ for ( const client of enabledClients ) {
 	winston.info( `Starting ${ client } bot...` );
 
 	const options = config[ client ];
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	// eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
 	const Handler: typeof MessageHandler = require( `./lib/handlers/${ allHandlers.get( client ) }` )[ allHandlers.get( client ) ];
 	const handler: MessageHandler = new Handler( options );
 	handler.start();

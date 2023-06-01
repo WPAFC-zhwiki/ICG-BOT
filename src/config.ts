@@ -45,7 +45,7 @@ if ( fs.existsSync( path.join( __dirname, '../config', '.env' ) ) ) {
 	} );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
 const config: ConfigTS = require( global.configPath ).default;
 
 // winston.debug( 'load config from "' + global.configPath + '".' );

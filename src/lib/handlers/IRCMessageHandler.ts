@@ -116,6 +116,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 				!that._enabled ||
 				from === client.nick ||
 				ircOptions.ignore.map( function ( name ) {
+					// eslint-disable-next-line security/detect-non-literal-regexp
 					return new RegExp( `^${ lodash.escapeRegExp( name ) }\\d*$` );
 				} ).filter( function ( reg ) {
 					return reg.exec( from );

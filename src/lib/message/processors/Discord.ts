@@ -1,4 +1,5 @@
 import Discord = require( 'discord.js' );
+import { escapeRegExp } from 'lodash';
 import LRU = require( 'lru-cache' );
 import winston = require( 'winston' );
 
@@ -106,7 +107,8 @@ export async function preProcess( context: Context<Discord.Message> ) {
 					}
 
 					context.text = context.text.replace(
-						new RegExp( `<@!?${ info.id }>`, 'gu' ),
+						// eslint-disable-next-line security/detect-non-literal-regexp
+						new RegExp( `<@!?${ escapeRegExp( info.id ) }>`, 'gu' ),
 						`<${ info.bot ? 'bot' : 'user' } @${ discordHandler.getNick( info ) }>`
 					);
 				}

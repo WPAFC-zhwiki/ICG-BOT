@@ -149,7 +149,7 @@ Manager.global.ifEnable( 'transport', function () {
 
 	// 載入各用戶端的處理程式，並連接到 bridge 中
 	for ( const [ type ] of Manager.handlers ) {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	// eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
 		const processor: bridge.processor = require( `./transport/processors/${ type }` ).default;
 		winston.debug( `[transport] load processor ${ type }` );
 		bridge.addProcessor( type, processor );

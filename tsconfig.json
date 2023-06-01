@@ -1,7 +1,4 @@
 {
-	"rules": {
-		"no-var-requires": 0
-	},
 	"compilerOptions": {
 		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
@@ -9,12 +6,13 @@
 		"esModuleInterop": true,
 		"importHelpers": true,
 		"noImplicitAny": false,
+		"incremental": true,
 		"module": "CommonJS",
 		"moduleResolution": "node",
 		"outDir": "./build",
 		"removeComments": true,
 		"resolveJsonModule": true,
-		"sourceMap": false,
+		"sourceMap": true,
 		"strict": true,
 		"strictNullChecks": false,
 		"strictBindCallApply": true,

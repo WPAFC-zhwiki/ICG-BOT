@@ -243,7 +243,10 @@ class RecentChanges {
 		}
 	}
 
-	public addProcessFunction<E = RecentChangeEvent>( filter: RCFilterFunction, func: RCProcessFunction<E> ) {
+	public addProcessFunction<E extends RecentChangeEvent = RecentChangeEvent>(
+		filter: RCFilterFunction,
+		func: RCProcessFunction<E>
+	) {
 		this._mayStartProcess();
 		this._processer.set( filter, func as RCProcessFunction );
 	}
