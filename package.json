@@ -55,7 +55,7 @@
 		"@types/fs-extra": "^11.0.0",
 		"@types/irc": "^0.5.1",
 		"@types/lodash": "^4.14.182",
-		"@types/lru-cache": "^5.1.1",
+		"@types/lru-cache": "^7.0.0",
 		"@types/module-alias": "^2.0.1",
 		"@types/node": "^18.0.0",
 		"@types/node-fetch": "^2.6.2",
