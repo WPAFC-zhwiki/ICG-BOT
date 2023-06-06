@@ -33,7 +33,7 @@
 		"dotenv": "^16.0.3",
 		"fs-extra": "^11.0.0",
 		"grunt": "^1.5.3",
-		"https-proxy-agent": "^5.0.1",
+		"https-proxy-agent": "^7.0.0",
 		"irc-colors": "~1.5.0",
 		"irc-upd": "~0.11.0",
 		"lodash": "^4.17.21",
