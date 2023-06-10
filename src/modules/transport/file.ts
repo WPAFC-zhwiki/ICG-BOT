@@ -5,12 +5,17 @@
  * Telegram 音訊使用 ogg 格式，QQ 則使用 amr 和 silk，這個可以考慮互相轉換一下
  *
  */
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+( require( 'axios' ) as {default: object;} ).default = require( 'axios' ) as object;
+
 import crypto = require( 'node:crypto' );
 import fs = require( 'node:fs' );
 import path = require( 'node:path' );
 import stream = require( 'node:stream' );
 
-import request = require( 'request' );
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import FormData = require( 'form-data' );
 import sharp = require( 'sharp' );
 import winston = require( 'winston' );
 
@@ -70,6 +75,28 @@ function convertFileType( type: string ): string {
 			return type;
 	}
 }
+class FetchStream extends stream.Transform {
+	public constructor( private url: string, private config?: AxiosRequestConfig | undefined ) {
+		super();
+		this.doFetch();
+	}
+
+	private async doFetch() {
+		try {
+			const res = await axios.get<stream.Readable>( this.url, Object.assign( {}, this.config, {
+				responseType: 'stream'
+			} ) );
+			res.data.pipe( this );
+		} catch ( error ) {
+			this.emit( 'error', error );
+		}
+	}
+
+	public override _transform( chunk: unknown, encoding: BufferEncoding, callback: stream.TransformCallback ) {
+		this.push( chunk, encoding );
+		callback();
+	}
+}
 
 /**
  * 下载/获取文件内容，对文件进行格式转换（如果需要的话），然后管道出去
@@ -83,7 +110,7 @@ function getFileStream( file: fileTS ): stream.Readable {
 	let fileStream: stream.Readable;
 
 	if ( file.url ) {
-		fileStream = request.get( file.url ) as stream.Stream as stream.Readable;
+		fileStream = new FetchStream( file.url );
 	} else if ( file.path ) {
 		fileStream = fs.createReadStream( file.path );
 	} else {
@@ -133,21 +160,37 @@ async function uploadToCache( file: fileTS ): Promise<string> {
 	return servemedia.serveUrl + targetName;
 }
 
+function createTimeoutAbortSignal( timeOut: number ) {
+	const controller = new AbortController();
+	setTimeout( function () {
+		controller.abort( 'Timeout.' );
+	}, timeOut );
+	return controller.signal;
+}
+
+function createFormData( data: [ name: string, value: string | Blob, fileName?: string ][] ) {
+	const formData = new FormData();
+	for ( const [ name, value, fileName ] of data ) {
+		formData.append( name, value, fileName );
+	}
+	return formData;
+}
+
 /*
  * 上传到各种图床
  */
-function uploadToHost( host: string, file: fileTS ): Promise<string> {
-	return new Promise( function ( resolve, reject ) {
-		const requestOptions: request.Options = {
-			timeout: servemedia.timeout || 3000,
+function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], file: fileTS ) {
+	return new Promise<string>( function ( resolve, reject ) {
+		const requestOptions: Partial<AxiosRequestConfig<FormData>> = {
+			method: 'POST',
+			signal: createTimeoutAbortSignal( servemedia.timeout ?? 30000 ),
 			headers: {
-				'User-Agent': servemedia.userAgent || USERAGENT
+				'Content-Type': 'multipart/form-data'
 			},
-			url: ''
+			responseType: 'text'
 		};
 
-		const name = generateFileName( file.url || file.path, file.id );
-		const pendingFileStream = getFileStream( file );
+		const name = generateFileName( file.url ?? file.path, file.id );
 
 		// p4: reject .exe (complaint from the site admin)
 		if ( path.extname( name ) === '.exe' ) {
@@ -155,39 +198,22 @@ function uploadToHost( host: string, file: fileTS ): Promise<string> {
 			return;
 		}
 
-		const buf: Buffer[] = [];
+		const pendingFileStream = getFileStream( file );
+
+		const buf: unknown[] = [];
 		pendingFileStream
-			.on( 'data', function ( d: Buffer ) {
-				buf.push( d );
+			.on( 'data', function ( d: unknown ) {
+				return buf.push( d );
 			} )
 			.on( 'end', function () {
-				const pendingFile = Buffer.concat( buf );
+				const pendingFile = new Blob( [ Buffer.concat( buf as Uint8Array[] ) ] );
 
 				switch ( host ) {
 					case 'vim-cn':
-					case 'vimcn':
-						requestOptions.url = 'https://pb.nichi.co/';
-						requestOptions.formData = {
-							name: {
-								value: pendingFile,
-								options: {
-									filename: name
-								}
-							}
-						};
-						break;
-
-					case 'sm.ms':
-						requestOptions.url = 'https://sm.ms/api/upload';
-						requestOptions.json = true;
-						requestOptions.formData = {
-							smfile: {
-								value: pendingFile,
-								options: {
-									filename: name
-								}
-							}
-						};
+						requestOptions.url = 'https://img.vim-cn.com/';
+						requestOptions.data = createFormData( [
+							[ 'name', pendingFile, name ]
+						] );
 						break;
 
 					case 'imgur':
@@ -196,67 +222,64 @@ function uploadToHost( host: string, file: fileTS ): Promise<string> {
 						} else {
 							requestOptions.url = servemedia.imgur.apiUrl + '/upload';
 						}
-						requestOptions.headers.Authorization = `Client-ID ${ servemedia.imgur.clientId }`;
-						requestOptions.json = true;
-						requestOptions.formData = {
-							type: 'file',
-							image: {
-								value: pendingFile,
-								options: {
-									filename: name
-								}
-							}
-						};
+						requestOptions.headers = Object.assign( requestOptions.headers ?? {}, {
+							Authorization: `Client-ID ${ servemedia.imgur.clientId }`
+						} );
+						requestOptions.data = createFormData( [
+							[ 'type', 'file' ],
+							[ 'image', pendingFile, name ]
+						] );
 						break;
 
 					case 'uguu':
-					case 'Uguu':
-						requestOptions.url = servemedia.uguuApiUrl;
-						requestOptions.formData = {
-							file: {
-								value: pendingFile,
-								options: {
-									filename: name
-								}
-							},
-							randomname: 'true'
-						};
+						requestOptions.url = servemedia.uguuApiUrl; // 原配置文件以大写字母开头
+						requestOptions.data = createFormData( [
+							[ 'file', pendingFile, name ],
+							[ 'randomname', 'true' ]
+						] );
 						break;
 
 					default:
 						reject( new Error( 'Unknown host type' ) );
+						return;
 				}
 
-				request.post( requestOptions, function ( error: string, response: request.Response, body ) {
-					if ( !error && response.statusCode === 200 ) {
-						switch ( host ) {
-							case 'vim-cn':
-							case 'vimcn':
-								resolve( body.trim() );
-								break;
-							case 'uguu':
-							case 'Uguu':
-								resolve( body.trim() );
-								break;
-							case 'sm.ms':
-								if ( body && body.code !== 'success' ) {
-									reject( new Error( `sm.ms return: ${ body.msg }` ) );
-								} else {
-									resolve( body.data.url );
-								}
-								break;
-							case 'imgur':
-								if ( body && !body.success ) {
-									reject( new Error( `Imgur return: ${ body.data.error }` ) );
-								} else {
-									resolve( body.data.link );
-								}
-								break;
+				axios.postForm<string, AxiosResponse<string>, AxiosRequestConfig<FormData>>(
+					requestOptions.url,
+					requestOptions
+				)
+					.then( function ( response ) {
+						if ( response.status === 200 ) {
+							switch ( host ) {
+								case 'vim-cn':
+									resolve( String( response.data ).trim().replace( 'http://', 'https://' ) );
+									break;
+								case 'uguu':
+									resolve( String( response.data ).trim() );
+									break;
+								case 'imgur':
+									// eslint-disable-next-line no-case-declarations
+									const json: {
+										success: boolean;
+										data: {
+											error?: string;
+											link?: string;
+										};
+									} = JSON.parse( response.data );
+
+									if ( json && !json.success ) {
+
+										reject( new Error( `Imgur return: ${ json.data.error ?? JSON.stringify( json ) }` ) );
+									} else {
+										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+										resolve( json.data.link! );
+									}
+									break;
+							}
+						} else {
+							reject( new Error( String( response.data ) ) );
 						}
-					} else {
-						reject( new Error( error ) );
-					}
-				} );
+					} ).catch( reject );
 			} );
 	} );
 }
@@ -264,24 +287,26 @@ function uploadToHost( host: string, file: fileTS ): Promise<string> {
 /*
  * 上傳到自行架設的 linx 圖床上面
  */
-function uploadToLinx( file: fileTS ): Promise<string> {
+function uploadToLinx( file: fileTS ) {
 	return new Promise<string>( function ( resolve, reject ) {
-		const name: string = generateFileName( file.url || file.path, file.id );
+		const name = generateFileName( file.url ?? file.path, file.id );
 
-		pipeFileStream( file, request.put( {
-			url: servemedia.linxApiUrl + name,
+		const fileStream = getFileStream( file );
+		axios.put( String( servemedia.linxApiUrl ) + name, fileStream, {
 			headers: {
-				'User-Agent': servemedia.userAgent || USERAGENT,
+				'User-Agent': servemedia.userAgent ?? USERAGENT,
 				'Linx-Randomize': 'yes',
 				Accept: 'application/json'
-			}
-		}, function ( error: string, response: request.Response, body ) {
-			if ( !error && response.statusCode === 200 ) {
-				resolve( JSON.parse( body ).direct_url );
+			},
+			responseType: 'text'
+		} ).then( function ( response ) {
+			if ( response.status === 200 ) {
+
+				resolve( JSON.parse( response.data as string ).direct_url as string );
 			} else {
-				reject( new Error( error ) );
+				reject( new Error( String( response.data ) ) );
 			}
-		} ) as stream.Stream as stream.Writable ).catch( function ( err ) {
+		} ).catch( function ( err ) {
 			reject( err );
 		} );
 	} );
