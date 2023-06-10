@@ -111,11 +111,10 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		// 代理
 		let myAgent: https.Agent = https.globalAgent;
 		if ( botConfig.proxy && botConfig.proxy.host ) {
-			myAgent = new HttpsProxyAgent( {
-				host: botConfig.proxy.host,
-				port: botConfig.proxy.port,
-				secureProxy: true
-			} );
+			const url = new URL( 'https://example.org/' );
+			url.hostname = botConfig.proxy.host;
+			url.port = String( botConfig.proxy.port );
+			myAgent = new HttpsProxyAgent( url );
 		}
 
 		const client = new Telegraf( botConfig.token, {
