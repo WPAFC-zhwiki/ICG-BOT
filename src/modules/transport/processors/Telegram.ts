@@ -10,7 +10,7 @@ import { Manager } from '@app/init';
 
 import delay from '@app/lib/delay';
 import { Context } from '@app/lib/handlers/Context';
-import { TelegramSendMessageOpipons } from '@app/lib/handlers/TelegramMessageHandler';
+import { TelegramSendMessageOptions } from '@app/lib/handlers/TelegramMessageHandler';
 import { inspect } from '@app/lib/util';
 
 import * as bridge from '@app/modules/transport/bridge';
@@ -246,7 +246,7 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 
 	// 如果含有相片和音訊
 	if ( msg.extra.uploads ) {
-		const replyOption: TelegramSendMessageOpipons = {
+		const replyOption: TelegramSendMessageOptions = {
 			reply_to_message_id: newRawMsg.message_id
 		};
 

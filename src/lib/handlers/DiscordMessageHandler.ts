@@ -133,13 +133,13 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 							text += ` <Photo: ${ p.width }x${ p.height }, ${ getFriendlySize( p.size ) }>`;
 							break;
 						case 'video':
-							text += ` <Video: ${ p.width }x${ p.height }, ${ p.duration }", ${ getFriendlySize( p.size ) }>`;
+							text += ` <Video: ${ p.width }x${ p.height }, ${ getFriendlySize( p.size ) }>`;
 							break;
 						case 'audio':
-							text += ` <Audio: ${ p.duration }", ${ getFriendlySize( p.size ) }>`;
+							text += ` <Audio: ${ getFriendlySize( p.size ) }>`;
 							break;
 						default:
-							text += ` <File: ${ getFriendlySize( p.size ) }>`;
+							text += ` <Attachment: ${ getFriendlySize( p.size ) }>`;
 							break;
 					}
 				}

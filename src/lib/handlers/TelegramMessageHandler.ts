@@ -51,7 +51,7 @@ export interface TelegramEvents extends BaseEvents<TContext> {
 	groupChannelRichMessage( channel: TT.Chat.ChannelChat, context: Context<TContext> ): void;
 }
 
-export interface TelegramSendMessageOpipons extends ExtraReplyMessage {
+export interface TelegramSendMessageOptions extends ExtraReplyMessage {
 	withNick?: boolean
 }
 
@@ -525,7 +525,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 	async #say( method: string, target: string | number,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		message: any, options?: TelegramSendMessageOpipons ): Promise<any> {
+		message: any, options?: TelegramSendMessageOptions ): Promise<any> {
 		if ( !this._enabled ) {
 			throw new Error( 'Handler not enabled' );
 		} else {
@@ -533,13 +533,13 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		}
 	}
 
-	public say( target: string | number, message: string, options?: TelegramSendMessageOpipons ): Promise<TT.Message> {
+	public say( target: string | number, message: string, options?: TelegramSendMessageOptions ): Promise<TT.Message> {
 		return this.#say( 'sendMessage', target, message, options );
 	}
 
 	public sayWithHTML( target: string | number, message: string,
-		options?: TelegramSendMessageOpipons ): Promise<TT.Message> {
-		const options2: TelegramSendMessageOpipons = copyObject( options || {} );
+		options?: TelegramSendMessageOptions ): Promise<TT.Message> {
+		const options2: TelegramSendMessageOptions = copyObject( options || {} );
 		options2.parse_mode = 'HTML';
 		return this.say( target, message, options2 );
 	}
@@ -565,12 +565,12 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 	async #reply( method: string, context: Context<TContext>,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		message: any, options?: TelegramSendMessageOpipons ): Promise<any> {
+		message: any, options?: TelegramSendMessageOptions ): Promise<any> {
 		if ( ( context._rawdata && context._rawdata.message ) ) {
 			if ( context.isPrivate ) {
 				return await this.#say( method, context.to, message, options );
 			} else {
-				const options2: TelegramSendMessageOpipons = copyObject( options || {} );
+				const options2: TelegramSendMessageOptions = copyObject( options || {} );
 				options2.reply_to_message_id = context._rawdata.message.message_id;
 				if ( options2.withNick ) {
 					return await this.#say( method, context.to, `${ context.nick }: ${ message }`, options2 );
