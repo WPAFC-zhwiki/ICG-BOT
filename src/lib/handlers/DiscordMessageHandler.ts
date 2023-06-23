@@ -128,12 +128,20 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 						size: p.size,
 						url: that.useProxyURL ? p.proxyURL : p.url
 					} );
-					const displayType = {
-						image: 'Photo',
-						video: 'Video',
-						audio: 'Audio'
-					}[ type ] || 'File';
-					text += ` <${ displayType }: ${ p.width }x${ p.height }, ${ getFriendlySize( p.size ) }>`;
+					switch ( type ) {
+						case 'image':
+							text += ` <Photo: ${ p.width }x${ p.height }, ${ getFriendlySize( p.size ) }>`;
+							break;
+						case 'video':
+							text += ` <Video: ${ p.width }x${ p.height }, ${ p.duration }", ${ getFriendlySize( p.size ) }>`;
+							break;
+						case 'audio':
+							text += ` <Audio: ${ p.duration }", ${ getFriendlySize( p.size ) }>`;
+							break;
+						default:
+							text += ` <File: ${ getFriendlySize( p.size ) }>`;
+							break;
+					}
 				}
 			}
 
