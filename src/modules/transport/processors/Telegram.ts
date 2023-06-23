@@ -253,12 +253,14 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 		for ( const upload of msg.extra.uploads ) {
 			if ( upload.type === 'audio' ) {
 				await tgHandler.sendAudio( to, upload.url, replyOption );
-			} else if ( upload.type === 'photo' ) {
+			} else if ( upload.type === 'photo' || upload.type === 'image' ) {
 				if ( path.extname( upload.url ) === '.gif' ) {
 					await tgHandler.sendAnimation( to, upload.url, replyOption );
 				} else {
 					await tgHandler.sendPhoto( to, upload.url, replyOption );
 				}
+			} else if ( upload.type === 'video' ) {
+				await tgHandler.sendVideo( to, upload.url, replyOption );
 			} else {
 				await tgHandler.sendDocument( to, upload.url, replyOption );
 			}

@@ -50,6 +50,9 @@ dependencies:
   lru-cache:
     specifier: ^6.0.0
     version: 6.0.0
+  mime-db:
+    specifier: ^1.52.0
+    version: 1.52.0
   module-alias:
     specifier: ^2.2.2
     version: 2.2.2
@@ -100,6 +103,9 @@ devDependencies:
   '@types/lru-cache':
     specifier: ^7.0.0
     version: 7.4.0
+  '@types/mime-db':
+    specifier: ^1.43.1
+    version: 1.43.1
   '@types/module-alias':
     specifier: ^2.0.1
     version: 2.0.1
@@ -519,6 +525,10 @@ packages:
 
   /@types/luxon@3.3.0:
     resolution: {integrity: sha512-uKRI5QORDnrGFYgcdAVnHvEIvEZ8noTpP/Bg+HeUzZghwinDlIS87DEenV5r1YoOF9G4x600YsUXLWZ19rmTmg==}
+    dev: true
+
+  /@types/mime-db@1.43.1:
+    resolution: {integrity: sha512-kGZJY+R+WnR5Rk+RPHUMERtb2qBRViIHCBdtUrY+NmwuGb8pQdfTqQiCKPrxpdoycl8KWm2DLdkpoSdt479XoQ==}
     dev: true
 
   /@types/module-alias@2.0.1:

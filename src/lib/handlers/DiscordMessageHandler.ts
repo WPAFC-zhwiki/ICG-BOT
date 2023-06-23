@@ -1,8 +1,11 @@
+import path = require( 'node:path' );
+
 import Discord = require( 'discord.js' );
 import winston = require( 'winston' );
 
 import { ConfigTS } from '@app/config';
 
+import extList from '@app/lib/extToMime';
 import { Context, ContextExtra as ContextExtra } from '@app/lib/handlers/Context';
 import { BaseEvents, MessageHandler } from '@app/lib/handlers/MessageHandler';
 import { inspect, getFriendlySize } from '@app/lib/util';
@@ -117,14 +120,20 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 			if ( rawdata.attachments && rawdata.attachments.size ) {
 				extra.files = [];
 				for ( const [ , p ] of rawdata.attachments ) {
+					const type = ( extList.get( path.extname( p.url ) ) || 'unknown' ).split( '/' )[ 0 ];
 					extra.files.push( {
 						client: 'Discord',
-						type: 'photo',
+						type: ( extList.get( path.extname( p.url ) ) || 'unknown' ).split( '/' )[ 0 ],
 						id: p.id,
 						size: p.size,
 						url: that.useProxyURL ? p.proxyURL : p.url
 					} );
-					text += ` <photo: ${ p.width }x${ p.height }, ${ getFriendlySize( p.size ) }>`;
+					const displayType = {
+						image: 'Photo',
+						video: 'Video',
+						audio: 'Audio'
+					}[ type ] || 'File';
+					text += ` <${ displayType }: ${ p.width }x${ p.height }, ${ getFriendlySize( p.size ) }>`;
 				}
 			}
 
