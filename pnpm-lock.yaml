@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -4559,7 +4559,6 @@ packages:
     resolution: {directory: lib/winston-format-remove-telegram-apitoken, type: directory}
     id: file:lib/winston-format-remove-telegram-apitoken
     name: '@sunafterrainwm/winston-format-remove-telegram-apitoken'
-    version: 1.0.0
     peerDependencies:
       lodash: '>3.0.0'
       winston: '>3.0.0'
