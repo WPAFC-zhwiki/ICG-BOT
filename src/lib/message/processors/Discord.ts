@@ -1,6 +1,6 @@
 import Discord = require( 'discord.js' );
 import { escapeRegExp } from 'lodash';
-import LRU = require( 'lru-cache' );
+import { LRUCache } from 'lru-cache';
 import winston = require( 'winston' );
 
 import { Manager } from '@app/init';
@@ -9,9 +9,9 @@ import { Context } from '@app/lib/handlers/Context';
 import msgManage from '@app/lib/message/msgManage';
 import { inspect } from '@app/lib/util';
 
-const userInfo = new LRU<string, Discord.User>( {
+const userInfo = new LRUCache<string, Discord.User>( {
 	max: 500,
-	maxAge: 3600000
+	ttl: 3600 * 1000
 } );
 
 const discordHandler = Manager.handlers.get( 'Discord' );

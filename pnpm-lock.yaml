@@ -48,8 +48,8 @@ dependencies:
     specifier: ^4.17.21
     version: 4.17.21
   lru-cache:
-    specifier: ^6.0.0
-    version: 6.0.0
+    specifier: ^10.0.0
+    version: 10.0.0
   mime-db:
     specifier: ^1.52.0
     version: 1.52.0
@@ -100,9 +100,6 @@ devDependencies:
   '@types/lodash':
     specifier: ^4.14.182
     version: 4.14.182
-  '@types/lru-cache':
-    specifier: ^7.0.0
-    version: 7.4.0
   '@types/mime-db':
     specifier: ^1.43.1
     version: 1.43.1
@@ -522,10 +519,6 @@ packages:
 
   /@types/lodash@4.14.182:
     resolution: {integrity: sha512-/THyiqyQAP9AfARo4pF+aCGcyiQ94tX/Is2I7HofNRqoYLgN1PBoOWu2/zTA5zMxzP5EFutMtWtGAFRKUe961Q==}
-    dev: true
-
-  /@types/lru-cache@7.4.0:
-    resolution: {integrity: sha512-jZ/Tb2/3vXw4VYd9AImFC/n6XT3WywZNAxwY8Ox9eM87M9ta9G7KzCx4aKo2Zllvr02k40eY328cjOO3WuK5Kw==}
     dev: true
 
   /@types/luxon@3.3.0:
@@ -3140,6 +3133,11 @@ packages:
       ms: 2.1.3
       safe-stable-stringify: 2.4.3
       triple-beam: 1.3.0
+    dev: false
+
+  /lru-cache@10.0.0:
+    resolution: {integrity: sha512-svTf/fzsKHffP42sujkO/Rjs37BCIsQVRCeNYIm9WN8rgT7ffoUnRtZCqU+6BqcSBdv8gwJeTz8knJpgACeQMw==}
+    engines: {node: 14 || >=16.14}
     dev: false
 
   /lru-cache@6.0.0:
