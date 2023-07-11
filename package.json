@@ -23,7 +23,7 @@
 		"url": "https://github.com/WPAFC-zhwiki/ICG-Bot/issues"
 	},
 	"private": true,
-	"packageManager": "pnpm@8.6.6",
+	"packageManager": "pnpm@8.6.7",
 	"dependencies": {
 		"@sunafterrainwm/winston-format-remove-telegram-apitoken": "file:lib/winston-format-remove-telegram-apitoken",
 		"axios": "^1.4.0",
