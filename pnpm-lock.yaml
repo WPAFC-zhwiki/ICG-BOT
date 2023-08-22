@@ -155,8 +155,8 @@ devDependencies:
     specifier: ^2.4.0
     version: 2.4.0
   typegram:
-    specifier: ^4.1.1
-    version: 4.1.1
+    specifier: ^5.0.0
+    version: 5.0.0
   types-mediawiki:
     specifier: ^1.2.0
     version: 1.2.0
@@ -4427,6 +4427,11 @@ packages:
 
   /typegram@4.1.1:
     resolution: {integrity: sha512-4xR41CHqE2gKmbv1t1C4JM0MNtaQWo28Ez4c2dDAwdKL7BixDRxk0THmiWjJTGKAZdkaaD1I3tVMXRlbk9VJOw==}
+    dev: false
+
+  /typegram@5.0.0:
+    resolution: {integrity: sha512-6Z4klKmEsDKfN8dLEf8Buh6vZk1RMGUgOJscVSRXbM+RiiRgjeabc2NucR4e+RoQ1m3mwMjbi+Td+TbrQTWT+g==}
+    dev: true
 
   /types-mediawiki@1.2.0:
     resolution: {integrity: sha512-vJP1BS4Kc3Wq6aVGLZ0mNXl50UdovZfmzG4KSDtzvqYIybHC2PHa4W91/v2UaiLOK6IRrfifH/9/QsYVnQIRQQ==}

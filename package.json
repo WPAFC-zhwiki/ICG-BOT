@@ -76,7 +76,7 @@
 		"ts-node": "^10.9.1",
 		"tsconfig-paths": "^4.0.0",
 		"tslib": "^2.4.0",
-		"typegram": "^4.1.1",
+		"typegram": "^5.0.0",
 		"types-mediawiki": "^1.2.0"
 	},
 	"engines": {
