@@ -115,7 +115,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					timestamp: new Date(),
 					description: `未預料的錯誤：${ turndown( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。 #監視錯誤`,
+				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。 @sunafterrainwm #監視錯誤`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
 			}, 'debug' );
 		} else if ( !$parseHTML( '.afc-submission-pending' ).length && /已添加至分类/.exec( event.comment ) ) {
@@ -124,7 +124,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					timestamp: new Date(),
 					description: `未預料的錯誤：${ turndown( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。 #監視錯誤`,
+				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。 @sunafterrainwm #監視錯誤`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
 			}, 'debug' );
 		} else if ( $parseHTML( '.afc-submission-pending' ).length && /已从分类中移除/.exec( event.comment ) ) {
@@ -134,7 +134,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					timestamp: new Date(),
 					description: `未預料的錯誤：${ turndown( pageLink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pending.length }個等待審核的AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pageLink }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pending.length }個等待審核的AFC審核模板。 #監視錯誤`,
+				tMsg: `未預料的錯誤：${ pageLink }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pending.length }個等待審核的AFC審核模板。 @sunafterrainwm #監視錯誤`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pageLink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pending.length }個等待審核的AFC審核模板。`
 			}, 'debug' );
 		}
