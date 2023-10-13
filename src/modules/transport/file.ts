@@ -23,7 +23,7 @@ import { ConfigTS, version, repository } from '@app/config';
 import { Manager } from '@app/init';
 
 import { file as fileTS } from '@app/lib/handlers/Context';
-import { inspect } from '@app/lib/util';
+import { getFileNameFromUrl, inspect } from '@app/lib/util';
 
 import * as bridge from '@app/modules/transport/bridge';
 import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
@@ -48,12 +48,15 @@ const USERAGENT = `AFC-ICG-BOT/${ version } (${ repository.replace( /^git\+/, ''
 function generateFileName( url: string, name: string ): string {
 	let extName: string = path.extname( name || '' );
 	if ( extName === '' ) {
-		extName = path.extname( url || '' );
+		extName = path.extname( getFileNameFromUrl( url ) || '' );
 	}
-	// handle https://url/file.png?abc=123#456
-	extName = extName.split( /[?#]/ )[ 0 ];
 	if ( extName === '.webp' ) {
 		extName = '.png';
+	}
+	
+	// p4: reject .exe (complaint from the site admin)
+	if ( path.extname( name ) === '.exe' ) {
+		throw new Error( 'We wont upload .exe file' );
 	}
 	return crypto.createHash( 'md5' ).update( name || ( Math.random() ).toString() ).digest( 'hex' ) + extName;
 }
@@ -183,106 +186,104 @@ function createFormData( data: [ name: string, value: string | Blob, fileName?: 
  */
 function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], file: fileTS ) {
 	return new Promise<string>( function ( resolve, reject ) {
-		const requestOptions: Partial<AxiosRequestConfig<FormData>> = {
-			method: 'POST',
-			signal: createTimeoutAbortSignal( servemedia.timeout ?? 30000 ),
-			headers: {
-				'Content-Type': 'multipart/form-data'
-			},
-			responseType: 'text'
-		};
-
-		const name = generateFileName( file.url ?? file.path, file.id );
-
-		// p4: reject .exe (complaint from the site admin)
-		if ( path.extname( name ) === '.exe' ) {
-			reject( 'We wont upload .exe file' );
-			return;
-		}
-
-		const pendingFileStream = getFileStream( file );
-
-		const buf: unknown[] = [];
-		pendingFileStream
-			.on( 'data', function ( d: unknown ) {
-				return buf.push( d );
-			} )
-			.on( 'end', function () {
-				const pendingFile = new Blob( [ Buffer.concat( buf as Uint8Array[] ) ] );
-
-				switch ( host ) {
-					case 'vim-cn':
-						requestOptions.url = 'https://img.vim-cn.com/';
-						requestOptions.data = createFormData( [
-							[ 'name', pendingFile, name ]
-						] );
-						break;
-
-					case 'imgur':
-						if ( servemedia.imgur.apiUrl.endsWith( '/' ) ) {
-							requestOptions.url = servemedia.imgur.apiUrl + 'upload';
-						} else {
-							requestOptions.url = servemedia.imgur.apiUrl + '/upload';
-						}
-						requestOptions.headers = Object.assign( requestOptions.headers ?? {}, {
-							Authorization: `Client-ID ${ servemedia.imgur.clientId }`
-						} );
-						requestOptions.data = createFormData( [
-							[ 'type', 'file' ],
-							[ 'image', pendingFile, name ]
-						] );
-						break;
-
-					case 'uguu':
-						requestOptions.url = servemedia.uguuApiUrl; // 原配置文件以大写字母开头
-						requestOptions.data = createFormData( [
-							[ 'file', pendingFile, name ],
-							[ 'randomname', 'true' ]
-						] );
-						break;
-
-					default:
-						reject( new Error( 'Unknown host type' ) );
-						return;
-				}
-
-				axios.postForm<string, AxiosResponse<string>, AxiosRequestConfig<FormData>>(
-					requestOptions.url,
-					requestOptions
-				)
-					.then( function ( response ) {
-						if ( response.status === 200 ) {
-							switch ( host ) {
-								case 'vim-cn':
-									resolve( String( response.data ).trim().replace( 'http://', 'https://' ) );
-									break;
-								case 'uguu':
-									resolve( String( response.data ).trim() );
-									break;
-								case 'imgur':
-									// eslint-disable-next-line no-case-declarations
-									const json: {
-										success: boolean;
-										data: {
-											error?: string;
-											link?: string;
-										};
-									} = JSON.parse( response.data );
-
-									if ( json && !json.success ) {
-
-										reject( new Error( `Imgur return: ${ json.data.error ?? JSON.stringify( json ) }` ) );
-									} else {
-										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-										resolve( json.data.link! );
-									}
-									break;
+		try {
+			const requestOptions: Partial<AxiosRequestConfig<FormData>> = {
+				method: 'POST',
+				signal: createTimeoutAbortSignal( servemedia.timeout ?? 30000 ),
+				headers: {
+					'Content-Type': 'multipart/form-data'
+				},
+				responseType: 'text'
+			};
+	
+			const name = generateFileName( file.url ?? file.path, file.id );
+	
+			const pendingFileStream = getFileStream( file );
+	
+			const buf: unknown[] = [];
+			pendingFileStream
+				.on( 'data', function ( d: unknown ) {
+					return buf.push( d );
+				} )
+				.on( 'end', function () {
+					const pendingFile = new Blob( [ Buffer.concat( buf as Uint8Array[] ) ] );
+	
+					switch ( host ) {
+						case 'vim-cn':
+							requestOptions.url = 'https://img.vim-cn.com/';
+							requestOptions.data = createFormData( [
+								[ 'name', pendingFile, name ]
+							] );
+							break;
+	
+						case 'imgur':
+							if ( servemedia.imgur.apiUrl.endsWith( '/' ) ) {
+								requestOptions.url = servemedia.imgur.apiUrl + 'upload';
+							} else {
+								requestOptions.url = servemedia.imgur.apiUrl + '/upload';
 							}
-						} else {
-							reject( new Error( String( response.data ) ) );
-						}
-					} ).catch( reject );
-			} );
+							requestOptions.headers = Object.assign( requestOptions.headers ?? {}, {
+								Authorization: `Client-ID ${ servemedia.imgur.clientId }`
+							} );
+							requestOptions.data = createFormData( [
+								[ 'type', 'file' ],
+								[ 'image', pendingFile, name ]
+							] );
+							break;
+	
+						case 'uguu':
+							requestOptions.url = servemedia.uguuApiUrl; // 原配置文件以大写字母开头
+							requestOptions.data = createFormData( [
+								[ 'file', pendingFile, name ],
+								[ 'randomname', 'true' ]
+							] );
+							break;
+	
+						default:
+							reject( new Error( 'Unknown host type' ) );
+							return;
+					}
+	
+					axios.postForm<string, AxiosResponse<string>, AxiosRequestConfig<FormData>>(
+						requestOptions.url,
+						requestOptions
+					)
+						.then( function ( response ) {
+							if ( response.status === 200 ) {
+								switch ( host ) {
+									case 'vim-cn':
+										resolve( String( response.data ).trim().replace( 'http://', 'https://' ) );
+										break;
+									case 'uguu':
+										resolve( String( response.data ).trim() );
+										break;
+									case 'imgur':
+										// eslint-disable-next-line no-case-declarations
+										const json: {
+											success: boolean;
+											data: {
+												error?: string;
+												link?: string;
+											};
+										} = JSON.parse( response.data );
+	
+										if ( json && !json.success ) {
+	
+											reject( new Error( `Imgur return: ${ json.data.error ?? JSON.stringify( json ) }` ) );
+										} else {
+											// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+											resolve( json.data.link! );
+										}
+										break;
+								}
+							} else {
+								reject( new Error( String( response.data ) ) );
+							}
+						} ).catch( reject );
+				} );
+		} catch ( error ) {
+			reject( error );
+		}
 	} );
 }
 
@@ -291,26 +292,29 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
  */
 function uploadToLinx( file: fileTS ) {
 	return new Promise<string>( function ( resolve, reject ) {
-		const name = generateFileName( file.url ?? file.path, file.id );
+		try {
+			const name = generateFileName( file.url ?? file.path, file.id );
 
-		const fileStream = getFileStream( file );
-		axios.put( String( servemedia.linxApiUrl ) + name, fileStream, {
-			headers: {
-				'User-Agent': servemedia.userAgent ?? USERAGENT,
-				'Linx-Randomize': 'yes',
-				Accept: 'application/json'
-			},
-			responseType: 'text'
-		} ).then( function ( response ) {
-			if ( response.status === 200 ) {
-
-				resolve( JSON.parse( response.data as string ).direct_url as string );
-			} else {
-				reject( new Error( String( response.data ) ) );
-			}
-		} ).catch( function ( err ) {
-			reject( err );
-		} );
+			const fileStream = getFileStream( file );
+			axios.put( String( servemedia.linxApiUrl ) + name, fileStream, {
+				headers: {
+					'User-Agent': servemedia.userAgent ?? USERAGENT,
+					'Linx-Randomize': 'yes',
+					Accept: 'application/json'
+				},
+				responseType: 'text'
+			} ).then( function ( response ) {
+				if ( response.status === 200 ) {
+					resolve( JSON.parse( response.data as string ).direct_url as string );
+				} else {
+					reject( new Error( String( response.data ) ) );
+				}
+			} ).catch( function ( err ) {
+				reject( err );
+			} );
+		} catch ( error ) {
+			reject( error );
+		}
 	} );
 }
 

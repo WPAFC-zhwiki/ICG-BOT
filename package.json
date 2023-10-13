@@ -9,7 +9,7 @@
 	},
 	"scripts": {
 		"start": "grunt clean && node -r ts-node/register -r tsconfig-paths/register ./src/index.ts",
-		"test": "npm run lint && npm run build && npm build-start",
+		"test": "pnpm run lint && pnpm run build && pnpm run build-start",
 		"build": "grunt",
 		"build:no-relad": "grunt build:noReloadFlag",
 		"build-start": "grunt built && node bin/index",

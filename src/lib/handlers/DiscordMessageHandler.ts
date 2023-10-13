@@ -8,7 +8,7 @@ import { ConfigTS } from '@app/config';
 import extList from '@app/lib/extToMime';
 import { Context, ContextExtra as ContextExtra } from '@app/lib/handlers/Context';
 import { BaseEvents, MessageHandler } from '@app/lib/handlers/MessageHandler';
-import { inspect, getFriendlySize } from '@app/lib/util';
+import { inspect, getFriendlySize, getFileNameFromUrl } from '@app/lib/util';
 
 export interface DiscordEvents extends BaseEvents<Discord.Message> {
 	pin( info: {
@@ -120,10 +120,10 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 			if ( rawdata.attachments && rawdata.attachments.size ) {
 				extra.files = [];
 				for ( const [ , p ] of rawdata.attachments ) {
-					const type = ( extList.get( path.extname( p.url ) ) || 'unknown' ).split( '/' )[ 0 ];
+					const type = ( extList.get( path.extname( getFileNameFromUrl( p.url ) ) ) || 'unknown' ).split( '/' )[ 0 ];
 					extra.files.push( {
 						client: 'Discord',
-						type: ( extList.get( path.extname( p.url ) ) || 'unknown' ).split( '/' )[ 0 ],
+						type,
 						id: p.id,
 						size: p.size,
 						url: that.useProxyURL ? p.proxyURL : p.url

@@ -1,3 +1,4 @@
+import path = require( 'node:path' );
 import util = require( 'node:util' );
 
 export function getFriendlySize( size: number ): string {
@@ -28,4 +29,15 @@ export function inspect( object: unknown ) {
 		colors: false,
 		depth: 1
 	} );
+}
+
+export function getFileNameFromUrl( urlString: string ) {
+	let url: URL;
+	try {
+		url = new URL( urlString, 'https://localhost/' );
+	} catch {
+		// eslint-disable-next-line security/detect-unsafe-regex
+		return ( urlString.match( /^(?:.*[\\/])?([^\\/?#&]+)(?:[?#&].*)?$/ ) || [] )[ 1 ] || urlString;
+	}
+	return path.basename( url.pathname );
 }
