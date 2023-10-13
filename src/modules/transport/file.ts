@@ -46,11 +46,12 @@ const USERAGENT = `AFC-ICG-BOT/${ version } (${ repository.replace( /^git\+/, ''
  * @return {string} 新文件名
  */
 function generateFileName( url: string, name: string ): string {
-	// https://url/file.png?abc=123#456
-	let extName: string = path.extname( ( name || '' ).split( /[\?#]/ )[ 0 ] );
+	let extName: string = path.extname( name || '' );
 	if ( extName === '' ) {
 		extName = path.extname( url || '' );
 	}
+	// handle https://url/file.png?abc=123#456
+	extName = extName.split( /[?#]/ )[ 0 ];
 	if ( extName === '.webp' ) {
 		extName = '.png';
 	}
