@@ -53,7 +53,7 @@ function generateFileName( url: string, name: string ): string {
 	if ( extName === '.webp' ) {
 		extName = '.png';
 	}
-	
+
 	// p4: reject .exe (complaint from the site admin)
 	if ( path.extname( name ) === '.exe' ) {
 		throw new Error( 'We wont upload .exe file' );
@@ -195,11 +195,11 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
 				},
 				responseType: 'text'
 			};
-	
+
 			const name = generateFileName( file.url ?? file.path, file.id );
-	
+
 			const pendingFileStream = getFileStream( file );
-	
+
 			const buf: unknown[] = [];
 			pendingFileStream
 				.on( 'data', function ( d: unknown ) {
@@ -207,7 +207,7 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
 				} )
 				.on( 'end', function () {
 					const pendingFile = new Blob( [ Buffer.concat( buf as Uint8Array[] ) ] );
-	
+
 					switch ( host ) {
 						case 'vim-cn':
 							requestOptions.url = 'https://img.vim-cn.com/';
@@ -215,7 +215,7 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
 								[ 'name', pendingFile, name ]
 							] );
 							break;
-	
+
 						case 'imgur':
 							if ( servemedia.imgur.apiUrl.endsWith( '/' ) ) {
 								requestOptions.url = servemedia.imgur.apiUrl + 'upload';
@@ -230,7 +230,7 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
 								[ 'image', pendingFile, name ]
 							] );
 							break;
-	
+
 						case 'uguu':
 							requestOptions.url = servemedia.uguuApiUrl; // 原配置文件以大写字母开头
 							requestOptions.data = createFormData( [
@@ -238,12 +238,12 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
 								[ 'randomname', 'true' ]
 							] );
 							break;
-	
+
 						default:
 							reject( new Error( 'Unknown host type' ) );
 							return;
 					}
-	
+
 					axios.postForm<string, AxiosResponse<string>, AxiosRequestConfig<FormData>>(
 						requestOptions.url,
 						requestOptions
@@ -266,9 +266,9 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
 												link?: string;
 											};
 										} = JSON.parse( response.data );
-	
+
 										if ( json && !json.success ) {
-	
+
 											reject( new Error( `Imgur return: ${ json.data.error ?? JSON.stringify( json ) }` ) );
 										} else {
 											// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
