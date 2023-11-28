@@ -4,9 +4,7 @@ import Tls = require( 'node:tls' );
 
 import * as TT from '@telegraf/types';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import { cloneDeep as copyObject } from 'lodash';
 import { Telegraf, Context as TContext, Telegram } from 'telegraf';
-import { InputFile } from 'telegraf/typings/core/types/typegram';
 import { ExtraPhoto, ExtraReplyMessage } from 'telegraf/typings/telegram-types';
 import winston = require( 'winston' );
 
@@ -17,7 +15,8 @@ import { MessageHandler, Command, BaseEvents } from '@app/lib/handlers/MessageHa
 import { inspect, getFriendlySize, getFriendlyLocation } from '@app/lib/util';
 
 type FilterFunctionPropName<O extends object> = {
-	[K in keyof O]: O[K] extends (...args: any) => any ? K : never;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	[K in keyof O]: O[K] extends ( ...args: any ) => any ? K : never;
 }[keyof O];
 
 export type TelegramFallbackBots = 'Link Channel' | 'Group' | 'Channel' | false;
@@ -543,7 +542,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			that.#checkClientEnable();
 			// @ts-expect-error TS2322
 			return that._client.telegram[ method ]( ...args );
-		}
+		};
 	}
 
 	public say( target: string | number, message: string, options?: TelegramSendMessageOptions ): Promise<TT.Message> {
@@ -570,7 +569,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 	public sendDocument = TelegramMessageHandler.wrapApiFunction( this, 'sendDocument' );
 
-	#replyBuildTextAndOptions<E extends Record<string, unknown> = {}>(
+	#replyBuildTextAndOptions<E extends Record<string, unknown>>(
 		context: Context<TContext>,
 		message: string,
 		options?: Partial<E> & TelegramSendMessageOptions<ExtraReplyMessage>
