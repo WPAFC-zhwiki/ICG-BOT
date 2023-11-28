@@ -2,11 +2,12 @@ import fs = require( 'node:fs' );
 import https = require( 'node:https' );
 import Tls = require( 'node:tls' );
 
+import * as TT from '@telegraf/types';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { cloneDeep as copyObject } from 'lodash';
 import { Telegraf, Context as TContext, Telegram } from 'telegraf';
+import { InputFile } from 'telegraf/typings/core/types/typegram';
 import { ExtraPhoto, ExtraReplyMessage } from 'telegraf/typings/telegram-types';
-import * as TT from 'typegram';
 import winston = require( 'winston' );
 
 import { ConfigTS } from '@app/config';
@@ -14,6 +15,10 @@ import { ConfigTS } from '@app/config';
 import { Context } from '@app/lib/handlers/Context';
 import { MessageHandler, Command, BaseEvents } from '@app/lib/handlers/MessageHandler';
 import { inspect, getFriendlySize, getFriendlyLocation } from '@app/lib/util';
+
+type FilterFunctionPropName<O extends object> = {
+	[K in keyof O]: O[K] extends (...args: any) => any ? K : never;
+}[keyof O];
 
 export type TelegramFallbackBots = 'Link Channel' | 'Group' | 'Channel' | false;
 
@@ -51,7 +56,7 @@ export interface TelegramEvents extends BaseEvents<TContext> {
 	groupChannelRichMessage( channel: TT.Chat.ChannelChat, context: Context<TContext> ): void;
 }
 
-export interface TelegramSendMessageOptions extends ExtraReplyMessage {
+export type TelegramSendMessageOptions<E extends ExtraPhoto | ExtraReplyMessage = ExtraReplyMessage> = E & {
 	withNick?: boolean
 }
 
@@ -234,7 +239,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 				}
 
 				if ( 'reply_to_message' in ctx.message ) {
-					const reply: TT.ReplyMessage = ctx.message.reply_to_message;
+					const reply: TT.Message = ctx.message.reply_to_message;
 					context.extra.reply = {
 						nick: that.#getNick( reply.from ),
 						username: reply.from.username,
@@ -247,6 +252,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					if (
 						reply.from.id === 777000 &&
 						'forward_from_chat' in reply &&
+						reply.forward_from_chat &&
 						reply.forward_from_chat.type === 'channel'
 					) {
 						context.extra.reply.nick = `Channel ${ reply.forward_from_chat.title }`;
@@ -523,59 +529,62 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		this._client.inlineQuery( ...args );
 	}
 
-	async #say( method: string, target: string | number,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		message: any, options?: TelegramSendMessageOptions ): Promise<any> {
+	#checkClientEnable(): void | never {
 		if ( !this._enabled ) {
 			throw new Error( 'Handler not enabled' );
-		} else {
-			return await this._client.telegram[ method ]( target, message, options );
+		}
+	}
+
+	private static wrapApiFunction<M extends FilterFunctionPropName<Telegram>>(
+		that: TelegramMessageHandler,
+		method: M
+	) {
+		return ( ...args: Parameters<Telegram[ M ]> ): ReturnType<Telegram[ M ]> => {
+			that.#checkClientEnable();
+			// @ts-expect-error TS2322
+			return that._client.telegram[ method ]( ...args );
 		}
 	}
 
 	public say( target: string | number, message: string, options?: TelegramSendMessageOptions ): Promise<TT.Message> {
-		return this.#say( 'sendMessage', target, message, options );
+		this.#checkClientEnable();
+		return this._client.telegram.sendMessage( target, message, options );
 	}
 
-	public sayWithHTML( target: string | number, message: string,
-		options?: TelegramSendMessageOptions ): Promise<TT.Message> {
-		const options2: TelegramSendMessageOptions = copyObject( options || {} );
-		options2.parse_mode = 'HTML';
-		return this.say( target, message, options2 );
+	public sayWithHTML(
+		target: string | number,
+		message: string,
+		options?: TelegramSendMessageOptions
+	): Promise<TT.Message> {
+		options.parse_mode = 'HTML';
+		return this.say( target, message, options );
 	}
 
-	public sendPhoto( ...args: Parameters<Telegram[ 'sendPhoto' ]> ): Promise<TT.Message.PhotoMessage> {
-		return this._client.telegram.sendPhoto( ...args );
-	}
+	public sendPhoto = TelegramMessageHandler.wrapApiFunction( this, 'sendPhoto' );
 
-	public sendAudio( ...args: Parameters<Telegram[ 'sendAudio' ]> ): Promise<TT.Message.AudioMessage> {
-		return this._client.telegram.sendAudio( ...args );
-	}
-	public sendVideo( ...args: Parameters<Telegram[ 'sendVideo' ]> ): Promise<TT.Message.VideoMessage> {
-		return this._client.telegram.sendVideo( ...args );
-	}
+	public sendAudio = TelegramMessageHandler.wrapApiFunction( this, 'sendAudio' );
 
-	public sendAnimation( ...args: Parameters<Telegram[ 'sendAnimation' ]> ): Promise<TT.Message.AnimationMessage> {
-		return this._client.telegram.sendAnimation( ...args );
-	}
+	public sendVideo = TelegramMessageHandler.wrapApiFunction( this, 'sendVideo' );
 
-	public sendDocument( ...args: Parameters<Telegram[ 'sendDocument' ]> ): Promise<TT.Message.DocumentMessage> {
-		return this._client.telegram.sendDocument( ...args );
-	}
+	public sendAnimation = TelegramMessageHandler.wrapApiFunction( this, 'sendAnimation' );
 
-	async #reply( method: string, context: Context<TContext>,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		message: any, options?: TelegramSendMessageOptions ): Promise<any> {
+	public sendDocument = TelegramMessageHandler.wrapApiFunction( this, 'sendDocument' );
+
+	#replyBuildTextAndOptions<E extends Record<string, unknown> = {}>(
+		context: Context<TContext>,
+		message: string,
+		options?: Partial<E> & TelegramSendMessageOptions<ExtraReplyMessage>
+	) : [ text: string, options: Partial<E> & TelegramSendMessageOptions<ExtraReplyMessage> ] | never {
+		options = options || {};
 		if ( ( context._rawdata && context._rawdata.message ) ) {
 			if ( context.isPrivate ) {
-				return await this.#say( method, context.to, message, options );
+				return [ String( message ), options ];
 			} else {
-				const options2: TelegramSendMessageOptions = copyObject( options || {} );
-				options2.reply_to_message_id = context._rawdata.message.message_id;
-				if ( options2.withNick ) {
-					return await this.#say( method, context.to, `${ context.nick }: ${ message }`, options2 );
+				options.reply_to_message_id = context._rawdata.message.message_id;
+				if ( options.withNick ) {
+					return [ String( `${ context.nick }: ${ message }` ), options ];
 				} else {
-					return await this.#say( method, context.to, `${ message }`, options2 );
+					return [ String( message ), options ];
 				}
 			}
 		} else {
@@ -583,14 +592,13 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		}
 	}
 
-	public reply( context: Context<TContext>,
-		message: string, options?: ExtraReplyMessage ): Promise<TT.Message> {
-		return this.#reply( 'sendMessage', context, message, options );
-	}
-
-	public replyWithPhoto( context: Context<TContext>,
-		photo: TT.InputFile, options?: ExtraPhoto ): Promise<TT.Message.PhotoMessage> {
-		return this.#reply( 'sendPhoto', context, photo, options );
+	public reply(
+		context: Context<TContext>,
+		message: string,
+		options?: ExtraReplyMessage
+	): Promise<TT.Message> {
+		[ message, options ] = this.#replyBuildTextAndOptions( context, message, options );
+		return this.say( context.to, message, options );
 	}
 
 	public getChatAdministrators( group: string | number ): Promise<TT.ChatMember[]> {

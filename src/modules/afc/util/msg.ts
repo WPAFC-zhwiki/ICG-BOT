@@ -1,7 +1,7 @@
+import { Message as TMessage } from '@telegraf/types';
 import cheerio = require( 'cheerio' );
 import { Message as DMessage, EmbedBuilder as DMessageEmbed, MessageEditOptions as DMessageEditOptions } from 'discord.js';
 import mIrc = require( 'irc-upd' );
-import { Message as TMessage } from 'typegram';
 import winston = require( 'winston' );
 
 import { Manager } from '@app/init';
