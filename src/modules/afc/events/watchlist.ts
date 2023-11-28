@@ -268,16 +268,16 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			}
 			if ( warning.length ) {
 				if ( warning.length === 1 ) {
-					tMsg += '\n<b>警告：</b>' + warning[ 0 ];
+					tMsg += '\n<b>警告：</b>' + warning[ 0 ] + ' @sunafterrainwm';
 					dMsg.setFooter( {
 						text: '警告：' + warning[ 0 ]
 					} );
 				} else {
-					tMsg += '\n<b>警告：</b>\n' + warning.map( function ( x ) {
+					tMsg += '\n<b>警告：</b> @sunafterrainwm\n' + warning.map( function ( x ) {
 						return `• ${ x }`;
 					} ).join( '\n' );
 					dMsg.setFooter( {
-						text: '警告：' + warning.map( function ( x ) {
+						text: '警告：\n' + warning.map( function ( x ) {
 							return `• ${ x }`;
 						} ).join( '\n' )
 					} );
