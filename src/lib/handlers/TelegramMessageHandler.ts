@@ -555,6 +555,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		message: string,
 		options?: TelegramSendMessageOptions
 	): Promise<TT.Message> {
+		options = options || {};
 		options.parse_mode = 'HTML';
 		return this.say( target, message, options );
 	}
