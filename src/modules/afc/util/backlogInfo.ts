@@ -21,12 +21,12 @@ export async function getBacklogInfo(): Promise<{
 	tMsg: string;
 	iMsg: string;
 }> {
-	let list: ApiPageInfo[] = await new mwbot.category( 'Category:正在等待審核的草稿' ).members();
+	let list: ApiPageInfo[] = await new mwbot.Category( 'Category:正在等待審核的草稿' ).members();
 	list = list.filter( function ( x ) {
 		return [ 0, 2, 118 ].includes( x.ns );
 	} ).sort();
 	const cnt = list.length;
-	await new mwbot.page( 'Template:AFC_status/level' ).purge();
+	await new mwbot.Page( 'Template:AFC_status/level' ).purge();
 	const html = await mwbot.parseTitle( 'Template:AFC_status/level' );
 	const $rawLvl = $( $.parseHTML( html ) );
 	const lvl = parseInt( $rawLvl.find( 'p' ).text(), 10 );

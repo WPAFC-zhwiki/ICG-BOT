@@ -29,7 +29,7 @@ setCommand( [ 'autoreview', 'autoreviewp' ], async function ( args, reply ) {
 	}
 
 	try {
-		title = new mwbot.title( title ).getPrefixedText();
+		title = new mwbot.Title( title ).getPrefixedText();
 	} catch ( e ) {
 		reply( {
 			tMsg: '標題不合法。',

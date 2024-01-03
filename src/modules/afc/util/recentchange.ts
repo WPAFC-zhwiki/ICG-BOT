@@ -203,7 +203,7 @@ class RecentChanges {
 		}
 
 		if ( filter.since ) {
-			this._filter.rcstart = new mwbot.date( filter.since ).toISOString();
+			this._filter.rcstart = new mwbot.Date( filter.since ).toISOString();
 		} else {
 			delete this._filter.rcstart;
 		}
@@ -253,7 +253,7 @@ class RecentChanges {
 
 	private async _request(): Promise<void> {
 		try {
-			mwbot.title.checkData();
+			mwbot.Title.checkData();
 		} catch ( e ) {
 			await mwbot.getSiteInfo();
 		}

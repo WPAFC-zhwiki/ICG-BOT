@@ -124,7 +124,7 @@ export class AFCPage {
 	private categories: Record<string, string | false>;
 
 	private constructor( title: string | MwnTitle ) {
-		this._page = new mwbot.page( title );
+		this._page = new mwbot.Page( title );
 	}
 
 	public toString() {
