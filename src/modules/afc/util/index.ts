@@ -1,5 +1,5 @@
 import cheerio = require( 'cheerio' );
-import { mwn } from 'mwn';
+import { Mwn } from 'mwn';
 import TurndownService from 'turndown';
 import winston = require( 'winston' );
 
@@ -41,7 +41,7 @@ export function decodeURI( encodedURI: string ): string {
 
 export const $ = cheerio.load( '' );
 
-export const mwbot = ( function (): mwn {
+export const mwbot = ( function (): Mwn {
 	const mwnconfig = Manager.config.afc.mwn;
 
 	if ( mwnconfig.userAgent.length === 0 ) {
@@ -49,7 +49,7 @@ export const mwbot = ( function (): mwn {
 	}
 
 	// eslint-disable-next-line no-shadow
-	const mwbot: mwn = new mwn( {
+	const mwbot: Mwn = new Mwn( {
 		...mwnconfig,
 		silent: true
 	} );

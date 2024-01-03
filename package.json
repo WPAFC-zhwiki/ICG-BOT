@@ -42,7 +42,7 @@
 		"lru-cache": "^10.0.0",
 		"mime-db": "^1.52.0",
 		"module-alias": "^2.2.2",
-		"mwn": "^1.11.4",
+		"mwn": "^2.0.0",
 		"node-fetch": "^2.6.7",
 		"remove-excessive-newline": "^1.0.0",
 		"safe-regex": "^2.1.1",
