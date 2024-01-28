@@ -38,7 +38,7 @@
 		"https-proxy-agent": "^7.0.0",
 		"irc-colors": "~1.5.0",
 		"irc-upd": "~0.11.0",
-		"json-diff-ts": "^2.2.1",
+		"json-diff-ts": "github:sunafterrainwm/json-diff-ts#v2.2.1-cjs-build",
 		"lodash": "^4.17.21",
 		"lru-cache": "^10.0.0",
 		"mime-db": "^1.52.0",
