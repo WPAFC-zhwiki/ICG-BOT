@@ -156,6 +156,7 @@ export function registerEvent( name: string, disableDuplicateWarn = false ): voi
 	}
 	registeredEvents.push( name );
 }
+
 export function send( msg: {
 	dMsg?: DiscordSendMessage | DMessageEmbed;
 	tMsg?: string;
