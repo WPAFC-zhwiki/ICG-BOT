@@ -1,4 +1,5 @@
 import cheerio = require( 'cheerio' );
+import removeExcessiveNewline = require( 'remove-excessive-newline' );
 
 import { $, mwbot } from '@app/modules/afc/util/index';
 
@@ -49,7 +50,7 @@ export function filterLongerOutputWikitext( wt: string ) {
 		.replace( /(<\/(math|chem)\b([^>]*)>)/gi, '$1</nowiki>' );
 }
 
-export function cleanToTelegramHtml( rawHtml: string, baseUrl = 'https://zh.wikipedia.org/wiki/' ) {
+export function cleanToTelegramHTML( rawHtml: string, baseUrl = 'https://zh.wikipedia.org/wiki/' ) {
 	const replaceMap: {
 		selector: string;
 		doReplace( element: cheerio.Element ): string;
@@ -91,15 +92,17 @@ export function cleanToTelegramHtml( rawHtml: string, baseUrl = 'https://zh.wiki
 		} );
 	}
 
-	return $parse.text()
-		.split( '\n' )
-		.map( ( v ) => !v.trim() ? '' : v.trimEnd() )
-		.join( '\n' )
-		.replace( /\n{3,}/g, '\n\n' );
+	return removeExcessiveNewline(
+		$parse.text()
+			.split( '\n' )
+			.map( ( v ) => !v.trim() ? '' : v.trimEnd() )
+			.join( '\n' ),
+		1
+	);
 }
 
 export async function wikitextParseAndClean( wikitext:string, title: string, baseUrl = 'https://zh.wikipedia.org/wiki/' ) {
-	return cleanToTelegramHtml(
+	return cleanToTelegramHTML(
 		await mwbot.parseWikitext( filterLongerOutputWikitext( wikitext ), {
 			title,
 			disablelimitreport: true,

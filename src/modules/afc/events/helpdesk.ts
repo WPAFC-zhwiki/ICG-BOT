@@ -4,16 +4,16 @@ import type AP from 'types-mediawiki/api_params';
 import winston = require( 'winston' );
 
 import {
-	$, encodeURI, htmlToIRC, makeHTMLLink,
+	$, encodeURI, HTMLNoNeedEscape, htmlToIRC, makeHTMLLink,
 	mwbot, recentChange, RecentChangeEvent,
 	registerEvent, send, turndown, wikitextParseAndClean
 } from '@app/modules/afc/util';
 
-function htmllink( title: string, text?: string ) {
+function makeHTMLWikiLink( title: string, text?: string | HTMLNoNeedEscape ) {
 	return String( makeHTMLLink( `https://zh.wikipedia.org/wiki/${ title }`, text || title ) );
 }
 
-function mdlink( title: string, text?: string ) {
+function makeMarkdownWikiLink( title: string, text?: string ) {
 	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
@@ -57,7 +57,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		title: '詢問桌有新留言！',
 		color: Discord.Colors.Blue,
 		url: `https://zh.wikipedia.org/wiki/${ diff }`,
-		description: `留言者：${ mdlink( `User:${ event.user }`, event.user ) }`,
+		description: `留言者：${ makeMarkdownWikiLink( `User:${ event.user }`, event.user ) }`,
 		fields: [ {
 			name: '留言內容',
 			value: parseMarkDown.length > 1024 ? parseMarkDown.slice( 0, 1021 ) + '...' : parseMarkDown
@@ -65,8 +65,8 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		timestamp: new Date( event.timestamp ).getTime()
 	} );
 
-	let tMsg = `${ htmllink( diff, '<b>詢問桌有新留言！</b>' ) }
-留言者：${ htmllink( `User:${ event.user }`, event.user ) }
+	let tMsg = `${ makeHTMLWikiLink( diff, new HTMLNoNeedEscape( '<b>詢問桌有新留言！</b>' ) ) }
+留言者：${ makeHTMLWikiLink( `User:${ event.user }`, event.user ) }
 留言內容：
 ${ ( parsedHTML.length > 2048 ? parsedHTML.slice( 0, 2045 ) + '...' : parsedHTML ) }`;
 
