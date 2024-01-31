@@ -77,17 +77,19 @@ export function cleanToTelegramHtml( rawHtml: string, baseUrl = 'https://zh.wiki
 	];
 
 	const $parse = cheerio.load( rawHtml, {}, false );
+
+	$parse( [
+		'script',
+		'style',
+		'.mw-editsection',
+		'[class^=ext-discussiontools-init-]:not(.ext-discussiontools-init-section, .ext-discussiontools-init-timestamplink)'
+	].join( ', ' ) ).remove();
+
 	for ( const item of replaceMap ) {
 		$parse( item.selector ).text( function () {
 			return item.doReplace( <cheerio.Element>( this ) );
 		} );
 	}
-
-	$parse( [
-		'script',
-		'style',
-		'[class^=ext-discussiontools-init-]:not(.ext-discussiontools-init-section, .ext-discussiontools-init-timestamplink)'
-	].join( ', ' ) ).remove();
 
 	return $parse.text()
 		.split( '\n' )
@@ -99,7 +101,10 @@ export function cleanToTelegramHtml( rawHtml: string, baseUrl = 'https://zh.wiki
 export async function wikitextParseAndClean( wikitext:string, title: string, baseUrl = 'https://zh.wikipedia.org/wiki/' ) {
 	return cleanToTelegramHtml(
 		await mwbot.parseWikitext( filterLongerOutputWikitext( wikitext ), {
-			title
+			title,
+			disablelimitreport: true,
+			disableeditsection: true,
+			disabletoc: true
 		} ),
 		baseUrl
 	);
