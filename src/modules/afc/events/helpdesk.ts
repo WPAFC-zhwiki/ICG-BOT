@@ -43,14 +43,14 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		diffText += $( ele ).text() + '\n';
 	} );
 
-	const parseHtml = await wikitextParseAndClean(
+	const parsedHTML = await wikitextParseAndClean(
 		diffText,
 		'WikiProject:建立條目/詢問桌',
-		'https://zh.wikipedia.org/WikiProject:建立條目/詢問桌'
+		'https://zh.wikipedia.org/wiki/WikiProject:建立條目/詢問桌'
 	);
-	const parseMarkDown = turndown( parseHtml );
+	const parseMarkDown = turndown( parsedHTML );
 
-	winston.debug( `[afc/events/helpdesk] comment: ${ event.comment }, diff: ${ event.old_revid } -> ${ event.revid }, user: ${ event.user }, title: ${ event.title }, new: ${ parseHtml }` );
+	winston.debug( `[afc/events/helpdesk] comment: ${ event.comment }, diff: ${ event.old_revid } -> ${ event.revid }, user: ${ event.user }, title: ${ event.title }, new: ${ parsedHTML }` );
 
 	const diff = `Special:Diff/${ event.old_revid }/${ event.revid }`;
 	const dMsg = new Discord.EmbedBuilder( {
@@ -68,7 +68,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	let tMsg = `${ htmllink( diff, '<b>詢問桌有新留言！</b>' ) }
 留言者：${ htmllink( `User:${ event.user }`, event.user ) }
 留言內容：
-${ ( parseHtml.length > 2048 ? parseHtml.slice( 0, 2045 ) + '...' : parseHtml ) }`;
+${ ( parsedHTML.length > 2048 ? parsedHTML.slice( 0, 2045 ) + '...' : parsedHTML ) }`;
 
 	const iMsg = htmlToIRC( tMsg );
 

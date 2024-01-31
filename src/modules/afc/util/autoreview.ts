@@ -43,9 +43,9 @@ export async function autoReview(
 
 	const wikitext: string = page.text;
 
-	const $parseHTML = await page.parseToHTML();
+	const $parsedHTML = await page.parseToHTML();
 
-	if ( $parseHTML( '.afc-submission-ignore-content' ).length ) {
+	if ( $parsedHTML( '.afc-submission-ignore-content' ).length ) {
 		return {
 			warning,
 			issues: [ 'afc-test' ]
@@ -81,7 +81,7 @@ export async function autoReview(
 	}
 
 	let title = page.mwnPage.getMainText();
-	if ( $parseHTML( '.afc-submission' ).length ) {
+	if ( $parsedHTML( '.afc-submission' ).length ) {
 
 		if ( title === user ) {
 			issues.push( 'same-name' );
@@ -115,11 +115,11 @@ export async function autoReview(
 		}
 	}
 
-	if ( /AFC.*(?:[测測]試|沙盒)/i.exec( title ) || $parseHTML( '.afc-submission-only-test' ).length ) {
+	if ( /AFC.*(?:[测測]試|沙盒)/i.exec( title ) || $parsedHTML( '.afc-submission-only-test' ).length ) {
 		issues.push( 'afc-test' );
 	}
 
-	if ( $parseHTML( '#disambigbox' ).length ) {
+	if ( $parsedHTML( '#disambigbox' ).length ) {
 		warning.push( '本頁為消歧義頁，審閱結果可能不準確。' );
 	}
 

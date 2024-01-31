@@ -83,7 +83,12 @@ export function cleanToTelegramHtml( rawHtml: string, baseUrl = 'https://zh.wiki
 		} );
 	}
 
-	$parse( 'script, style' ).remove();
+	$parse( [
+		'script',
+		'style',
+		'[class^=ext-discussiontools-init-]:not(.ext-discussiontools-init-section, .ext-discussiontools-init-timestamplink)'
+	].join( ', ' ) ).remove();
+
 	return $parse.text()
 		.split( '\n' )
 		.map( ( v ) => !v.trim() ? '' : v.trimEnd() )
