@@ -12,11 +12,8 @@ import { parseUID, getUIDFromContext, addCommand, getUIDFromHandler } from '@app
 import { inspect } from '@app/lib/util';
 
 import { $, decodeURI } from '@app/modules/afc/util/index';
+import { HTMLNoNeedEscape, tEscapeHTML } from '@app/modules/afc/util/telegram-html';
 import * as moduleTransport from '@app/modules/transport';
-
-export function htmlEscape( str: string ) {
-	return $( '<div>' ).text( str ).html();
-}
 
 export function htmlToIRC( text: string ): string {
 	const $ele = cheerio.load( text );
@@ -25,7 +22,7 @@ export function htmlToIRC( text: string ): string {
 		const $a = $( a );
 		const href = decodeURI( $a.attr( 'href' ) ).replace( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
 
-		$a.html( ` ${ $a.html() } &lt;${ htmlEscape( href ) }&gt;` );
+		$a.html( tEscapeHTML` ${ new HTMLNoNeedEscape( $a.html() ) } &lt;${ href }&gt;` );
 	} );
 
 	$ele( 'b' ).each( function ( _i, b ): void {

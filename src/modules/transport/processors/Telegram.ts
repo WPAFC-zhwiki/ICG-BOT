@@ -1,6 +1,5 @@
 import path = require( 'node:path' );
 
-import cheerio = require( 'cheerio' );
 import format = require( 'string-format' );
 import { Context as TContext } from 'telegraf';
 import winston = require( 'winston' );
@@ -16,8 +15,11 @@ import { inspect } from '@app/lib/util';
 import * as bridge from '@app/modules/transport/bridge';
 import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
 
-function htmlEscape( str: string ): string {
-	return cheerio.load( '' )( '<div>' ).text( str ).html();
+function escapeHTML( str: string ): string {
+	return str
+		.replace( /&/g, '&amp;' )
+		.replace( /</g, '&lt;' )
+		.replace( />/g, '&gt;' );
 }
 
 function truncate( str: string, maxLen = 20 ) {
@@ -215,14 +217,14 @@ if ( config.options.Telegram.forwardChannels ) {
 export default async function ( msg: BridgeMsg ): Promise<void> {
 	// 元信息，用于自定义样式
 	const meta: Record<string, string> = {
-		nick: `<b>${ htmlEscape( msg.nick ) }</b>`,
-		from: htmlEscape( msg.from ),
-		to: htmlEscape( msg.to ),
-		text: htmlEscape( msg.text ),
-		client_short: htmlEscape( msg.extra.clientName.shortname ),
-		client_full: htmlEscape( msg.extra.clientName.fullname ),
-		command: htmlEscape( msg.command ),
-		param: htmlEscape( msg.param )
+		nick: `<b>${ escapeHTML( msg.nick ) }</b>`,
+		from: escapeHTML( msg.from ),
+		to: escapeHTML( msg.to ),
+		text: escapeHTML( msg.text ),
+		client_short: escapeHTML( msg.extra.clientName.shortname ),
+		client_full: escapeHTML( msg.extra.clientName.fullname ),
+		command: escapeHTML( msg.command ),
+		param: escapeHTML( msg.param )
 	};
 	if ( msg.extra.reply ) {
 		const reply = msg.extra.reply;
@@ -239,7 +241,7 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 		meta.forward_user = msg.extra.forward.username;
 	}
 
-	const template: string = htmlEscape( bridge.getMessageStyle( msg ) );
+	const template: string = escapeHTML( bridge.getMessageStyle( msg ) );
 	const output: string = format( template, meta );
 	const to: string = BridgeMsg.parseUID( msg.to_uid ).id;
 	const newRawMsg = await tgHandler.sayWithHTML( to, output );

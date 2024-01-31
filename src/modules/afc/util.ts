@@ -3,5 +3,6 @@ export * from '@app/modules/afc/util/msg';
 export * from '@app/modules/afc/util/autoreview';
 export * from '@app/modules/afc/util/backlogInfo';
 export * from '@app/modules/afc/util/AFCPage';
+export * from '@app/modules/afc/util/telegram-html';
 export * from '@app/modules/afc/util/reviewer';
 export * from '@app/modules/afc/util/recentchange';
