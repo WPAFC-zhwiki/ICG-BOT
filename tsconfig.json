@@ -7,6 +7,7 @@
 		"importHelpers": true,
 		"noImplicitAny": false,
 		"incremental": true,
+		"tsBuildInfoFile": "./.cache/.tsbuildinfo",
 		"module": "CommonJS",
 		"moduleResolution": "node",
 		"outDir": "./build",
