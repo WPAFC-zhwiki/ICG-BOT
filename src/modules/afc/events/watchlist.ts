@@ -17,11 +17,54 @@ function getReason( $e: cheerio.Cheerio<cheerio.Element>, title: string ) {
 		$a.text( `<a href="${ url.href }">${ $a.text() }</a>` );
 	} );
 
+	if ( $e.hasClass( 'afc-submission-rejectreasonsheet' ) ) {
+		return getReasonFromRejectReasonSheet( $e );
+	} else if ( $e.children().length > 1 && $e.children().length === $e.children( 'table, hr' ).length ) {
+		const reasons = [];
+		for ( const ee of $e.children() ) {
+			reasons.push( getReasonFromSingleItem( $( ee ) ) );
+		}
+		return reasons;
+	} else {
+		return getReasonFromSingleItem( $e );
+	}
+}
+const RejectReasonSheetTypeMapString = {
+	SeriousReject: '嚴重阻止條目審核通過',
+	Reject: '阻止條目審核通過',
+	PossibleReject: '可能影響條目審核通過',
+	FixNeeded: '建議修正'
+};
+function getReasonFromRejectReasonSheet( $e: cheerio.Cheerio<cheerio.Element> ) {
+	const outputs: string[] = [];
+	for ( const item of $e.find( 'afc-submission-rejectreasonsheet-item' ) ) {
+		const $item = $( item );
+		const singleOutputs: string[] = [];
+		for ( const [ classSuffix, value ] of Object.entries( RejectReasonSheetTypeMapString ) ) {
+			if ( $item.hasClass( `afc-submission-rejectreasonsheet-${ classSuffix.toLowerCase() }` ) ) {
+				singleOutputs.push( `以下項目${ value }：` );
+				break;
+			}
+		}
+		if ( !singleOutputs.length ) {
+			singleOutputs.push( `${ $item.children( 'span' ).text().trim() || '（未知拒絕理由）' }：` ); // fallback
+		}
+		for ( const li of $item.children( 'ul' ).children( 'li' ) ) {
+			singleOutputs.push( ...getReasonFromSingleItem( $( li ) ) );
+		}
+		outputs.push( singleOutputs.join( '\n  • ' ) );
+	}
+	return outputs;
+}
+function getReasonFromSingleItem( $e: cheerio.Cheerio<cheerio.Element> ) {
 	$e.find( '.hide-when-compact, .date-container, .mbox-image a, hr' ).remove();
 
 	const $ambox = $e.find( 'table.ambox' ).remove();
 
-	let text = $e.text().trim() + ( $ambox ? '\r• ' + $ambox.find( '.mbox-text-span' ).text().trim().split( /。/g ).join( '。\r• ' ) : '' );
+	let text = $e.text().trim();
+	if ( $ambox.length ) {
+		text += $ambox.find( '.mbox-text-span' ).text().trim().split( /。/g ).join( '。\r• ' );
+	}
 	const $li = $e.find( 'li' );
 
 	if ( $li ) {
@@ -308,23 +351,14 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			dMsg.setDescription( turndown( `<b>${ tMsg }</b>` ) );
 
 			const $reasonBox = $submissionBox.find( '.afc-submission-reason-box' );
-			let reasons: string[] = [];
-			if ( $reasonBox.children().length ) {
+			const $reasonItems = $reasonBox.children( '.afc-submission-reason-item' );
+			const reasons: string[] = [];
+			if ( $reasonItems.length ) {
 				dMsg.setDescription( turndown( tMsg ) );
 
-				$reasonBox.children().each( function ( _i, $e ) {
-					if ( $( $e ).children().length > 1 && $( $e ).children().length === $( $e ).children( 'table, hr' ).length ) {
-						$( $e ).children().each( function ( _ei, $ee ) {
-							const res = getReason( $( $ee ), title );
-
-							reasons = Array.prototype.concat( reasons, res );
-						} );
-					} else {
-						const res = getReason( $( $e ), title );
-
-						reasons = Array.prototype.concat( reasons, res );
-					}
-				} );
+				for ( const item of $reasonItems ) {
+					reasons.push( ...getReason( $( item ), title ) );
+				}
 			}
 
 			winston.debug( `[afc/events/watchlist] comment: ${ event.comment }, user: ${ user }, title: ${ title }, creator: ${ creator }, submituser: ${ submitUser }, action: ${ $submissionBox.hasClass( 'afc-submission-rejected' ) ? 'rejected' : 'declined' }, reasons: ${ JSON.stringify( reasons ) }` );
