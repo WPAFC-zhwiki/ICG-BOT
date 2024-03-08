@@ -18,7 +18,7 @@ function getReason( $e: cheerio.Cheerio<cheerio.Element>, title: string ) {
 	} );
 
 	const $children = $e.children();
-	if ( $children.length === 1 && $children.hasClass( '.afc-submission-rejectreasonsheet' ) ) {
+	if ( $children.length === 1 && $children.hasClass( 'afc-submission-rejectreasonsheet' ) ) {
 		return getReasonFromRejectReasonSheet( $children );
 	} else if ( $children.length > 1 && $children.length === $children.filter( 'table, hr' ).length ) {
 		const reasons = [];
