@@ -17,11 +17,12 @@ function getReason( $e: cheerio.Cheerio<cheerio.Element>, title: string ) {
 		$a.text( `<a href="${ url.href }">${ $a.text() }</a>` );
 	} );
 
-	if ( $e.hasClass( 'afc-submission-rejectreasonsheet' ) ) {
-		return getReasonFromRejectReasonSheet( $e );
-	} else if ( $e.children().length > 1 && $e.children().length === $e.children( 'table, hr' ).length ) {
+	const $children = $e.children();
+	if ( $children.length === 1 && $children.hasClass( '.afc-submission-rejectreasonsheet' ) ) {
+		return getReasonFromRejectReasonSheet( $children );
+	} else if ( $children.length > 1 && $children.length === $children.filter( 'table, hr' ).length ) {
 		const reasons = [];
-		for ( const ee of $e.children() ) {
+		for ( const ee of $children ) {
 			reasons.push( getReasonFromSingleItem( $( ee ) ) );
 		}
 		return reasons;
@@ -37,7 +38,7 @@ const RejectReasonSheetTypeMapString = {
 };
 function getReasonFromRejectReasonSheet( $e: cheerio.Cheerio<cheerio.Element> ) {
 	const outputs: string[] = [];
-	for ( const item of $e.find( 'afc-submission-rejectreasonsheet-item' ) ) {
+	for ( const item of $e.children( 'afc-submission-rejectreasonsheet-item' ) ) {
 		const $item = $( item );
 		const singleOutputs: string[] = [];
 		for ( const [ classSuffix, value ] of Object.entries( RejectReasonSheetTypeMapString ) ) {
