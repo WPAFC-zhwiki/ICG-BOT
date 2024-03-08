@@ -74,8 +74,8 @@ export class BridgeMsg<R extends rawmsg = rawmsg> extends Context<R> implements 
 
 		this._from_client = this._to_client = this.handler.type;
 
-		this.__from = String( context.from || this._from || super._from );
-		this.__to = String( context.to || this._from || super._to );
+		this.__from = String( context.from || this._from );
+		this.__to = String( context.to || this._from );
 
 		this.rawFrom = overrides.rawFrom || `${ this._from_client }/${ this.__from }`;
 		this.rawTo = overrides.rawTo || `${ this._to_client }/${ this.__to }`;
