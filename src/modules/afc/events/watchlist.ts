@@ -38,7 +38,7 @@ const RejectReasonSheetTypeMapString = {
 };
 function getReasonFromRejectReasonSheet( $e: cheerio.Cheerio<cheerio.Element> ) {
 	const outputs: string[] = [];
-	for ( const item of $e.children( 'afc-submission-rejectreasonsheet-item' ) ) {
+	for ( const item of $e.children( '.afc-submission-rejectreasonsheet-item' ) ) {
 		const $item = $( item );
 		const singleOutputs: string[] = [];
 		for ( const [ classSuffix, value ] of Object.entries( RejectReasonSheetTypeMapString ) ) {
