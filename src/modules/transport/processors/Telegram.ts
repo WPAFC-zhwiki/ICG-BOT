@@ -22,14 +22,6 @@ function escapeHTML( str: string ): string {
 		.replace( />/g, '&gt;' );
 }
 
-function truncate( str: string, maxLen = 20 ) {
-	str = str.replace( /\n/gu, '' );
-	if ( str.length > maxLen ) {
-		str = str.slice( 0, maxLen - 3 ) + '...';
-	}
-	return str;
-}
-
 const config: ConfigTS[ 'transport' ] = Manager.config.transport;
 const tgHandler = Manager.handlers.get( 'Telegram' );
 
@@ -121,7 +113,7 @@ tgHandler.on( 'pin', function ( info: {
 			text: `${ info.from.nick } pinned: ${ info.text.replace( /\n/gu, ' ' ) }`,
 			isNotice: true,
 			handler: tgHandler,
-			_rawdata: ctx
+			_rawData: ctx
 		} ) ).catch( function ( err ) {
 			throw err;
 		} );
@@ -153,7 +145,7 @@ tgHandler.on( 'join', function ( group: number, from: {
 			text: text,
 			isNotice: true,
 			handler: tgHandler,
-			_rawdata: ctx
+			_rawData: ctx
 		} ) ).catch( function ( err ) {
 			throw err;
 		} );
@@ -184,7 +176,7 @@ tgHandler.on( 'leave', function ( group: number, from: {
 			text: text,
 			isNotice: true,
 			handler: tgHandler,
-			_rawdata: ctx
+			_rawData: ctx
 		} ) ).catch( function ( err ) {
 			throw err;
 		} );
@@ -214,7 +206,7 @@ if ( config.options.Telegram.forwardChannels ) {
 }
 
 // 收到了來自其他群組的訊息
-export default async function ( msg: BridgeMsg ): Promise<void> {
+export default async function ( msg: BridgeMsg ): Promise<number> {
 	// 元信息，用于自定义样式
 	const meta: Record<string, string> = {
 		nick: `<b>${ escapeHTML( msg.nick ) }</b>`,
@@ -226,14 +218,30 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 		command: escapeHTML( msg.command ),
 		param: escapeHTML( msg.param )
 	};
+	let associationReplyMessageId: number | null = null;
 	if ( msg.extra.reply ) {
 		const reply = msg.extra.reply;
-		meta.reply_nick = reply.nick;
-		meta.reply_user = reply.username;
-		if ( reply.isText ) {
-			meta.reply_text = truncate( reply.message );
+		const associationMessageId = await bridge.fetchMessageAssociation(
+			reply.origClient,
+			reply.origChatId,
+			reply.origMessageId,
+			tgHandler.type,
+			msg.to
+		);
+		if ( associationMessageId ) {
+			associationReplyMessageId = typeof associationMessageId === 'string' ?
+				Number.parseInt( associationMessageId, 10 ) :
+				associationMessageId;
 		} else {
-			meta.reply_text = reply.message;
+			/*
+			meta.reply_nick = reply.nick;
+			meta.reply_user = reply.username;
+			if ( reply.isText ) {
+				meta.reply_text = bridge.truncate( reply.message );
+			} else {
+				meta.reply_text = reply.message;
+			}
+			*/
 		}
 	}
 	if ( msg.extra.forward ) {
@@ -244,10 +252,19 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 	const template: string = escapeHTML( bridge.getMessageStyle( msg ) );
 	const output: string = format( template, meta );
 	const to: string = BridgeMsg.parseUID( msg.to_uid ).id;
-	const newRawMsg = await tgHandler.sayWithHTML( to, output );
+	const newRawMsg = associationReplyMessageId ?
+		await tgHandler.sayWithHTML( to, output, {
+			reply_to_message_id: associationReplyMessageId
+		} ) :
+		await tgHandler.sayWithHTML( to, output );
 
 	// 如果含有相片和音訊
-	if ( msg.extra.uploads ) {
+	if ( msg.extra.fileIdUploads ) {
+		// 優先 file_id 上傳法
+		for ( const upload of msg.extra.fileIdUploads ) {
+			await upload( newRawMsg.chat.id, newRawMsg.message_id );
+		}
+	} else if ( msg.extra.uploads ) {
 		const replyOption: TelegramSendMessageOptions = {
 			reply_to_message_id: newRawMsg.message_id
 		};
@@ -268,4 +285,6 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 			}
 		}
 	}
+
+	return newRawMsg.message_id;
 }

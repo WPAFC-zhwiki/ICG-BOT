@@ -23,7 +23,7 @@
 		"url": "https://github.com/WPAFC-zhwiki/ICG-Bot/issues"
 	},
 	"private": true,
-	"packageManager": "pnpm@8.10.5",
+	"packageManager": "pnpm@9.0.4",
 	"dependencies": {
 		"@sunafterrainwm/winston-format-remove-telegram-apitoken": "file:lib/winston-format-remove-telegram-apitoken",
 		"axios": "^1.4.0",
@@ -45,13 +45,14 @@
 		"module-alias": "^2.2.2",
 		"mwn": "^2.0.0",
 		"node-fetch": "^2.6.7",
+		"redis": "^4.6.13",
 		"remove-excessive-newline": "^1.0.0",
 		"safe-regex": "^2.1.1",
 		"sharp": "0.32.6",
 		"string-format": "^2.0.0",
 		"telegraf": "^4.11.2",
 		"turndown": "^7.1.1",
-		"typescript": "^4.7.4",
+		"typescript": "^5.4.5",
 		"winston": "^3.8.1"
 	},
 	"devDependencies": {
@@ -81,7 +82,7 @@
 		"types-mediawiki": "^1.2.0"
 	},
 	"engines": {
-		"node": ">=14.0.0",
+		"node": ">=18.0.0",
 		"npm": ">7.0.0"
 	},
 	"_moduleDirectories": [

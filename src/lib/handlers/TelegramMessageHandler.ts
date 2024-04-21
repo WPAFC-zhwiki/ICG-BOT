@@ -197,6 +197,27 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 				size: msg.file_size,
 				mime_type: msg.mime_type
 			} ];
+			context.extra.fileIdUploads = [ ( chatId: string | number, messageId: number ) => {
+				const replyOptions: TelegramSendMessageOptions = {
+					reply_to_message_id: messageId
+				};
+				switch ( type ) {
+					case 'photo':
+						return that._client.telegram.sendPhoto( chatId, msg.file_id, replyOptions );
+					case 'sticker':
+						return that._client.telegram.sendSticker( chatId, msg.file_id, replyOptions );
+					case 'audio':
+						return that._client.telegram.sendAudio( chatId, msg.file_id, replyOptions );
+					case 'voice':
+						return that._client.telegram.sendVoice( chatId, msg.file_id, replyOptions );
+					case 'video':
+						return that._client.telegram.sendVideo( chatId, msg.file_id, replyOptions );
+					case 'document':
+						return that._client.telegram.sendDocument( chatId, msg.file_id, replyOptions );
+					default:
+						return Promise.resolve( null );
+				}
+			} ];
 		}
 
 		client.on( 'message', async function ( ctx, next ) {
@@ -208,6 +229,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 				const context: Context<TContext> = new Context<TContext>( {
 					from: ctx.message.from.id,
 					to: ctx.chat.id,
+					messageId: ctx.message.message_id,
 					nick: that.#getNick( ctx.message.from ),
 					text: '',
 					isPrivate: ( ctx.chat.id > 0 ),
@@ -215,7 +237,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						username: ctx.message.from.username
 					},
 					handler: that,
-					_rawdata: ctx
+					_rawData: ctx
 				} );
 
 				if ( ctx.from.id === 777000 ) {
@@ -240,12 +262,15 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 				if ( 'reply_to_message' in ctx.message ) {
 					const reply: TT.Message = ctx.message.reply_to_message;
 					context.extra.reply = {
+						origClient: that._type,
+						origChatId: ctx.message.chat.id,
+						origMessageId: ctx.message.message_id,
 						nick: that.#getNick( reply.from ),
 						username: reply.from.username,
 						message: that.#convertToText( reply ),
 						isText: 'text' in reply && !!reply.text,
 						id: String( reply.from.id ),
-						_rawdata: null
+						_rawData: null
 					};
 
 					if (
@@ -258,12 +283,15 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						context.extra.reply.username = reply.forward_from_chat.username;
 					} else {
 						context.extra.reply = {
+							origClient: that._type,
+							origChatId: ctx.message.chat.id,
+							origMessageId: ctx.message.message_id,
 							nick: that.#getNick( reply.from ),
 							username: reply.from.username,
 							message: that.#convertToText( reply ),
 							isText: 'text' in reply && !!reply.text,
 							id: String( reply.from.id ),
-							_rawdata: null
+							_rawData: null
 						};
 					}
 				} else if ( 'forward_from' in ctx.message ) {
@@ -576,11 +604,11 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		options?: Partial<E> & TelegramSendMessageOptions<ExtraReplyMessage>
 	) : [ text: string, options: Partial<E> & TelegramSendMessageOptions<ExtraReplyMessage> ] | never {
 		options = options || {};
-		if ( ( context._rawdata && context._rawdata.message ) ) {
+		if ( ( context._rawData && context._rawData.message ) ) {
 			if ( context.isPrivate ) {
 				return [ String( message ), options ];
 			} else {
-				options.reply_to_message_id = context._rawdata.message.message_id;
+				options.reply_to_message_id = context._rawData.message.message_id;
 				if ( options.withNick ) {
 					return [ String( `${ context.nick }: ${ message }` ), options ];
 				} else {

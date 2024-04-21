@@ -15,7 +15,7 @@ import { Context as TContext } from 'telegraf';
 import { Manager } from '@app/init';
 
 import delay from '@app/lib/delay';
-import { Context, rawmsg } from '@app/lib/handlers/Context';
+import { Context, RawMsg } from '@app/lib/handlers/Context';
 import { addCommand } from '@app/lib/message';
 
 import { transportMessage, BridgeMsg } from '@app/modules/transport';
@@ -23,7 +23,7 @@ import { transportMessage, BridgeMsg } from '@app/modules/transport';
 const tg = Manager.handlers.get( 'Telegram' );
 
 addCommand( 'anyone', async function ( context: Context ) {
-	const rawdata: rawmsg = context._rawdata;
+	const rawdata: RawMsg = context._rawData;
 
 	if ( rawdata instanceof TContext ) {
 		if ( 'reply_to_message' in rawdata.message ) {

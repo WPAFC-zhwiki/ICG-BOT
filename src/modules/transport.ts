@@ -11,6 +11,8 @@ import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
 import '@app/modules/transport/file';
 import '@app/modules/transport/paeeye';
 
+import { associateMessageUsefulClients } from './transport/BridgeDatabase/AbstractBridgeDatabase';
+
 export * from '@app/modules/transport/BridgeMsg';
 export * from '@app/modules/transport/bridge';
 export * from '@app/modules/transport/command';
@@ -148,10 +150,20 @@ Manager.global.ifEnable( 'transport', function () {
 	}
 
 	// 載入各用戶端的處理程式，並連接到 bridge 中
+	let clientAssociateMessageUsefulCount = 0;
 	for ( const [ type ] of Manager.handlers ) {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
+		if ( associateMessageUsefulClients.includes( type ) ) {
+			clientAssociateMessageUsefulCount++;
+		}
+		// eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
 		const processor: bridge.processor = require( `./transport/processors/${ type }` ).default;
 		winston.debug( `[transport] load processor ${ type }` );
 		bridge.addProcessor( type, processor );
+	}
+
+	if ( clientAssociateMessageUsefulCount && Manager.config.transport.messageAssociation?.type === 'redis' ) {
+		import( '@app/modules/transport/BridgeDatabase/RedisBridgeDatabase' ).then( function ( mRedisBridgeDatabase ) {
+			bridge.setBridgeDatabase( mRedisBridgeDatabase.RedisBridgeDatabase.getInstance() );
+		} );
 	}
 } );

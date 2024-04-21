@@ -148,17 +148,19 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 			if ( rawdata.reference && rawdata.reference.messageId ) {
 				if ( rawdata.channel.id === rawdata.reference.channelId ) {
 					const msg = await rawdata.channel.messages.fetch( rawdata.reference.messageId );
-					const reply = {
+
+					extra.reply = {
+						origClient: that._type,
+						origChatId: rawdata.channel.id,
+						origMessageId: msg.id,
 						id: msg.author.id,
 						nick: that.getNick( msg.member || msg.author ),
 						username: msg.author.username,
 						discriminator: msg.author.discriminator,
 						message: that._convertToText( msg ),
 						isText: msg.content && true,
-						_rawdata: msg
+						_rawData: msg
 					};
-
-					extra.reply = reply;
 				}
 			}
 
@@ -170,7 +172,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 				isPrivate: rawdata.channel.type === Discord.ChannelType.DM,
 				extra: extra,
 				handler: that,
-				_rawdata: rawdata
+				_rawData: rawdata
 			} );
 
 			// 檢查是不是命令

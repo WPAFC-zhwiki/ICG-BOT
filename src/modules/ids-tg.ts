@@ -9,7 +9,7 @@ import { Manager } from '@app/init';
 const tg = Manager.handlers.get( 'Telegram' );
 
 tg.addCommand( 'thisgroupid', function ( context ) {
-	const rawdata = context._rawdata;
+	const rawdata = context._rawData;
 	let output: string;
 	if ( rawdata.from.id === rawdata.chat.id ) {
 		output = `Your ID: <code>${ rawdata.from.id }</code>`;
@@ -34,7 +34,7 @@ function upperCaseFirst( str: string ): string {
 }
 
 tg.addCommand( 'userid', function ( context ) {
-	const rawdata = context._rawdata;
+	const rawdata = context._rawData;
 
 	let output: string;
 	if ( 'reply_to_message' in rawdata.message ) {

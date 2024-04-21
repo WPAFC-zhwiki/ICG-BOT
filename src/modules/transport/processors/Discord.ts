@@ -10,14 +10,6 @@ import { inspect } from '@app/lib/util';
 import * as bridge from '@app/modules/transport/bridge';
 import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
 
-function truncate( str: string, maxLen = 20 ) {
-	str = str.replace( /\n/gu, '' );
-	if ( str.length > maxLen ) {
-		str = str.slice( 0, maxLen - 3 ) + '...';
-	}
-	return str;
-}
-
 const config: ConfigTS[ 'transport' ] = Manager.config.transport;
 const discordHandler = Manager.handlers.get( 'Discord' );
 const options: ConfigTS[ 'transport' ][ 'options' ][ 'Discord' ] = config.options.Discord;
@@ -64,7 +56,7 @@ discordHandler.on( 'text', async function ( context ) {
 } );
 
 // 收到了來自其他群組的訊息
-export default async function ( msg: BridgeMsg ): Promise<void> {
+export default async function ( msg: BridgeMsg ): Promise<string> {
 	// 元信息，用于自定义样式
 	const meta: Record<string, string> = {
 		nick: msg.nick,
@@ -76,14 +68,28 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 		command: msg.command,
 		param: msg.param
 	};
+	let associationReplyMessageId: string | null = null;
 	if ( msg.extra.reply ) {
 		const reply = msg.extra.reply;
-		meta.reply_nick = reply.nick;
-		meta.reply_user = reply.username;
-		if ( reply.isText ) {
-			meta.reply_text = truncate( reply.message );
+		const associationMessageId = await bridge.fetchMessageAssociation(
+			reply.origClient,
+			reply.origChatId,
+			reply.origMessageId,
+			discordHandler.type,
+			msg.to
+		);
+		if ( associationMessageId ) {
+			associationReplyMessageId = String( associationMessageId );
 		} else {
-			meta.reply_text = reply.message;
+			/*
+			meta.reply_nick = reply.nick;
+			meta.reply_user = reply.username;
+			if ( reply.isText ) {
+				meta.reply_text = bridge.truncate( reply.message );
+			} else {
+				meta.reply_text = reply.message;
+			}
+			*/
 		}
 	}
 	if ( msg.extra.forward ) {
@@ -96,5 +102,18 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 	const output = format( template, meta );
 	const attachFileUrls = ( msg.extra.uploads || [] ).map( ( u: { url: string; } ) => ` ${ u.url }` ).join( '' );
 
-	discordHandler.say( BridgeMsg.parseUID( msg.to_uid ).id, `${ output }${ attachFileUrls }` );
+	const message = associationReplyMessageId ?
+		await discordHandler.say( BridgeMsg.parseUID( msg.to_uid ).id, {
+			content: `${ output }${ attachFileUrls }`,
+			files: ( msg.extra.uploads || [] )
+				.map( ( upload ) => ( {
+					attachment: upload.url
+				} ) ),
+			reply: {
+				messageReference: associationReplyMessageId,
+				failIfNotExists: false
+			}
+		} ) :
+		await discordHandler.say( BridgeMsg.parseUID( msg.to_uid ).id, `${ output }${ attachFileUrls }` );
+	return message.id;
 }

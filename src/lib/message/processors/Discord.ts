@@ -22,7 +22,7 @@ type Emoji = {
 };
 
 export async function preProcess( context: Context<Discord.Message> ) {
-	userInfo.set( String( context.from ), context._rawdata.author );
+	userInfo.set( String( context.from ), context._rawData.author );
 
 	if ( /<a?:\w+:\d*?>/g.test( context.text ) ) {
 		// 處理自定義表情符號

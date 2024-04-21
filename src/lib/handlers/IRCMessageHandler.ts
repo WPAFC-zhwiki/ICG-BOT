@@ -110,7 +110,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		};
 
 		// 绑定事件
-		function processMessage( from: string, to: string, text: string, rawdata: irc.IMessage, isAction = false ) {
+		function processMessage( from: string, to: string, text: string, rawData: irc.IMessage, isAction = false ) {
 
 			if (
 				!that._enabled ||
@@ -136,8 +136,9 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 				isPrivate: to === client.nick,
 				extra: {},
 				handler: that,
-				_rawdata: rawdata
+				_rawData: rawData
 			} );
+			context.messageId = context.programMessageId; // 以 programMessageId 代替根本不存在的 messageId 方便映射
 
 			if ( isAction ) {
 				context.extra.isAction = true;
@@ -177,8 +178,8 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 			that.emit( 'join', channel, nick, message );
 		} );
 
-		client.on( 'nick', function ( oldnick: string, newnick: string, channels: string[], message: irc.IMessage ) {
-			that.emit( 'nick', oldnick, newnick, channels, message );
+		client.on( 'nick', function ( oldNick: string, newNick: string, channels: string[], message: irc.IMessage ) {
+			that.emit( 'nick', oldNick, newNick, channels, message );
 		} );
 
 		client.on( 'quit', function ( nick: string, reason: string, channels: string[], message: irc.IMessage ) {

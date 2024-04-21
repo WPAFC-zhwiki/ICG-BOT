@@ -16,7 +16,7 @@ const ircHandler = Manager.handlers.get( 'IRC' );
 function getChans( context: Context ) {
 	const r: string[] = [];
 	prepareBridgeMsg( context );
-	for ( const c of context.extra.mapto ) {
+	for ( const c of context.extra.mapTo ) {
 		const client = parseUID( c );
 		if ( client.client === 'IRC' ) {
 			r.push( client.id );

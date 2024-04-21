@@ -11,14 +11,6 @@ import { inspect } from '@app/lib/util';
 import * as bridge from '@app/modules/transport/bridge';
 import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
 
-function truncate( str: string, maxLen = 20 ) {
-	str = str.replace( /\n/gu, '' );
-	if ( str.length > maxLen ) {
-		str = str.slice( 0, maxLen - 3 ) + '...';
-	}
-	return str;
-}
-
 const config: ConfigTS[ 'transport' ] = Manager.config.transport;
 const ircHandler = Manager.handlers.get( 'IRC' );
 
@@ -72,7 +64,7 @@ ircHandler.on( 'topic', ( channel, topic, nick, message ) => {
 			text: text,
 			isNotice: true,
 			handler: ircHandler,
-			_rawdata: message
+			_rawData: message
 		// eslint-disable-next-line @typescript-eslint/no-empty-function
 		} ) ).catch( function () {} );
 	}
@@ -93,7 +85,7 @@ ircHandler.on( 'join', async function ( channel, nick, message ) {
 			text: `${ nick } 加入頻道`,
 			isNotice: true,
 			handler: ircHandler,
-			_rawdata: message
+			_rawData: message
 		} ) );
 	}
 
@@ -146,7 +138,7 @@ ircHandler.on( 'nick', function ( oldnick, newnick, _channels, rawdata ) {
 				text: message,
 				isNotice: true,
 				handler: ircHandler,
-				_rawdata: rawdata
+				_rawData: rawdata
 			} ) );
 		}
 	}
@@ -173,7 +165,7 @@ function leaveHandler( nick: string, chans: string[],
 				text: message,
 				isNotice: true,
 				handler: ircHandler,
-				_rawdata: rawdata
+				_rawData: rawdata
 			} ) );
 		}
 
@@ -204,7 +196,7 @@ ircHandler.on( 'kill', ( nick, reason, channels, message ) => {
 } );
 
 // 收到了來自其他群組的訊息
-export default async function ( msg: BridgeMsg ): Promise<void> {
+export default async function ( msg: BridgeMsg ): Promise<false> {
 	// 元信息，用于自定义样式
 	const meta: Record<string, string> = {
 		nick: msg.nick,
@@ -221,7 +213,7 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 		meta.reply_nick = reply.nick;
 		meta.reply_user = reply.username;
 		if ( reply.isText ) {
-			meta.reply_text = truncate( reply.message );
+			meta.reply_text = bridge.truncate( reply.message );
 		} else {
 			meta.reply_text = reply.message;
 		}
@@ -283,4 +275,6 @@ export default async function ( msg: BridgeMsg ): Promise<void> {
 	}
 
 	await ircHandler.say( BridgeMsg.parseUID( msg.to_uid ).id, output );
+
+	return false;
 }

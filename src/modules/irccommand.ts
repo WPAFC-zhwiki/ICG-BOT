@@ -22,7 +22,7 @@ if ( ircHandler && Manager.global.isEnable( 'transport' ) ) {
 	addCommand( `${ prefix }command`, async function ( context: Context ) {
 		if ( !context.isPrivate ) {
 			prepareBridgeMsg( context );
-			if ( context.param && context.extra?.mapto?.length ) {
+			if ( context.param && context.extra?.mapTo?.length ) {
 				if ( echo ) {
 					context.reply( context.param, {
 						noPrefix: true
@@ -30,7 +30,7 @@ if ( ircHandler && Manager.global.isEnable( 'transport' ) ) {
 				}
 
 				let sentCount = 0;
-				for ( const c of context.extra.mapto ) {
+				for ( const c of context.extra.mapTo ) {
 					const client = parseUID( c );
 					if ( client.client === 'IRC' ) {
 						sentCount++;

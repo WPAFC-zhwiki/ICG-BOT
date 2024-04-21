@@ -1,12 +1,12 @@
 import { ExtendsMap, handlers } from '@app/init';
 
-import { Context, rawmsg, ContextExtra, ContextOptin } from '@app/lib/handlers/Context';
+import { Context, RawMsg, ContextExtra, ContextOptions } from '@app/lib/handlers/Context';
 import { MessageHandler } from '@app/lib/handlers/MessageHandler';
 import { getUIDFromContext, parseUID } from '@app/lib/message';
 
 let clientFullNames: Record<string, string> = {};
 
-export interface BridgeMsgOptin<rawdata extends rawmsg> extends ContextOptin<rawdata> {
+export interface BridgeMsgOptin<rawdata extends RawMsg> extends ContextOptions<rawdata> {
 	plainText?: boolean;
 	isNotice?: boolean;
 	from_uid?: string;
@@ -15,7 +15,7 @@ export interface BridgeMsgOptin<rawdata extends rawmsg> extends ContextOptin<raw
 	rawTo?: string;
 }
 
-export class BridgeMsg<R extends rawmsg = rawmsg> extends Context<R> implements BridgeMsgOptin<R> {
+export class BridgeMsg<R extends RawMsg = RawMsg> extends Context<R> implements BridgeMsgOptin<R> {
 	readonly rawFrom: string;
 	readonly rawTo: string;
 
@@ -106,25 +106,28 @@ export class BridgeMsg<R extends rawmsg = rawmsg> extends Context<R> implements 
 
 	static getUIDFromContext = getUIDFromContext;
 
-	static botReply<T extends rawmsg>( context: Context<T>, config: BridgeMsgOptin<T> ): BridgeMsg<null>;
-	static botReply( context: Context, config: BridgeMsgOptin<rawmsg> ): BridgeMsg {
-		const brigdmsg: BridgeMsg = new BridgeMsg( context, config );
+	static botReply<T extends RawMsg>( context: Context<T>, config: BridgeMsgOptin<T> ): BridgeMsg<null>;
+	static botReply( context: Context, config: BridgeMsgOptin<RawMsg> ): BridgeMsg {
+		const bridgeMsg: BridgeMsg = new BridgeMsg( context, config );
 
-		brigdmsg.extra.reply = {
-			id: brigdmsg.from,
-			nick: brigdmsg.nick,
-			message: brigdmsg.text,
-			username: brigdmsg.extra.username,
-			isText: !brigdmsg.extra.isImage,
-			discriminator: brigdmsg.extra.discriminator,
-			_rawdata: brigdmsg._rawdata
+		bridgeMsg.extra.reply = {
+			origClient: context.handler.type,
+			origChatId: context.to,
+			origMessageId: context.programMessageId,
+			id: bridgeMsg.from,
+			nick: bridgeMsg.nick,
+			message: bridgeMsg.text,
+			username: bridgeMsg.extra.username,
+			isText: !bridgeMsg.extra.isImage,
+			discriminator: bridgeMsg.extra.discriminator,
+			_rawData: bridgeMsg._rawData
 		};
-		delete brigdmsg._rawdata;
+		delete bridgeMsg._rawData;
 
-		if ( brigdmsg.extra.discriminator ) {
-			brigdmsg.extra.reply.discriminator = brigdmsg.extra.discriminator;
+		if ( bridgeMsg.extra.discriminator ) {
+			bridgeMsg.extra.reply.discriminator = bridgeMsg.extra.discriminator;
 		}
 
-		return brigdmsg;
+		return bridgeMsg;
 	}
 }

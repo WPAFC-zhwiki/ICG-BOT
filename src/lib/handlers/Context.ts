@@ -1,3 +1,4 @@
+import type * as TT from '@telegraf/types';
 import { Message as DMessage } from 'discord.js';
 import { IMessage } from 'irc-upd';
 import { Context as TContext } from 'telegraf';
@@ -6,20 +7,30 @@ import { MessageHandler } from '@app/lib/handlers/MessageHandler';
 
 let msgId = 0;
 
-export type rawmsg = TContext | IMessage | DMessage;
+export type RawMsg = TContext | IMessage | DMessage;
 
-export type file = {
+export type File = {
 	/**
 	 * 用於區分
 	 */
 	client: string;
 
+	origFilename?: string;
+	/** Telegram */
+	fileId?: string;
 	url?: string;
 	path?: string;
 	type: string;
 	id: string;
 	size: number;
 	mime_type?: string;
+};
+
+export type UploadedFile = {
+	url: string;
+	fileId?: string;
+	displayFilename: string;
+	type: string;
 };
 
 export type ContextExtra = {
@@ -35,16 +46,19 @@ export type ContextExtra = {
 	/**
 	 * 對應到目標群組之後的 to（由 bridge 發送）
 	 */
-	mapto?: string[];
+	mapTo?: string[];
 
 	reply?: {
+		origClient: string;
+		origChatId: string | number;
+		origMessageId: string | number;
 		id: string;
 		nick: string;
 		username?: string;
 		message: string;
 		isText?: boolean;
 		discriminator?: string;
-		_rawdata?: rawmsg;
+		_rawData?: RawMsg;
 	};
 
 	forward?: {
@@ -52,19 +66,21 @@ export type ContextExtra = {
 		username: string;
 	};
 
-	files?: file[];
+	files?: File[];
 
 	username?: string;
 
 	isChannel?: boolean;
 
 	/**
-	 * Telegram：檔案上傳用，由 bridge 發送
+	 * 跨客戶端檔案上傳用，由 bridge 發送
 	 */
-	uploads?: {
-		url: string;
-		type: string;
-	}[];
+	uploads?: UploadedFile[];
+
+	/**
+	 * Telegram：file_id 上傳法
+	 */
+	fileIdUploads?: ( ( chatId: string | number, messageId: number ) => Promise<TT.Message | null> )[];
 
 	isImage?: boolean;
 
@@ -78,15 +94,16 @@ export type ContextExtra = {
 	discriminator?: string;
 };
 
-export type ContextOptin<rawdata extends rawmsg> = {
+export type ContextOptions<RawData extends RawMsg> = {
 	from?: string | number;
 	to?: string | number;
+	messageId?: string | number;
 	nick?: string;
 	text?: string;
 	isPrivate?: boolean;
 	extra?: ContextExtra;
 	handler?: MessageHandler;
-	_rawdata?: rawdata;
+	_rawData?: RawData;
 	command?: string;
 	param?: string;
 }
@@ -115,7 +132,7 @@ function getMsgId(): number {
  *             shortname: ''
  *             fullname: ''
  *         }
- *         mapto: [     // 對應到目標群組之後的 to（由 bridge 發送）
+ *         mapTo: [     // 對應到目標群組之後的 to（由 bridge 發送）
  *             "irc/#aaa",
  *             ...
  *         ],
@@ -144,11 +161,11 @@ function getMsgId(): number {
  *         ],
  *     },
  *     handler: 訊息來源的 handler,
- *     _rawdata: 處理訊息的機器人所用的內部資料，應避免使用,
+ *     _rawData: 處理訊息的機器人所用的內部資料，應避免使用,
  * }
  * ```
  */
-export class Context<R extends rawmsg = rawmsg> implements ContextOptin<R> {
+export class Context<R extends RawMsg = RawMsg> implements ContextOptions<R> {
 	protected _from: string = null;
 	get from(): string {
 		return this._from;
@@ -171,15 +188,21 @@ export class Context<R extends rawmsg = rawmsg> implements ContextOptin<R> {
 
 	public isPrivate = false;
 
-	public readonly isbot: boolean = false;
+	public readonly isBot: boolean = false;
 
 	public extra: ContextExtra = {};
 	public readonly handler: MessageHandler = null;
-	public _rawdata: R = null;
+	public _rawData: R = null;
 	public command = '';
 	public param = '';
 
 	private readonly _msgId: number = getMsgId();
+
+	public messageId: number | string = null;
+	private readonly _programMessageId = `Message#${ String( this._msgId ) }@${ String( Date.now() ) }`;
+	get programMessageId(): string | number {
+		return this.messageId || this._programMessageId;
+	}
 
 	protected static getArgument<T>( ...args: T[] ): T | undefined {
 		for ( let i = 0; i < args.length; i++ ) {
@@ -190,12 +213,15 @@ export class Context<R extends rawmsg = rawmsg> implements ContextOptin<R> {
 		return undefined;
 	}
 
-	public constructor( options: Context<R> | ContextOptin<R> = {}, overrides: ContextOptin<R> = {} ) {
+	public constructor( options: Context<R> | ContextOptions<R> = {}, overrides: ContextOptions<R> = {} ) {
 		// TODO 雖然這樣很醜陋，不過暫時先這樣了
 		this._from = String( Context.getArgument( overrides.from, options.from, null ) );
 		this._to = String( Context.getArgument( overrides.to, options.to, null ) );
 
-		for ( const k of [ 'nick', 'text', 'isPrivate', 'isbot', 'extra', 'handler', '_rawdata', 'command', 'param' ] ) {
+		for ( const k of [
+			'nick', 'text', 'isPrivate', 'isBot', 'extra',
+			'handler', '_rawData', 'command', 'param', 'messageId'
+		] ) {
 			this[ k ] = Context.getArgument( overrides[ k ], options[ k ], this[ k ] );
 		}
 

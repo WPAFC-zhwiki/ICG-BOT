@@ -110,14 +110,14 @@ export async function reply( context: Context, msg: {
 	moduleTransport.prepareBridgeMsg( context );
 
 	// 若互聯且在公開群組調用，則讓其他群也看到
-	if ( context.extra.mapto ) {
+	if ( context.extra.mapTo ) {
 		await ( new Promise<void>( function ( resolve ) {
 			setTimeout( function () {
 				resolve();
 			}, 1000 );
 		} ) );
 
-		for ( const t of context.extra.mapto ) {
+		for ( const t of context.extra.mapTo ) {
 			if ( t === that.uid ) {
 				continue;
 			}

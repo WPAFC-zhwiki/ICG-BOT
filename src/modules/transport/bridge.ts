@@ -2,10 +2,13 @@ import winston = require( 'winston' );
 
 import { Manager } from '@app/init';
 
-import { Context, rawmsg } from '@app/lib/handlers/Context';
+import { Context, RawMsg } from '@app/lib/handlers/Context';
 import { inspect } from '@app/lib/util';
 
 import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
+
+import { AbstractBridgeDatabase, AssociateMessage } from './BridgeDatabase/AbstractBridgeDatabase';
+import { NoopBridgeDatabase } from './BridgeDatabase/NoopBridgeDatabase';
 
 function checkEnable(): void {
 	if ( !Manager.global.isEnable( 'transport' ) ) {
@@ -13,7 +16,7 @@ function checkEnable(): void {
 	}
 }
 
-export type processor = ( msg: BridgeMsg ) => Promise<void>;
+export type processor = ( msg: BridgeMsg ) => Promise</* message id */ false | string | number>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type hook = ( ...args: any[] ) => Promise<any>;
@@ -43,7 +46,7 @@ export function setAliases( a: Record<string, alias> ): void {
 	Object.assign( aliases, a );
 }
 
-function getBridgeMsg<T extends rawmsg>( msg: BridgeMsg<T> | Context<T> ): BridgeMsg<T> {
+function getBridgeMsg<T extends RawMsg>( msg: BridgeMsg<T> | Context<T> ): BridgeMsg<T> {
 	if ( msg instanceof BridgeMsg ) {
 		return msg;
 	} else {
@@ -54,23 +57,23 @@ function getBridgeMsg<T extends rawmsg>( msg: BridgeMsg<T> | Context<T> ): Bridg
 export function prepareBridgeMsg( msg: BridgeMsg ): Promise<void>;
 export function prepareBridgeMsg( msg: Context ): void;
 export function prepareBridgeMsg( msg: Context ): Promise<void> | void {
-	if ( Object.prototype.hasOwnProperty.call( msg.extra, 'mapto' ) ) {
+	if ( Object.prototype.hasOwnProperty.call( msg.extra, 'mapTo' ) ) {
 		return Promise.resolve();
 	}
 
 	// 檢查是否有傳送目標
 	const to_uid = BridgeMsg.getUIDFromContext( msg, msg.to );
-	const alltargets = map[ to_uid ];
-	const targets = [];
-	for ( const t in alltargets ) {
-		if ( !alltargets[ t ].disabled ) {
+	const allTargets = map[ to_uid ];
+	const targets: string[] = [];
+	for ( const t in allTargets ) {
+		if ( !allTargets[ t ].disabled ) {
 			targets.push( t );
 		}
 	}
 
 	// 向 msg 中加入附加訊息
 	msg.extra.clients = targets.length + 1;
-	msg.extra.mapto = targets;
+	msg.extra.mapTo = targets;
 	if ( aliases[ to_uid ] ) {
 		msg.extra.clientName = aliases[ to_uid ];
 	} else {
@@ -155,15 +158,21 @@ export async function emitHook<V extends keyof hooks>( event: V, ...args: Parame
 	}
 }
 
-function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
+type SendMessageReturn = {
+	client: string;
+	chatId: string | number;
+	messageId: string | number | false;
+};
+
+function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<SendMessageReturn>[] {
 	const currMsgId = msg.msgId;
 
 	// 全部訊息已傳送 resolve( true )，部分訊息已傳送 resolve( false )；
 	// 所有訊息被拒絕傳送 reject()
 	// Hook 需自行處理異常
 	// 向對應目標的 handler 觸發 exchange
-	const promises: Promise<void>[] = [];
-	for ( const t of msg.extra.mapto ) {
+	const promises: Promise<SendMessageReturn>[] = [];
+	for ( const t of msg.extra.mapTo ) {
 		const msg2 = new BridgeMsg( msg, {
 			to_uid: t,
 			rawFrom: msg.from_uid,
@@ -184,13 +193,17 @@ function sendMessage( msg: BridgeMsg, isbridge = false ): Promise<void>[] {
 				} else {
 					winston.debug( `[transport/bridge] <BotTransport> ${ msgid } -X-> ${ new_uid.uid }: No processor` );
 				}
-			} ) );
+				return false;
+			} ).then( ( messageId ) => ( { client, chatId: new_uid.id, messageId } ) ) );
 		} else {
 			// eslint-disable-next-line no-shadow
 			const processor = processors.get( client );
 			if ( processor ) {
 				winston.debug( `[transport/bridge] <BotSend> ${ msgid } ---> ${ new_uid.uid }` );
-				promises.push( processor( msg2 ) );
+				promises.push(
+					processor( msg2 )
+						.then( ( messageId ) => ( { client, chatId: new_uid.id, messageId } ) )
+				);
 			} else {
 				winston.debug( `[transport/bridge] <BotSend> ${ msgid } -X-> ${ new_uid.uid }: No processor` );
 			}
@@ -207,21 +220,21 @@ export async function transportMessage( m: BridgeMsg | Context, bot?: boolean ):
 
 	const currMsgId: number = msg.msgId;
 
-	let isbridge: boolean;
+	let isBridge: boolean;
 
 	if ( bot ) {
 		delete msg.extra.username; // 刪掉讓日誌變混亂的username
 
-		isbridge = false;
+		isBridge = false;
 		winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } ---> ${ msg.to_uid }: ${ msg.text }` );
 		const extraJson: string = JSON.stringify( msg.extra, Object.keys( msg.extra ).filter( function ( key ) {
-			return key !== '_rawdata';
+			return key !== '_rawData';
 		} ) );
 		if ( extraJson !== 'null' && extraJson !== '{}' ) {
 			winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } extra: ${ extraJson }` );
 		}
 	} else {
-		isbridge = true;
+		isBridge = true;
 		winston.debug( `[transport/bridge] <UserSend> #${ currMsgId } ${ msg.from_uid } ---> ${ msg.to_uid }: ${ msg.text }` );
 		const extraJson: string = JSON.stringify( msg.extra );
 		if ( extraJson !== 'null' && extraJson !== '{}' ) {
@@ -241,10 +254,14 @@ export async function transportMessage( m: BridgeMsg | Context, bot?: boolean ):
 
 	let allResolved = false;
 
-	const promises = sendMessage( msg, isbridge );
+	const promises = sendMessage( msg, isBridge );
 
 	try {
-		await Promise.all( promises );
+		const associateMessage = ( await Promise.all( promises ) )
+			.filter( ( data ) => data.messageId !== false ) as AssociateMessage;
+		if ( associateMessage ) {
+			await bridgeDatabase.setMessageAssociation( associateMessage );
+		}
 	} catch ( error ) {
 		allResolved = false;
 		winston.error( '[transport/bridge] <BotSend> Rejected: ' + inspect( error ) );
@@ -257,4 +274,40 @@ export async function transportMessage( m: BridgeMsg | Context, bot?: boolean ):
 		winston.debug( `[transport/bridge] <BotSend> #${ currMsgId } has no targets. Ignored.` );
 	}
 	return await Promise.resolve( allResolved );
+}
+
+let bridgeDatabase: AbstractBridgeDatabase = NoopBridgeDatabase.getInstance();
+
+export function setBridgeDatabase( db: AbstractBridgeDatabase ) {
+	bridgeDatabase = db;
+}
+
+export async function fetchMessageAssociation(
+	fromClient: string,
+	fromChatId: string | number,
+	fromMessageId: string | number,
+	toClient: string,
+	toChatId: string | number
+): Promise<string | number | false> {
+	const associations = await bridgeDatabase.getMessageAssociation( fromClient, fromChatId, fromMessageId );
+	if ( !associations ) {
+		return false;
+	}
+	for ( const association of associations ) {
+		if (
+			association[ 0 ] === toClient &&
+			String( association[ 1 ] ) === String( toChatId )
+		) {
+			return association[ 2 ];
+		}
+	}
+	return false;
+}
+
+export function truncate( str: string, maxLen = 20 ) {
+	str = str.replace( /\n/gu, '' );
+	if ( str.length > maxLen ) {
+		str = str.slice( 0, maxLen - 3 ) + '...';
+	}
+	return str;
 }

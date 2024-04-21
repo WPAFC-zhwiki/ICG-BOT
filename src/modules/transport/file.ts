@@ -22,7 +22,7 @@ import winston = require( 'winston' );
 import { ConfigTS, version, repository } from '@app/config';
 import { Manager } from '@app/init';
 
-import { file as fileTS } from '@app/lib/handlers/Context';
+import { File, UploadedFile } from '@app/lib/handlers/Context';
 import { getFileNameFromUrl, inspect } from '@app/lib/util';
 
 import * as bridge from '@app/modules/transport/bridge';
@@ -30,11 +30,6 @@ import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
 import * as command from '@app/modules/transport/command';
 
 const servemedia: ConfigTS[ 'transport' ][ 'servemedia' ] = Manager.config.transport.servemedia;
-
-type File = {
-	type: string;
-	url: string;
-};
 
 const USERAGENT = `AFC-ICG-BOT/${ version } (${ repository.replace( /^git\+/, '' ) })`;
 
@@ -106,11 +101,11 @@ class FetchStream extends stream.Transform {
 /**
  * 下载/获取文件内容，对文件进行格式转换（如果需要的话），然后管道出去
  *
- * @param {fileTS} file
+ * @param {File} file
  *
  * @return {fs.ReadStream}
  */
-function getFileStream( file: fileTS ): stream.Readable {
+function getFileStream( file: File ): stream.Readable {
 	const filePath: string = file.url || file.path;
 	let fileStream: stream.Readable;
 
@@ -140,7 +135,7 @@ function getFileStream( file: fileTS ): stream.Readable {
 
 }
 
-function pipeFileStream( file: fileTS, pipe: stream.Writable ): Promise<void> {
+function pipeFileStream( file: File, pipe: stream.Writable ): Promise<void> {
 	return new Promise<void>( function ( resolve, reject ) {
 		const fileStream = getFileStream( file );
 		fileStream
@@ -155,7 +150,7 @@ function pipeFileStream( file: fileTS, pipe: stream.Writable ): Promise<void> {
 /*
  * 儲存至本機快取
  */
-async function uploadToCache( file: fileTS ): Promise<string> {
+async function uploadToCache( file: File ): Promise<string> {
 	const targetName = generateFileName( file.url || file.path, file.id );
 	const targetPath = path.join( servemedia.cachePath, targetName );
 	const writeStream = fs.createWriteStream( targetPath ).on( 'error', ( e ) => {
@@ -184,7 +179,7 @@ function createFormData( data: [ name: string, value: string | Blob, fileName?: 
 /*
  * 上传到各种图床
  */
-function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], file: fileTS ) {
+function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], file: File ) {
 	return new Promise<string>( function ( resolve, reject ) {
 		try {
 			const requestOptions: Partial<AxiosRequestConfig<FormData>> = {
@@ -290,7 +285,7 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
 /*
  * 上傳到自行架設的 linx 圖床上面
  */
-function uploadToLinx( file: fileTS ) {
+function uploadToLinx( file: File ) {
 	return new Promise<string>( function ( resolve, reject ) {
 		try {
 			const name = generateFileName( file.url ?? file.path, file.id );
@@ -321,7 +316,7 @@ function uploadToLinx( file: fileTS ) {
 /*
  * 決定檔案去向
  */
-async function uploadFile( file: fileTS ): Promise<File | null> {
+async function uploadFile( file: File ): Promise<UploadedFile | null> {
 	let url: string;
 	const fileType: string = convertFileType( file.type );
 
@@ -354,6 +349,7 @@ async function uploadFile( file: fileTS ): Promise<File | null> {
 	if ( url ) {
 		return {
 			type: fileType,
+			displayFilename: file.origFilename || path.basename( url ),
 			url: url
 		};
 	} else {
@@ -366,11 +362,20 @@ async function uploadFile( file: fileTS ): Promise<File | null> {
  */
 const fileUploader = {
 	handlers: Manager.handlers,
-	process: async function ( context: BridgeMsg ): Promise<File[]> {
+	process: async function ( context: BridgeMsg ): Promise<UploadedFile[]> {
 		// 上传文件
-		// p4: dont bother with files from somewhere without bridges in config
-		if ( context.extra.clients > 1 && context.extra.files && servemedia.type && servemedia.type !== 'none' ) {
-			const promises: Promise<{ type: string; url: string; } | null>[] = [];
+		// p4: don't bother with files from somewhere without bridges in config
+		if (
+			context.extra.clients > 1 &&
+			context.extra.files &&
+			// 過濾掉只有 Telegram 的傳輸，用 file_id
+			context.extra.mapTo
+				.filter( ( target ) => BridgeMsg.parseUID( target ).client === 'telegram' )
+				.length === context.extra.clients &&
+			servemedia.type &&
+			servemedia.type !== 'none'
+		) {
+			const promises: Promise<UploadedFile | null>[] = [];
 			const fileCount: number = context.extra.files.length;
 
 			// 将聊天消息附带文件上传到服务器
@@ -387,7 +392,7 @@ const fileUploader = {
 			}
 
 			// 整理上传到服务器之后到URL
-			const uploads: File[] = ( await Promise.all( promises ) ).filter( function ( x: File ): File {
+			const uploads: UploadedFile[] = ( await Promise.all( promises ) ).filter( ( x ) => {
 				return x;
 			} );
 			for ( const [ index, upload ] of uploads.entries() ) {
