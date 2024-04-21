@@ -24,7 +24,7 @@ export class RedisBridgeDatabase extends AbstractBridgeDatabase<MessageAssociati
 			winston.error( '[transport/RedisBridgeDatabase] Error: ' + inspect( error ) );
 		} );
 		this.#cache = new LRUCache( {
-			maxSize: 5000,
+			max: 5000,
 			ttl: 86400 * 1e3
 		} );
 	}
@@ -54,6 +54,7 @@ export class RedisBridgeDatabase extends AbstractBridgeDatabase<MessageAssociati
 		messageId: string | number
 	): Promise<AssociateMessage | false> {
 		const key = this._getKey( targetClient, chatId, messageId );
+		winston.debug( '[transport/RedisBridgeDatabase] Query: ' + [ targetClient, chatId, messageId ] + ' = ' + key );
 		let cacheValue = this.#cache.get( key );
 		if ( !cacheValue ) {
 			cacheValue = await ( async () => {
@@ -75,10 +76,12 @@ export class RedisBridgeDatabase extends AbstractBridgeDatabase<MessageAssociati
 			} )();
 			this.#cache.set( key, cacheValue );
 		}
+		winston.debug( '[transport/RedisBridgeDatabase] Query: ' + key + ' = ' + cacheValue );
 		return cacheValue;
 	}
 
 	async setMessageAssociation( association: AssociateMessage ): Promise<boolean> {
+		winston.debug( '[transport/RedisBridgeDatabase] Insert: ' + JSON.stringify( association ) );
 		const keysToAssociate = [];
 		for ( const { client, chatId, messageId } of association ) {
 			keysToAssociate.push( this._getKey( client, chatId, messageId ) );

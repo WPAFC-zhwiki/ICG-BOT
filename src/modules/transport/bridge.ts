@@ -295,10 +295,10 @@ export async function fetchMessageAssociation(
 	}
 	for ( const association of associations ) {
 		if (
-			association[ 0 ] === toClient &&
-			String( association[ 1 ] ) === String( toChatId )
+			association.client === toClient &&
+			String( association.chatId ) === String( toChatId )
 		) {
-			return association[ 2 ];
+			return association.messageId;
 		}
 	}
 	return false;

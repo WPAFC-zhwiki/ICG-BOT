@@ -162,8 +162,10 @@ Manager.global.ifEnable( 'transport', function () {
 	}
 
 	if ( clientAssociateMessageUsefulCount && Manager.config.transport.messageAssociation?.type === 'redis' ) {
-		import( '@app/modules/transport/BridgeDatabase/RedisBridgeDatabase' ).then( function ( mRedisBridgeDatabase ) {
-			bridge.setBridgeDatabase( mRedisBridgeDatabase.RedisBridgeDatabase.getInstance() );
+		import( '@app/modules/transport/BridgeDatabase/RedisBridgeDatabase' ).then( async function ( mRedisBridgeDatabase ) {
+			const instance = mRedisBridgeDatabase.RedisBridgeDatabase.getInstance();
+			bridge.setBridgeDatabase( instance );
+			await instance.start();
 		} );
 	}
 } );
