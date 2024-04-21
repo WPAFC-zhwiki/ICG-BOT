@@ -88,7 +88,7 @@ export function prepareBridgeMsg( msg: Context ): Promise<void> | void {
 	}
 }
 
-export function getMessageStyle( msg: BridgeMsg ): string {
+export function getMessageStyle( msg: BridgeMsg, skipReplyCheck = false ): string {
 	// 自定义消息样式
 	let styleMode: 'simple' | 'complex' = 'simple';
 	const messageStyle = Manager.config.transport.options.messageStyle;
@@ -102,7 +102,7 @@ export function getMessageStyle( msg: BridgeMsg ): string {
 		return messageStyle[ styleMode ].notice;
 	} else if ( msg.extra.isAction ) {
 		return messageStyle[ styleMode ].action;
-	} else if ( msg.extra.reply ) {
+	} else if ( msg.extra.reply && !skipReplyCheck ) {
 		return messageStyle[ styleMode ].reply;
 	} else if ( msg.extra.forward ) {
 		return messageStyle[ styleMode ].forward;
@@ -258,6 +258,11 @@ export async function transportMessage( m: BridgeMsg | Context, bot?: boolean ):
 
 	try {
 		const associateMessage = ( await Promise.all( promises ) )
+			.concat( [ {
+				client: msg.handler.type,
+				chatId: msg.to,
+				messageId: msg.messageId ?? false
+			} ] )
 			.filter( ( data ) => data.messageId !== false ) as AssociateMessage;
 		if ( associateMessage ) {
 			await bridgeDatabase.setMessageAssociation( associateMessage );

@@ -249,7 +249,7 @@ export default async function ( msg: BridgeMsg ): Promise<number> {
 		meta.forward_user = msg.extra.forward.username;
 	}
 
-	const template: string = escapeHTML( bridge.getMessageStyle( msg ) );
+	const template: string = escapeHTML( bridge.getMessageStyle( msg, true ) );
 	const output: string = format( template, meta );
 	const to: string = BridgeMsg.parseUID( msg.to_uid ).id;
 	const newRawMsg = associationReplyMessageId ?

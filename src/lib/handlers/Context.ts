@@ -198,7 +198,7 @@ export class Context<R extends RawMsg = RawMsg> implements ContextOptions<R> {
 
 	private readonly _msgId: number = getMsgId();
 
-	public messageId: number | string = null;
+	public messageId: number | string | null = null;
 	private readonly _programMessageId = `Message#${ String( this._msgId ) }@${ String( Date.now() ) }`;
 	get programMessageId(): string | number {
 		return this.messageId || this._programMessageId;

@@ -97,7 +97,7 @@ export default async function ( msg: BridgeMsg ): Promise<string> {
 		meta.forward_user = msg.extra.forward.username;
 	}
 
-	const template: string = bridge.getMessageStyle( msg );
+	const template: string = bridge.getMessageStyle( msg, true );
 
 	const output = format( template, meta );
 	const attachFileUrls = ( msg.extra.uploads || [] ).map( ( u: { url: string; } ) => ` ${ u.url }` ).join( '' );
