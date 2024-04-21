@@ -93,7 +93,6 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		const that: this = this;
 
 		client.on( 'messageCreate', async function ( rawdata: Discord.Message ): Promise<void> {
-
 			if ( rawdata.partial ) {
 				rawdata = await rawdata.fetch();
 			}
@@ -167,6 +166,7 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 			const context = new Context<Discord.Message>( {
 				from: rawdata.author.id,
 				to: rawdata.channel.id,
+				messageId: rawdata.id,
 				nick: that.getNick( rawdata.member || rawdata.author ),
 				text: text,
 				isPrivate: rawdata.channel.type === Discord.ChannelType.DM,

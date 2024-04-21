@@ -264,7 +264,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					context.extra.reply = {
 						origClient: that._type,
 						origChatId: ctx.message.chat.id,
-						origMessageId: ctx.message.message_id,
+						origMessageId: reply.message_id,
 						nick: that.#getNick( reply.from ),
 						username: reply.from.username,
 						message: that.#convertToText( reply ),
@@ -281,18 +281,6 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					) {
 						context.extra.reply.nick = `Channel ${ reply.forward_from_chat.title }`;
 						context.extra.reply.username = reply.forward_from_chat.username;
-					} else {
-						context.extra.reply = {
-							origClient: that._type,
-							origChatId: ctx.message.chat.id,
-							origMessageId: ctx.message.message_id,
-							nick: that.#getNick( reply.from ),
-							username: reply.from.username,
-							message: that.#convertToText( reply ),
-							isText: 'text' in reply && !!reply.text,
-							id: String( reply.from.id ),
-							_rawData: null
-						};
 					}
 				} else if ( 'forward_from' in ctx.message ) {
 					const fwd: TT.User = ctx.message.forward_from;
