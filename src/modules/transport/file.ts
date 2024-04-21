@@ -371,7 +371,7 @@ const fileUploader = {
 			// 過濾掉只有 Telegram 的傳輸，用 file_id
 			context.extra.mapTo
 				.filter( ( target ) => BridgeMsg.parseUID( target ).client === 'telegram' )
-				.length === context.extra.clients &&
+				.length !== context.extra.clients &&
 			servemedia.type &&
 			servemedia.type !== 'none'
 		) {
