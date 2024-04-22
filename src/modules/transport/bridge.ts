@@ -248,7 +248,8 @@ export async function transportMessage( m: BridgeMsg | Context, bot?: boolean ):
 
 	try {
 		await prepareBridgeMsg( msg );
-	} catch ( e ) {
+	} catch ( error ) {
+		winston.error( `[transport/bridge] Fail to run prepareBridgeMsg on Msg #${ currMsgId }: ${ inspect( error ) }` );
 		return;
 	}
 

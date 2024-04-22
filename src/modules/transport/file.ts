@@ -404,7 +404,7 @@ const fileUploader = {
 			const telegramApiRoot = Manager.config.Telegram.bot.apiRoot || 'https://api.telegram.org';
 			winston.debug( `[file] Upload Skip: context=${ JSON.stringify( {
 				clients: context.extra.clients,
-				files: context.extra.files.concat( [] ).map( ( v ) => {
+				files: context.extra.files?.concat( [] ).map( ( v ) => {
 					if ( v.url.startsWith( telegramApiRoot ) ) {
 						return {
 							...v,
