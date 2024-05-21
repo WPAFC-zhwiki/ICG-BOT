@@ -133,6 +133,7 @@ dist
 config/*
 !config/config.example.ts 
 !config/config.type.d.ts
+!config/heartbeatConfig.example.sh
 
 # build
 build/

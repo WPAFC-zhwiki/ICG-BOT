@@ -320,7 +320,7 @@ const config: ConfigTS = {
 			'telegram/-12345678': 'https://en.wikipedia.org/wiki/$1',
 			'discord/87654321': false // 不在 Discord 頻道 8765432 啟用
 		}
-	}
+	},
 
 	/*
 
@@ -383,6 +383,9 @@ const config: ConfigTS = {
 		}
 	]
 	*/
+
+	// 啟用heartbeat，參見heartbeatConfig.example.sh
+	heartbeat: false
 };
 
 export default config;

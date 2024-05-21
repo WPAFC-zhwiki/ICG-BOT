@@ -513,7 +513,10 @@ export interface ConfigTS {
 			path: string;
 		} )[];
 		usePolling?: boolean
-	}
+	};
+
+	// 啟用heartbeat，參見heartbeatConfig.example.sh
+	heartbeat?: boolean;
 }
 
 interface AFCEventEnableType {

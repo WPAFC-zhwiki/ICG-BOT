@@ -11,22 +11,22 @@ export { ConfigTS, MessageAssociation } from '@config/config.type';
 export { version } from '@package.json';
 export const repository: string = Repository.replace( /^git\+/, '' );
 
-declare global {
-	// eslint-disable-next-line no-var
-	var configPath: string;
-}
+export const programRoot = path.resolve( __dirname, '..' );
+export const configRoot = path.join( programRoot, 'config' );
+
+export let configPath: string;
 
 if ( process.argv.includes( '--icconfig' ) ) {
-	const configPath: string = process.argv[ process.argv.indexOf( '--icconfig' ) + 1 ];
+	const argConfigPath: string = process.argv[ process.argv.indexOf( '--icconfig' ) + 1 ];
 	try {
-		global.configPath = require.resolve( path.join( __dirname, '../config', configPath ) );
+		global.configPath = require.resolve( path.join( configRoot, argConfigPath ) );
 	} catch ( err1 ) {
 		if ( String( err1 ).match( 'Cannot find module' ) ) {
 			try {
-				global.configPath = require.resolve( path.join( __dirname, '../', configPath ) );
+				global.configPath = require.resolve( path.join( programRoot, argConfigPath ) );
 			} catch ( err2 ) {
 				if ( String( err2 ).match( 'Cannot find module' ) ) {
-					global.configPath = require.resolve( configPath );
+					global.configPath = require.resolve( argConfigPath );
 				} else {
 					throw err2;
 				}
@@ -36,12 +36,12 @@ if ( process.argv.includes( '--icconfig' ) ) {
 		}
 	}
 } else {
-	global.configPath = require.resolve( path.join( __dirname, '../config', 'config' ) );
+	global.configPath = require.resolve( path.join( configRoot, 'config' ) );
 }
 
-if ( fs.existsSync( path.join( __dirname, '../config', '.env' ) ) ) {
+if ( fs.existsSync( path.join( configRoot, '.env' ) ) ) {
 	dotenv.config( {
-		path: path.join( __dirname, '../config', '.env' )
+		path: path.join( configRoot, '.env' )
 	} );
 }
 
