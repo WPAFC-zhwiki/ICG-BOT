@@ -116,7 +116,7 @@ importers:
         version: 2.0.4
       '@types/node':
         specifier: ^18.0.0
-        version: 18.19.41
+        version: 18.19.42
       '@types/node-fetch':
         specifier: ^2.6.2
         version: 2.6.11
@@ -155,7 +155,7 @@ importers:
         version: 2.29.1(@typescript-eslint/parser@5.62.0(eslint@8.56.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.1)(eslint@8.56.0)
       ts-node:
         specifier: ^10.9.1
-        version: 10.9.2(@types/node@18.19.41)(typescript@5.4.5)
+        version: 10.9.2(@types/node@18.19.42)(typescript@5.4.5)
       tsconfig-paths:
         specifier: ^4.0.0
         version: 4.2.0
@@ -394,8 +394,8 @@ packages:
   '@types/node@14.18.63':
     resolution: {integrity: sha512-fAtCfv4jJg+ExtXhvCkCqUKZ+4ok/JQk01qDKhL5BDDoS3AxKXhV5/MAVUZyQnSEd2GT92fkgZl0pz0Q0AzcIQ==}
 
-  '@types/node@18.19.41':
-    resolution: {integrity: sha512-LX84pRJ+evD2e2nrgYCHObGWkiQJ1mL+meAgbvnwk/US6vmMY7S2ygBTGV2Jw91s9vUsLSXeDEkUHZIJGLrhsg==}
+  '@types/node@18.19.42':
+    resolution: {integrity: sha512-d2ZFc/3lnK2YCYhos8iaNIYu9Vfhr92nHiyJHRltXWjXUBjEE+A4I58Tdbnw4VhggSW+2j5y5gTrLs4biNnubg==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -2745,11 +2745,11 @@ snapshots:
   '@types/fs-extra@11.0.4':
     dependencies:
       '@types/jsonfile': 6.1.4
-      '@types/node': 18.19.41
+      '@types/node': 18.19.42
 
   '@types/irc@0.5.4':
     dependencies:
-      '@types/node': 18.19.41
+      '@types/node': 18.19.42
 
   '@types/jquery@3.5.29':
     dependencies:
@@ -2761,7 +2761,7 @@ snapshots:
 
   '@types/jsonfile@6.1.4':
     dependencies:
-      '@types/node': 18.19.41
+      '@types/node': 18.19.42
 
   '@types/lodash@4.14.202': {}
 
@@ -2773,12 +2773,12 @@ snapshots:
 
   '@types/node-fetch@2.6.11':
     dependencies:
-      '@types/node': 18.19.41
+      '@types/node': 18.19.42
       form-data: 4.0.0
 
   '@types/node@14.18.63': {}
 
-  '@types/node@18.19.41':
+  '@types/node@18.19.42':
     dependencies:
       undici-types: 5.26.5
 
@@ -2787,7 +2787,7 @@ snapshots:
   '@types/request@2.48.12':
     dependencies:
       '@types/caseless': 0.12.5
-      '@types/node': 18.19.41
+      '@types/node': 18.19.42
       '@types/tough-cookie': 4.0.5
       form-data: 2.5.1
 
@@ -2805,7 +2805,7 @@ snapshots:
 
   '@types/ws@8.5.11':
     dependencies:
-      '@types/node': 18.19.41
+      '@types/node': 18.19.42
 
   '@typescript-eslint/eslint-plugin@5.62.0(@typescript-eslint/parser@5.62.0(eslint@8.56.0)(typescript@5.4.5))(eslint@8.56.0)(typescript@5.4.5)':
     dependencies:
@@ -5007,14 +5007,14 @@ snapshots:
 
   ts-mixer@6.0.3: {}
 
-  ts-node@10.9.2(@types/node@18.19.41)(typescript@5.4.5):
+  ts-node@10.9.2(@types/node@18.19.42)(typescript@5.4.5):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.9
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 18.19.41
+      '@types/node': 18.19.42
       acorn: 8.11.3
       acorn-walk: 8.3.2
       arg: 4.1.3
