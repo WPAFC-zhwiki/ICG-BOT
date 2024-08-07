@@ -5,6 +5,7 @@ import { default as config, version } from '@app/config';
 
 import { Context } from '@app/lib/handlers/Context';
 import { MessageHandler } from '@app/lib/handlers/MessageHandler';
+import { RedisWrapper } from '@app/lib/redis';
 import { inspect } from '@app/lib/util';
 
 import { ifEnable, isEnable } from '@app/modules/enable';
@@ -169,3 +170,5 @@ for ( const client of enabledClients ) {
 
 	winston.info( `${ client } bot has started.` );
 }
+
+RedisWrapper.getInstance().start();

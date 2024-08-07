@@ -1,7 +1,6 @@
-import fetch, { Response } from 'node-fetch';
 import winston = require( 'winston' );
 
-import { inspect } from '@app/lib/util';
+import { inspect, parseHttpResponseJson } from '@app/lib/util';
 
 import { AFCPage } from '@app/modules/afc/util';
 import issuesData from '@app/modules/afc/util/issuesData.json';
@@ -56,16 +55,8 @@ export async function autoReview(
 		await fetch(
 			`https://zhwp-afc-bot.toolforge.org/api/autoreview.njs?title=${ encodeURIComponent( page.toString() ) }&apiversion=2022v01`
 		)
-			.then( async function ( res ): Promise<[ Response, string ]> {
-				return [ res, await res.text() ];
-			} )
-			.then( function ( [ res, resJsonTxt ] ) {
-				let resJson: ApiError | ApiResultV1;
-				try {
-					resJson = JSON.parse( resJsonTxt ) as ApiError | ApiResultV1;
-				} catch {
-					throw new Error( `Request fail, status: ${ res.status }, response: ${ resJsonTxt }` );
-				}
+			.then<ApiError | ApiResultV1>( parseHttpResponseJson )
+			.then( function ( resJson ) {
 				if ( resJson.status !== 200 ) {
 					throw new AutoReviewApiError( resJson as ApiError );
 				}

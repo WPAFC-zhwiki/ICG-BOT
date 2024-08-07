@@ -193,6 +193,14 @@ export interface ConfigTS {
 
 	modules: string[];
 
+	redisCache?: {
+		enable: boolean;
+
+		upstream: string;
+
+		prefix?: string;
+	};
+
 	transport?: {
 		/**
 		 * 1. 可以填任意個群組
@@ -407,8 +415,6 @@ export interface ConfigTS {
 				};
 			};
 		};
-
-		messageAssociation?: MessageAssociation.MessageAssociationRedis;
 
 		/**
 		 * 本節用於處理圖片檔案
@@ -705,26 +711,4 @@ interface MwnLoginOAuth extends MwnLoginBase {
 		accessToken: string;
 		accessSecret: string;
 	};
-}
-
-export type MessageAssociation = MessageAssociation.MessageAssociationRedis | MessageAssociationNoop;
-export namespace MessageAssociation {
-	export interface MessageAssociationBase {
-		/**
-		 * 關聯資料庫
-		 */
-		type?: '' | 'none' | 'redis';
-	}
-
-	export interface MessageAssociationRedis extends MessageAssociationBase {
-		type: 'redis';
-
-		redisUpstream: string;
-
-		redisPrefix?: string;
-	}
-
-	export interface MessageAssociationNoop extends MessageAssociationBase {
-		type: '' | 'none';
-	}
 }

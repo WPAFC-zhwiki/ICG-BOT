@@ -41,3 +41,26 @@ export function getFileNameFromUrl( urlString: string ) {
 	}
 	return path.basename( url.pathname );
 }
+
+export async function parseHttpResponseJson<T>( response: Response ) {
+	const res = await Promise.resolve( response );
+	let resJsonTxt = await res.text();
+	let resJson: T;
+	try {
+		resJson = JSON.parse( resJsonTxt ) satisfies T;
+	} catch {
+		if ( [ 502, 503, 504 ].includes( res.status ) && res.headers.get( 'Content-Type' )?.includes( 'html' ) ) {
+			// 不要把502 503 504錯誤頁面的html吐出來
+			const errorMsg = {
+				502: 'Bad Gateway',
+				503: 'Service Unavailable',
+				504: 'Gateway Timeout'
+			};
+			resJsonTxt = `<!-- redacted -->${ errorMsg[ res.status ] }`;
+		} else {
+			resJsonTxt = resJsonTxt.slice( 0, 1000 );
+		}
+		throw new Error( `Request fail, status: ${ res.status }, response: ${ resJsonTxt }` );
+	}
+	return resJson;
+}

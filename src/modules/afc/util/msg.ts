@@ -99,7 +99,9 @@ export async function reply( context: Context, msg: {
 		output.raw = dc.say( that.id, discordEmbedToOption( msg.dMsg ) );
 	} else if ( that.client === 'Telegram' && msg.tMsg ) {
 		output.raw = tg.sayWithHTML( that.id, msg.tMsg, {
-			disable_web_page_preview: true
+			link_preview_options: {
+				is_disabled: true
+			}
 		} );
 	} else if ( that.client === 'IRC' && msg.iMsg ) {
 		output.raw = irc.say( that.id, msg.iMsg, {
@@ -126,7 +128,9 @@ export async function reply( context: Context, msg: {
 				output.dc.push( dc.say( s.id, discordEmbedToOption( msg.dMsg ) ) );
 			} else if ( s.client === 'Telegram' && msg.tMsg ) {
 				output.tg.push( tg.sayWithHTML( s.id, msg.tMsg, {
-					disable_web_page_preview: true
+					link_preview_options: {
+						is_disabled: true
+					}
 				} ) );
 			} else if ( s.client === 'IRC' && msg.iMsg ) {
 				output.irc.push( irc.say( s.id, msg.iMsg, {
@@ -178,7 +182,9 @@ ${ msg.iMsg }
 			output.push( dc.say( f.id, discordEmbedToOption( msg.dMsg ) ) );
 		} else if ( f.client === 'Telegram' && msg.tMsg ) {
 			output.push( tg.sayWithHTML( f.id, msg.tMsg, {
-				disable_web_page_preview: true
+				link_preview_options: {
+					is_disabled: true
+				}
 			} ) );
 		} else if ( f.client === 'IRC' && msg.iMsg ) {
 			output.push( irc.say( f.id, msg.iMsg, {
@@ -231,7 +237,9 @@ export async function editMessage( promises: Promise<Response>[] | Transport, ed
 			if ( msg ) {
 				if ( 'message_id' in msg && 'chat' in msg ) { // Telegram
 					tg.rawClient.telegram.editMessageText( msg.chat.id, msg.message_id, null, edMsg.tMsg, {
-						disable_web_page_preview: true,
+						link_preview_options: {
+							is_disabled: true
+						},
 						parse_mode: 'HTML'
 					} );
 				} else if ( 'id' in msg && 'channel' in msg ) { // Discord

@@ -1,6 +1,5 @@
 import { CronJob } from 'cron';
 import { MwnTitle } from 'mwn';
-import fetch, { Response } from 'node-fetch';
 import winston = require( 'winston' );
 
 import { inspect } from '@app/lib/util';

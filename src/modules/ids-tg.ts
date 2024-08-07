@@ -29,34 +29,14 @@ function getOutPut( value: [ string | false, number ] ) {
 	return `${ value[ 0 ] || 'User' } ID: "${ value[ 1 ] }"`;
 }
 
-function upperCaseFirst( str: string ): string {
-	return str.slice( 0, 1 ).toUpperCase() + str.slice( 1 );
-}
-
 tg.addCommand( 'userid', function ( context ) {
 	const rawdata = context._rawData;
 
 	let output: string;
 	if ( 'reply_to_message' in rawdata.message ) {
-		if (
-			'forward_from' in rawdata.message.reply_to_message
-		) {
-			output = 'Forward From ' + getOutPut( [ false, rawdata.message.reply_to_message.forward_from.id ] );
-		} else if (
-			'forward_from_chat' in rawdata.message.reply_to_message &&
-			[ 'channel', 'group', 'supergroup' ].includes( rawdata.message.reply_to_message.forward_from_chat.type )
-		) {
-			let type = rawdata.message.reply_to_message.forward_from_chat.type;
-			type = type === 'supergroup' ? 'group' : type;
-			output = 'Forward From ' + getOutPut( [
-				upperCaseFirst( type ),
-				rawdata.message.reply_to_message.forward_from_chat.id
-			] );
-		} else {
-			output = 'Reply to ' + getOutPut( tg.isTelegramFallbackBot( rawdata.message.reply_to_message ) );
-		}
+		output = 'Reply to ' + getOutPut( tg.getMessageOriginDescription( rawdata.message.reply_to_message ) );
 	} else {
-		output = 'Your ' + getOutPut( tg.isTelegramFallbackBot( rawdata.message ) );
+		output = 'Your ' + getOutPut( tg.getMessageOriginDescription( rawdata.message ) );
 	}
 	winston.debug( `[ids-tg] Msg #${ context.msgId }: ${ output }` );
 	context.reply( output.replace( /"(-?\d+)"/, '<code>$1</code>' ), {

@@ -28,7 +28,9 @@ addCommand( 'anyone', async function ( context: Context ) {
 	if ( rawdata instanceof TContext ) {
 		if ( 'reply_to_message' in rawdata.message ) {
 			tg.rawClient.telegram.sendMessage( rawdata.chat.id, '沒有人，你悲劇了。', {
-				reply_to_message_id: rawdata.message.reply_to_message.message_id
+				reply_parameters: {
+					message_id: rawdata.message.reply_to_message.message_id
+				}
 			} );
 			try {
 				await tg.rawClient.telegram.deleteMessage( rawdata.chat.id, rawdata.message.message_id );

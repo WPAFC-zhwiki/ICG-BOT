@@ -11,7 +11,7 @@ import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
 import '@app/modules/transport/file';
 import '@app/modules/transport/paeeye';
 
-import { associateMessageUsefulClients } from './transport/BridgeDatabase/AbstractBridgeDatabase';
+import { associateMessageUsefulClients } from './transport/BridgeDatabase';
 
 export * from '@app/modules/transport/BridgeMsg';
 export * from '@app/modules/transport/bridge';
@@ -161,11 +161,7 @@ Manager.global.ifEnable( 'transport', function () {
 		bridge.addProcessor( type, processor );
 	}
 
-	if ( clientAssociateMessageUsefulCount && Manager.config.transport.messageAssociation?.type === 'redis' ) {
-		import( '@app/modules/transport/BridgeDatabase/RedisBridgeDatabase' ).then( async function ( mRedisBridgeDatabase ) {
-			const instance = mRedisBridgeDatabase.RedisBridgeDatabase.getInstance();
-			bridge.setBridgeDatabase( instance );
-			await instance.start();
-		} );
+	if ( clientAssociateMessageUsefulCount ) {
+		bridge.bridgeDatabase.isEnable = true;
 	}
 } );

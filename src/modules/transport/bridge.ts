@@ -7,8 +7,7 @@ import { inspect } from '@app/lib/util';
 
 import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
 
-import { AbstractBridgeDatabase, AssociateMessage } from './BridgeDatabase/AbstractBridgeDatabase';
-import { NoopBridgeDatabase } from './BridgeDatabase/NoopBridgeDatabase';
+import { BridgeDatabase, AssociateMessage } from './BridgeDatabase';
 
 function checkEnable(): void {
 	if ( !Manager.global.isEnable( 'transport' ) ) {
@@ -282,11 +281,7 @@ export async function transportMessage( m: BridgeMsg | Context, bot?: boolean ):
 	return await Promise.resolve( allResolved );
 }
 
-let bridgeDatabase: AbstractBridgeDatabase = NoopBridgeDatabase.getInstance();
-
-export function setBridgeDatabase( db: AbstractBridgeDatabase ) {
-	bridgeDatabase = db;
-}
+export const bridgeDatabase = new BridgeDatabase();
 
 export async function fetchMessageAssociation(
 	fromClient: string,

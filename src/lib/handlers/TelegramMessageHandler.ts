@@ -199,7 +199,9 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			} ];
 			context.extra.fileIdUploads = [ ( chatId: string | number, messageId: number ) => {
 				const replyOptions: TelegramSendMessageOptions = {
-					reply_to_message_id: messageId
+					reply_parameters: {
+						message_id: messageId
+					}
 				};
 				switch ( type ) {
 					case 'photo':
@@ -242,12 +244,16 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 				if ( ctx.from.id === 777000 ) {
 					if (
-						'forward_from_chat' in ctx.message &&
-						ctx.message.forward_from_chat.type === 'channel'
+						'forward_origin' in ctx.message &&
+						ctx.message.forward_origin.type === 'channel' &&
+						// for typing
+						ctx.message.forward_origin.chat.type === 'channel' &&
+						// 區分頻道訊息還是自動發言
+						!ctx.message.is_automatic_forward
 					) {
-						context.from = ctx.message.forward_from_chat.id;
+						context.from = ctx.message.forward_origin.chat.id;
 						context.nick = 'Channel';
-						context.extra.username = ctx.message.forward_from_chat.username;
+						context.extra.username = ctx.message.forward_origin.chat.username;
 						context.extra.isChannel = true;
 					} else if (
 						'sender_chat' in ctx.message &&
@@ -259,8 +265,41 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					}
 				}
 
-				if ( 'reply_to_message' in ctx.message ) {
-					const reply: TT.Message = ctx.message.reply_to_message;
+				if ( 'forward_origin' in ctx.message ) {
+					if ( ctx.message.forward_origin.type === 'user' ) {
+						const fwd: TT.User = ctx.message.forward_origin.sender_user;
+						context.extra.forward = {
+							nick: that.#getNick( fwd ),
+							username: fwd.username
+						};
+					} else if ( ctx.message.forward_origin.type === 'channel' ) {
+						const fwdChat = ctx.message.forward_origin.chat as TT.Chat.ChannelChat;
+						if ( !( ctx.message.is_automatic_forward && ctx.message.sender_chat?.id === fwdChat.id ) ) {
+							// 不標記實際上根本沒有用「轉傳」的訊息
+							context.extra.forward = {
+								nick: `Channel ${ fwdChat.title }`,
+								username: fwdChat.username
+							};
+						}
+					} else if ( ctx.message.forward_origin.type === 'chat' ) {
+						const fwdChat: TT.Chat = ctx.message.forward_origin.sender_chat as TT.Chat.SupergroupChat;
+						context.extra.forward = {
+							nick: fwdChat.title,
+							username: fwdChat.username
+						};
+					} else if ( ctx.message.forward_origin.type === 'hidden_user' ) {
+						context.extra.forward = {
+							nick: ctx.message.forward_origin.sender_user_name,
+							username: undefined
+						};
+					} else {
+						context.extra.forward = {
+							nick: '(Unknown)',
+							username: undefined
+						};
+					}
+				} else if ( 'reply_to_message' in ctx.message ) {
+					const reply = ctx.message.reply_to_message;
 					context.extra.reply = {
 						origClient: that._type,
 						origChatId: ctx.message.chat.id,
@@ -272,34 +311,6 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						id: String( reply.from.id ),
 						_rawData: null
 					};
-
-					if (
-						reply.from.id === 777000 &&
-						'forward_from_chat' in reply &&
-						reply.forward_from_chat &&
-						reply.forward_from_chat.type === 'channel'
-					) {
-						context.extra.reply.nick = `Channel ${ reply.forward_from_chat.title }`;
-						context.extra.reply.username = reply.forward_from_chat.username;
-					}
-				} else if ( 'forward_from' in ctx.message ) {
-					const fwd: TT.User = ctx.message.forward_from;
-					const fwdChat: TT.Chat = ctx.message.forward_from_chat;
-					if (
-						fwd.id === 777000 &&
-						fwdChat &&
-						fwdChat.type === 'channel'
-					) {
-						context.extra.forward = {
-							nick: `Channel ${ fwdChat.title }`,
-							username: fwdChat.username
-						};
-					} else {
-						context.extra.forward = {
-							nick: that.#getNick( fwd ),
-							username: fwd.username
-						};
-					}
 				}
 
 				if ( 'text' in ctx.message ) {
@@ -338,7 +349,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						that.emit( 'text', context );
 					}
 				} else {
-					const message: TT.Message = ctx.message;
+					const message = ctx.message;
 
 					if ( 'photo' in message ) {
 						let sz = 0;
@@ -483,25 +494,15 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		}
 	}
 
-	public isTelegramFallbackBot( message: TT.Message ): [ TelegramFallbackBots, number ] {
-		const fwdChat =
-			'forward_from_chat' in message &&
-			message.forward_from_chat.type === 'channel' &&
-			message.forward_from_chat;
-		if (
-			message.from.id === 777000 /* Telegram */ &&
-			fwdChat && fwdChat.type === 'channel'
-		) {
-			return [ 'Link Channel', fwdChat.id ];
-		} else if (
-			message.from.id === 1087968824 /* GroupAnonymousBot */
-		) {
-			return [ 'Group', message.chat.id ];
-		} else if (
-			message.from.id === 136817688 /* Channel Bot */ &&
-			message.sender_chat
-		) {
-			return [ 'Channel', message.sender_chat.id ];
+	public getMessageOriginDescription( message: TT.Message ): [ TelegramFallbackBots, number ] {
+		if ( 'forward_origin' in message ) {
+			if ( message.is_automatic_forward ) {
+				return [ 'Link Channel', message.sender_chat.id ];
+			} else if ( message.forward_origin.type === 'chat' ) {
+				return [ 'Group', message.forward_origin.sender_chat.id ];
+			} else if ( message.forward_origin.type === 'channel' ) {
+				return [ 'Channel', message.forward_origin.chat.id ];
+			}
 		}
 
 		return [ false, message.from.id ];
@@ -561,7 +562,10 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		};
 	}
 
-	public say( target: string | number, message: string, options?: TelegramSendMessageOptions ): Promise<TT.Message> {
+	public say(
+		target: string | number,
+		message: string, options?: TelegramSendMessageOptions
+	): Promise<TT.Message.TextMessage> {
 		this.#checkClientEnable();
 		return this._client.telegram.sendMessage( target, message, options );
 	}
@@ -596,7 +600,13 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			if ( context.isPrivate ) {
 				return [ String( message ), options ];
 			} else {
-				options.reply_to_message_id = context._rawData.message.message_id;
+				if ( options.reply_parameters ) {
+					winston.warn( '[TelegramMessageHandler] Duplicate setting reply option detected.' );
+					// throw new Error( 'Duplicate setting reply option detected.' );
+				}
+				options.reply_parameters = {
+					message_id: context._rawData.message.message_id
+				};
 				if ( options.withNick ) {
 					return [ String( `${ context.nick }: ${ message }` ), options ];
 				} else {

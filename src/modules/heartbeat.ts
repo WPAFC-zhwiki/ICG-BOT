@@ -9,10 +9,10 @@ import config, { programRoot, configRoot } from '@app/config';
 
 import { inspect } from '@app/lib/util';
 
-const HeartbeatConfig = 'heartbeatConfig.sh';
+const heartbeatConfig = 'heartbeatConfig.sh';
 
 if ( config.heartbeat ) {
-	const heartbeatData = dotenv.parse<Record<'STATUS_FILE' | 'MAX_NO_UPDATE_TIME', string>>( fs.readFileSync( path.join( configRoot, HeartbeatConfig ) ) );
+	const heartbeatData = dotenv.parse<Record<'STATUS_FILE' | 'MAX_NO_UPDATE_TIME', string>>( fs.readFileSync( path.join( configRoot, heartbeatConfig ) ) );
 	const statusFilePath = heartbeatData.STATUS_FILE
 		.replace( /\$PROGRAM_ROOT/g, programRoot )
 		.replace( /\$CONFIG_ROOT/g, configRoot )

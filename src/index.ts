@@ -5,14 +5,10 @@
  */
 import path = require( 'node:path' );
 
-import moduleAlias = require( 'module-alias' );
 import winston = require( 'winston' );
 
-moduleAlias.addAliases( {
-	'@app': __dirname,
-	'@config': path.join( __dirname, '../config' ),
-	'@package.json': path.join( __dirname, '../package.json' )
-} );
+// eslint-disable-next-line import/order
+import './registerModuleAlias.js';
 
 import { Manager } from '@app/init';
 

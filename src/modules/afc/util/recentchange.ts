@@ -1,5 +1,9 @@
 import { ApiParams, MwnDate } from 'mwn';
 import { ApiQueryRecentChangesParams } from 'types-mediawiki/api_params';
+import winston = require( 'winston' );
+
+import { RedisWrapper } from '@app/lib/redis';
+import { inspect } from '@app/lib/util';
 
 import { mwbot } from '@app/modules/afc/util/index';
 
@@ -157,6 +161,8 @@ type RCFunction<E, T> = ( event: E ) => T;
 type RCFilterFunction = RCFunction<RecentChangeEvent, boolean>;
 type RCProcessFunction<E = RecentChangeEvent> = RCFunction<E, void>;
 
+const recentChangeLastReadKey = 'afc/recentChange/LastRead';
+
 class RecentChanges {
 	private get _params(): ApiParams & ApiQueryRecentChangesParams {
 		return Object.assign( {
@@ -181,7 +187,7 @@ class RecentChanges {
 
 	private _startTimestamp: Date;
 
-	private _timeOut: NodeJS.Timer;
+	private _timeOut: NodeJS.Timer | 1;
 
 	public setRequestFilter( filter: RecentChangeFilter ) {
 		if ( filter.type ) {
@@ -234,12 +240,45 @@ class RecentChanges {
 		}
 	}
 
+	private async _getInitialTimestamp() {
+		const redisWrapper = RedisWrapper.getInstance();
+		if ( redisWrapper.isEnable ) {
+			try {
+				const lastTimestamp = await redisWrapper.get( recentChangeLastReadKey );
+				if ( lastTimestamp && !Number.isNaN( Date.parse( lastTimestamp ) ) ) {
+					winston.info( `[afc/recentchange] RecentChange start from cache timestamp ${ lastTimestamp }.` );
+					return new Date( lastTimestamp );
+				}
+			} catch ( error ) {
+				winston.error( `[afc/recentchange] Fail to get last initial timestamp: ${ inspect( error ) }.` );
+			}
+		}
+		return new Date();
+	}
+
+	private async _updateInitialTimestamp( date: Date ) {
+		const redisWrapper = RedisWrapper.getInstance();
+		if ( redisWrapper.isEnable ) {
+			try {
+				await redisWrapper.set( recentChangeLastReadKey, date.toISOString() );
+				winston.info( `[afc/recentchange] RecentChange cache timestamp has been update to ${ date.toISOString() }.` );
+			} catch ( error ) {
+				winston.error( '[afc/recentchange] Fail to update last initial timestamp: ' + inspect( error ) );
+			}
+		}
+	}
+
 	private _mayStartProcess() {
 		if ( !this._timeOut ) {
-			this._startTimestamp = new Date();
-			this._timeOut = setInterval( ( function ( this: RecentChanges ) {
-				this._request();
-			} ).bind( this ), 5000 );
+			// 佔位符
+			this._timeOut = 1;
+			this._getInitialTimestamp()
+				.then( ( startTimestamp ) => {
+					this._startTimestamp = startTimestamp;
+					this._timeOut = setInterval( ( () => {
+						this._request();
+					} ), 5000 );
+				} );
 		}
 	}
 
@@ -257,19 +296,27 @@ class RecentChanges {
 		} catch ( e ) {
 			await mwbot.getSiteInfo();
 		}
+
+		const now = new Date();
 		const data = await mwbot.request( this._params );
 
 		const recentchanges: RecentChangeEvent[] = data.query.recentchanges;
 
 		if ( recentchanges.length ) {
 			for ( const rc of recentchanges ) {
-				if ( this._fired.includes( rc.rcid ) || new Date( rc.timestamp ) < this._startTimestamp ) {
+				if (
+					this._fired.includes( rc.rcid ) ||
+					new Date( rc.timestamp ) < this._startTimestamp ||
+					// 避免重複捕獲
+					new Date( rc.timestamp ) >= now
+				) {
 					continue;
 				}
 				this._fired.push( rc.rcid );
 				this._fire( rc );
 			}
 		}
+		this._updateInitialTimestamp( now );
 	}
 
 	private _fire( event: RecentChangeEvent ): void {

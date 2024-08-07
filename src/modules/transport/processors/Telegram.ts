@@ -254,7 +254,9 @@ export default async function ( msg: BridgeMsg ): Promise<number> {
 	const to: string = BridgeMsg.parseUID( msg.to_uid ).id;
 	const newRawMsg = associationReplyMessageId ?
 		await tgHandler.sayWithHTML( to, output, {
-			reply_to_message_id: associationReplyMessageId
+			reply_parameters: {
+				message_id: associationReplyMessageId
+			}
 		} ) :
 		await tgHandler.sayWithHTML( to, output );
 
@@ -266,7 +268,9 @@ export default async function ( msg: BridgeMsg ): Promise<number> {
 		}
 	} else if ( msg.extra.uploads ) {
 		const replyOption: TelegramSendMessageOptions = {
-			reply_to_message_id: newRawMsg.message_id
+			reply_parameters: {
+				message_id: associationReplyMessageId
+			}
 		};
 
 		for ( const upload of msg.extra.uploads ) {
