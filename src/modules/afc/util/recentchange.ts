@@ -261,7 +261,7 @@ class RecentChanges {
 		if ( redisWrapper.isEnable ) {
 			try {
 				await redisWrapper.set( recentChangeLastReadKey, date.toISOString() );
-				winston.info( `[afc/recentchange] RecentChange cache timestamp has been update to ${ date.toISOString() }.` );
+				winston.debug( `[afc/recentchange] RecentChange cache timestamp has been update to ${ date.toISOString() }.` );
 			} catch ( error ) {
 				winston.error( '[afc/recentchange] Fail to update last initial timestamp: ' + inspect( error ) );
 			}
