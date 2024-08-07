@@ -1,4 +1,4 @@
-import redis = require( 'redis' );
+import redis = require( 'ioredis' );
 import winston = require( 'winston' );
 
 import config from '@app/config';
@@ -9,7 +9,7 @@ import { inspect } from '@app/lib/util';
 let instance: RedisWrapper;
 
 export class RedisWrapper {
-	#client?: redis.RedisClientType;
+	#client?: redis.Redis;
 	#isEnable: boolean;
 	#config: ConfigTS['redisCache'];
 	#startPromise: Promise<void> | null = null;
@@ -18,11 +18,9 @@ export class RedisWrapper {
 		this.#config = config.redisCache;
 		this.#isEnable = !!this.#config.enable;
 		if ( this.#isEnable ) {
-			this.#client = redis.createClient( {
-				url: this.#config.upstream
-			} );
+			this.#client = new redis.Redis( this.#config.upstream );
 			this.#client.on( 'error', ( error ) => {
-				winston.error( '[transport/RedisBridgeDatabase] Error: ' + inspect( error ) );
+				winston.error( '[redis] Error: ' + inspect( error ) );
 			} );
 		}
 	}
@@ -38,32 +36,7 @@ export class RedisWrapper {
 		return this.#isEnable;
 	}
 
-	public get startPromise() {
-		if ( !this.isEnable ) {
-			return Promise.resolve();
-		}
-		return this.#startPromise || Promise.reject( new Error( 'Redis client isn\'t start.' ) );
-	}
-
-	public async start() {
-		if ( this.#isEnable ) {
-			this.#startPromise = new Promise<void>( ( resolve, reject ) => {
-				this.#client.connect().then( () => {
-					resolve();
-				}, reject );
-			} );
-			await this.#startPromise;
-		}
-	}
-
-	public async stop() {
-		if ( this.#isEnable ) {
-			this.#startPromise = null;
-			await this.#client.disconnect();
-		}
-	}
-
-	private _getPrefixedKey( key: string ): string {
+	public _getPrefixedKey( key: string ): string {
 		return `${ this.#config.prefix || 'afc-icg-bot/' }${ key }`;
 	}
 
@@ -107,5 +80,36 @@ export class RedisWrapper {
 
 	public async setJson<T>( key: string, value: T ): Promise<boolean> {
 		return this.set( key, JSON.stringify( value ) );
+	}
+
+	public setPipeline() {
+		if ( !this.#isEnable ) {
+			return null;
+		}
+		return new RedisSetPipelineWrapper( this, this.#client.pipeline() );
+	}
+}
+
+class RedisSetPipelineWrapper {
+	#parent: RedisWrapper;
+	#commander: redis.ChainableCommander;
+
+	constructor( parent: RedisWrapper, commander: redis.ChainableCommander ) {
+		this.#parent = parent;
+		this.#commander = commander;
+	}
+
+	public set( key: string, value: string ): this {
+		const prefixedKey = this.#parent._getPrefixedKey( key );
+		this.#commander.set( prefixedKey, value );
+		return this;
+	}
+
+	public setJson<T>( key: string, value: T ): this {
+		return this.set( key, JSON.stringify( value ) );
+	}
+
+	public exec() {
+		return this.#commander.exec();
 	}
 }

@@ -54,12 +54,12 @@ export class BridgeDatabase {
 		for ( const { client, chatId, messageId } of association ) {
 			keysToAssociate.push( this._getKey( client, chatId, messageId ) );
 		}
-		const setPromises = [];
+		const setter = redisWrapper.setPipeline();
 		for ( const key of keysToAssociate ) {
 			this.#cache.set( key, association );
-			setPromises.push( redisWrapper.setJson<AssociateMessage>( key, association ) );
+			setter?.setJson<AssociateMessage>( key, association );
 		}
-		await Promise.all( setPromises );
+		await setter?.exec();
 		return true;
 	}
 }

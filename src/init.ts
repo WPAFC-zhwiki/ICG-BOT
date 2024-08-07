@@ -171,4 +171,4 @@ for ( const client of enabledClients ) {
 	winston.info( `${ client } bot has started.` );
 }
 
-RedisWrapper.getInstance().start();
+RedisWrapper.getInstance();
