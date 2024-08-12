@@ -1,3 +1,5 @@
+import { setTimeout as setTimeoutP } from 'node:timers/promises';
+
 import { ApiParams, MwnDate } from 'mwn';
 import { ApiQueryRecentChangesParams } from 'types-mediawiki/api_params';
 import winston = require( 'winston' );
@@ -185,9 +187,14 @@ class RecentChanges {
 
 	private readonly _fired: number[] = [];
 
-	private _startTimestamp: Date;
+	private _startTime: Date;
+	private _lastTime: Date;
 
-	private _timeOut: NodeJS.Timer | 1;
+	private _lock = false;
+
+	private static readonly _timeoutPlaceholder = Symbol( 'timeout' );
+	private _timeout: NodeJS.Timeout | typeof RecentChanges['_timeoutPlaceholder'];
+	private _abortController: AbortController | null = null;
 
 	public setRequestFilter( filter: RecentChangeFilter ) {
 		if ( filter.type ) {
@@ -268,55 +275,136 @@ class RecentChanges {
 		}
 	}
 
-	private _mayStartProcess() {
-		if ( !this._timeOut ) {
+	public async start() {
+		if ( !this._timeout ) {
 			// 佔位符
-			this._timeOut = 1;
-			this._getInitialTimestamp()
-				.then( ( startTimestamp ) => {
-					this._startTimestamp = startTimestamp;
-					this._timeOut = setInterval( ( () => {
-						this._request();
-					} ), 5000 );
-				} );
+			this._timeout = RecentChanges._timeoutPlaceholder;
+
+			try {
+				mwbot.Title.checkData();
+			} catch ( e ) {
+				await mwbot.getSiteInfo();
+			}
+
+			this._startTime = this._lastTime = await this._getInitialTimestamp();
+			this._requestInterval();
 		}
+	}
+
+	public stop() {
+		if ( !this._timeout ) {
+			return;
+		}
+		this._abortController?.abort();
+		if ( this._timeout !== RecentChanges._timeoutPlaceholder ) {
+			clearTimeout( this._timeout );
+		}
+		this._timeout = null;
 	}
 
 	public addProcessFunction<E extends RecentChangeEvent = RecentChangeEvent>(
 		filter: RCFilterFunction,
 		func: RCProcessFunction<E>
 	) {
-		this._mayStartProcess();
+		this.start();
 		this._processer.set( filter, func as RCProcessFunction );
 	}
 
-	private async _request(): Promise<void> {
-		try {
-			mwbot.Title.checkData();
-		} catch ( e ) {
-			await mwbot.getSiteInfo();
+	private async _wrapContinuableRecentChangesRequest(
+		params: ApiParams & ApiQueryRecentChangesParams,
+		abortController: AbortController | null = null,
+		rccontinue: string | undefined = undefined,
+		maxContinueCount = 10
+	): Promise<RecentChangeEvent[]> {
+		if ( !maxContinueCount ) {
+			return [];
 		}
 
-		const now = new Date();
-		const data = await mwbot.request( this._params );
+		const requestParams = Object.assign( {}, params );
+		if ( rccontinue ) {
+			requestParams.continue = '-||';
+			requestParams.rccontinue = rccontinue;
+		}
+		const data = await mwbot.request( requestParams, {
+			signal: abortController?.signal,
+			timeout: 15000
+		} ) as {
+			continue?: {
+				continue: string;
+				rccontinue: string;
+			},
+			query?: {
+				recentchanges?: RecentChangeEvent[];
+			}
+		};
 
-		const recentchanges: RecentChangeEvent[] = data.query.recentchanges;
+		if ( data.continue?.rccontinue ) {
+			return ( data.query?.recentchanges ?? [] )
+				.concat(
+					await this._wrapContinuableRecentChangesRequest(
+						params,
+						abortController,
+						data.continue.rccontinue,
+						--maxContinueCount
+					)
+				);
+		}
+
+		return ( data.query?.recentchanges ?? [] );
+	}
+
+	public async request( abortController?: AbortController | null ): Promise<void> {
+		const recentchanges = await this._wrapContinuableRecentChangesRequest(
+			Object.assign( <ApiQueryRecentChangesParams>{
+				rcstart: 'now',
+				// https://www.mediawiki.org/wiki/API:RecentChanges#Additional_notes
+				rcend: new Date( this._lastTime.getTime() - 30000 ).toISOString()
+			}, this._params ),
+			abortController
+		);
 
 		if ( recentchanges.length ) {
 			for ( const rc of recentchanges ) {
+				const time = new Date( rc.timestamp );
 				if (
 					this._fired.includes( rc.rcid ) ||
-					new Date( rc.timestamp ) < this._startTimestamp ||
-					// 避免重複捕獲
-					new Date( rc.timestamp ) >= now
+				time < this._startTime
 				) {
 					continue;
 				}
+
 				this._fired.push( rc.rcid );
 				this._fire( rc );
+				if ( time > this._lastTime ) {
+					this._lastTime = time;
+				}
 			}
 		}
-		this._updateInitialTimestamp( now );
+
+		this._updateInitialTimestamp( this._lastTime );
+	}
+
+	private async _requestInterval(): Promise<void> {
+		if ( this._lock ) {
+			return;
+		}
+
+		this._lock = true;
+		const abortController = this._abortController = new AbortController();
+
+		try {
+			await Promise.race( [
+				this.request( abortController ),
+				await setTimeoutP( 30000 )
+			] );
+		} finally {
+			this._lock = false;
+			abortController.abort();
+			delete this._abortController;
+			this._timeout = setTimeout( () => {
+				this._requestInterval();
+			}, 15000 );
+		}
 	}
 
 	private _fire( event: RecentChangeEvent ): void {
