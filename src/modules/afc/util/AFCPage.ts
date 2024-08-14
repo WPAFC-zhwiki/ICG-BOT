@@ -7,7 +7,7 @@ import winston = require( 'winston' );
 
 import { inspect } from '@app/lib/util';
 
-import { mwbot, $ } from '@app/modules/afc/util/index';
+import { mwbot, $, handleMwnRequestError } from '@app/modules/afc/util/index';
 import { isReviewer } from '@app/modules/afc/util/reviewer';
 
 const categoryRegex = /\[\[:?(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):([^[\]]+)\]\]/gi;
@@ -27,7 +27,7 @@ async function fetchRevisionsByTitle(
 		rvslots: 'main',
 		formatversion: '2',
 		...customOptions
-	} as ApiQueryRevisionsParams as ApiParams );
+	} as ApiQueryRevisionsParams as ApiParams ).catch( handleMwnRequestError );
 	const page: ApiPage = data.query.pages[ 0 ];
 	if ( page.missing ) {
 		throw new MwnError.MissingPage();
@@ -51,7 +51,7 @@ async function fetchRevisionByRevId(
 		rvslots: 'main',
 		formatversion: '2',
 		...customOptions
-	} as ApiQueryRevisionsParams as ApiParams );
+	} as ApiQueryRevisionsParams as ApiParams ).catch( handleMwnRequestError );
 	const page: ApiPage = data.query.pages[ 0 ];
 	if ( page.missing ) {
 		throw new MwnError.MissingPage();
@@ -247,16 +247,16 @@ export class AFCPage {
 			}
 		}
 
-		const { expandtemplates }: {
-			expandtemplates: {
-				parsetree: string;
-			};
-		} = Object.assign( await mwbot.request( {
+		const { expandtemplates } = await mwbot.request( {
 			action: 'expandtemplates',
 			title: title,
 			text: this._text,
 			prop: 'parsetree'
-		} ) );
+		} ).catch( handleMwnRequestError ) as {
+			expandtemplates: {
+				parsetree: string;
+			};
+		};
 
 		const $templateDom = cheerio.load( expandtemplates.parsetree, {
 			xmlMode: true
@@ -754,7 +754,7 @@ export class AFCPage {
 			contentmodel: 'wikitext',
 			uselang: 'zh-hant',
 			oldid: this._baseRevId
-		} ).then( function ( data ) {
+		} ).catch( handleMwnRequestError ).then( function ( data ) {
 			return ( data as { parse: { text: string } } ).parse.text;
 		} );
 
@@ -786,7 +786,7 @@ export class AFCPage {
 				nocreate: !!this._pageId,
 				createonly: !this._pageId,
 				...extraOptions
-			} );
+			} ).catch( handleMwnRequestError );
 
 			winston.debug( '[afc/util/AFCPage] Edit success:' + JSON.stringify( data ) );
 

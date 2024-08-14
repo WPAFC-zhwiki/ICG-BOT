@@ -1,7 +1,9 @@
+import util = require( 'node:util' );
+
 import cheerio = require( 'cheerio' );
 import removeExcessiveNewline = require( 'remove-excessive-newline' );
 
-import { $, mwbot } from '@app/modules/afc/util/index';
+import { $, handleMwnRequestError, mwbot } from '@app/modules/afc/util/index';
 
 export function escapeHTML( str: string ) {
 	return str
@@ -20,7 +22,11 @@ export class HTMLNoNeedEscape {
 	}
 
 	public valueOf() {
-		return `<HTMLNoNeedEscape>[${ this.text }]`;
+		return `HTMLNoNeedEscape <${ this.text }>`;
+	}
+
+	public [ util.inspect.custom ]( _depth: number, options: util.InspectOptionsStylized ) {
+		return `${ options.stylize( 'HTMLNoNeedEscape', 'special' ) } <${ options.stylize( this.text, 'string' ) }>`;
 	}
 }
 
@@ -71,6 +77,11 @@ export function cleanToTelegramHTML( rawHtml: string, baseUrl = 'https://zh.wiki
 			selector: 'a',
 			doReplace( element: cheerio.Element ) {
 				const $a = $( element );
+				const text = $a.text();
+				if ( !text.trim() ) {
+					// 不要生成空白連結
+					return text;
+				}
 				const url = new URL( $a.attr( 'href' ), baseUrl );
 				return tEscapeHTML`<a href="${ url.href }">${ new HTMLNoNeedEscape( $a.text() ) }</a>`;
 			}
@@ -83,6 +94,7 @@ export function cleanToTelegramHTML( rawHtml: string, baseUrl = 'https://zh.wiki
 		'script',
 		'style',
 		'.mw-editsection',
+		'.hide-when-compact',
 		'[class^=ext-discussiontools-init-]:not(.ext-discussiontools-init-section, .ext-discussiontools-init-timestamplink)'
 	].join( ', ' ) ).remove();
 
@@ -108,7 +120,7 @@ export async function wikitextParseAndClean( wikitext:string, title: string, bas
 			disablelimitreport: true,
 			disableeditsection: true,
 			disabletoc: true
-		} ),
+		} ).catch( handleMwnRequestError ),
 		baseUrl
 	);
 }

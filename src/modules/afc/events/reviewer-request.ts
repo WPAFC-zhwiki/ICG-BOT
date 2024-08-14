@@ -1,7 +1,7 @@
 import Discord = require( 'discord.js' );
 import winston = require( 'winston' );
 
-import { $, encodeURI, htmlToIRC, mwbot, pinMessage, recentChange,
+import { $, encodeURI, handleMwnRequestError, htmlToIRC, mwbot, pinMessage, recentChange,
 	RecentChangeEvent, registerEvent, send, turndown } from '@app/modules/afc/util';
 
 function htmllink( title: string, text?: string ) {
@@ -24,7 +24,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		format: 'json',
 		fromrev: event.old_revid,
 		torev: event.revid
-	} );
+	} ).catch( handleMwnRequestError );
 
 	const $diff = $( '<table>' ).append( compare.body );
 	let diffText = '';
@@ -33,7 +33,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		diffText += $( ele ).text() + '\n';
 	} );
 
-	const parse = await mwbot.parseWikitext( diffText );
+	const parse = await mwbot.parseWikitext( diffText ).catch( handleMwnRequestError );
 	const $parse = $( parse );
 	const $req = $parse.find( '.reviewer-request' );
 	winston.debug( `[afc/events/reviewer-request] comment: ${ event.comment }, fire: true` );

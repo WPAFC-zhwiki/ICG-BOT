@@ -7,7 +7,7 @@ import winston = require( 'winston' );
 import { RedisWrapper } from '@app/lib/redis';
 import { inspect } from '@app/lib/util';
 
-import { mwbot } from '@app/modules/afc/util/index';
+import { handleMwnRequestError, mwbot } from '@app/modules/afc/util/index';
 
 type OneOrMore<T> = T | T[];
 
@@ -283,7 +283,7 @@ class RecentChanges {
 			try {
 				mwbot.Title.checkData();
 			} catch ( e ) {
-				await mwbot.getSiteInfo();
+				await mwbot.getSiteInfo().catch( handleMwnRequestError );
 			}
 
 			this._startTime = this._lastTime = await this._getInitialTimestamp();
@@ -328,7 +328,7 @@ class RecentChanges {
 		const data = await mwbot.request( requestParams, {
 			signal: abortController?.signal,
 			timeout: 15000
-		} ) as {
+		} ).catch( handleMwnRequestError ) as {
 			continue?: {
 				continue: string;
 				rccontinue: string;
@@ -397,6 +397,8 @@ class RecentChanges {
 				this.request( abortController ),
 				await setTimeoutP( 30000 )
 			] );
+		} catch ( error ) {
+			winston.error( `[afc/recentchange] Request Error: ${ inspect( error ) }.` );
 		} finally {
 			this._lock = false;
 			abortController.abort();

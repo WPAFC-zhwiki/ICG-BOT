@@ -1,7 +1,7 @@
 import Discord = require( 'discord.js' );
 import irc = require( 'irc-upd' );
 
-import { mwbot, $ } from '@app/modules/afc/util/index';
+import { mwbot, $, handleMwnRequestError } from '@app/modules/afc/util/index';
 
 type ApiPageInfo = {
 	pageid: number;
@@ -26,8 +26,8 @@ export async function getBacklogInfo(): Promise<{
 		return [ 0, 2, 118 ].includes( x.ns );
 	} ).sort();
 	const cnt = list.length;
-	await new mwbot.Page( 'Template:AFC_status/level' ).purge();
-	const html = await mwbot.parseTitle( 'Template:AFC_status/level' );
+	await new mwbot.Page( 'Template:AFC_status/level' ).purge().catch( handleMwnRequestError );
+	const html = await mwbot.parseTitle( 'Template:AFC_status/level' ).catch( handleMwnRequestError );
 	const $rawLvl = $( $.parseHTML( html ) );
 	const lvl = parseInt( $rawLvl.find( 'p' ).text(), 10 );
 

@@ -1,10 +1,13 @@
+import { isAxiosError } from 'axios';
 import cheerio = require( 'cheerio' );
 import { Mwn } from 'mwn';
+import { MwnError } from 'mwn/build/error';
 import TurndownService from 'turndown';
 import winston = require( 'winston' );
 
 import { version, repository } from '@app/config';
 import { Manager } from '@app/init';
+import { createShadowError } from '@app/lib/util';
 
 const service = new TurndownService();
 
@@ -57,6 +60,7 @@ export const mwbot = ( function (): Mwn {
 	switch ( mwnconfig.type ) {
 		case 'botpassword':
 			mwbot.login()
+				.catch( handleMwnRequestError )
 				.then( function () {
 					winston.debug( `[afc/util/index] mwn login successful: ${ mwnconfig.username }@${ mwnconfig.apiUrl.split( '/api.php' ).join( '' ) }/index.php` );
 				} )
@@ -67,6 +71,7 @@ export const mwbot = ( function (): Mwn {
 		case 'oauth':
 			mwbot.initOAuth();
 			mwbot.getTokensAndSiteInfo()
+				.catch( handleMwnRequestError )
 				.then( function () {
 					winston.debug( '[afc/util/index] mwn: success get tokens and site info.' );
 				} )
@@ -76,6 +81,7 @@ export const mwbot = ( function (): Mwn {
 			break;
 		default:
 			mwbot.getSiteInfo()
+				.catch( handleMwnRequestError )
 				.then( function () {
 					winston.debug( '[afc/util/index] mwn: success get site info.' );
 				} );
@@ -92,4 +98,79 @@ export function parseWikiLink( context: string ): string {
 		} )
 		.replace( /&#91;/g, '[' )
 		.replace( /&#93;/g, ']' );
+}
+
+/**
+ * 隱藏 AxiosError 內的敏感內容並拋出錯誤
+ *
+ * @param {Error} error
+ * @return {false | never} false 表不是 AxiosError 所以什麼事都沒有做
+ */
+function redactedAndThrowAxiosError( error: unknown ): false | Error {
+	if ( !isAxiosError( error ) ) {
+		return false;
+	}
+
+	if ( error.status && error.status >= 500 ) {
+		// 伺服器出錯就省略其他內容
+		throw createShadowError( error );
+	}
+
+	delete error.config;
+	delete error.request?.headers;
+	delete error.request?.httpAgent;
+	delete error.request?.httpsAgent;
+	delete error.response?.headers;
+	delete error.response?.config;
+	delete error.response?.request;
+	delete error.isAxiosError;
+	delete error.toJSON;
+	throw error;
+}
+
+/**
+ * 隱藏 MwnError 內的敏感內容並拋出錯誤
+ *
+ * @param {Error} error
+ * @return {false | never} false 表不是 MwnError 所以什麼事都沒有做
+ */
+function redactedAndThrowMwnError( error: unknown ): false | never {
+	if ( !error || !( error instanceof MwnError ) ) {
+		return false;
+	}
+
+	delete error.docref;
+	delete error.request?.headers;
+	delete error.request?.httpAgent;
+	delete error.request?.httpsAgent;
+	const requestParams = error.request?.params;
+	if ( requestParams && typeof requestParams === 'object' ) {
+		for ( const key of Reflect.ownKeys( requestParams ) ) {
+			if ( typeof key === 'symbol' || key.toLowerCase().includes( 'token' ) ) {
+				delete requestParams[ key ];
+			}
+		}
+	}
+	delete error.response?.headers;
+	delete error.response?.config;
+	delete error.response?.request;
+	delete error.response?.request;
+	delete error.response?.data?.tokens;
+	delete error.response?.data?.query?.tokens;
+	throw error;
+}
+
+/**
+ * 隱藏 mwn 請求錯誤的敏感內容後拋出
+ *
+ * @param {unknown} error
+ * @return {never}
+ */
+export function handleMwnRequestError( error: unknown ): never {
+	redactedAndThrowAxiosError( error );
+	redactedAndThrowMwnError( error );
+	if ( error && error instanceof Error ) {
+		throw createShadowError( error );
+	}
+	throw error;
 }

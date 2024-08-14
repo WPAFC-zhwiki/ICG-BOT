@@ -17,6 +17,7 @@ if ( config.heartbeat ) {
 		.replace( /\$PROGRAM_ROOT/g, programRoot )
 		.replace( /\$CONFIG_ROOT/g, configRoot )
 		.replace( /\$HOME/g, os.homedir() );
+
 	const maxNoUpdateTime = Number.parseInt( heartbeatData.MAX_NO_UPDATE_TIME, 10 );
 
 	// eslint-disable-next-line no-inner-declarations

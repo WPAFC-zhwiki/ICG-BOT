@@ -4,7 +4,7 @@ import type AP from 'types-mediawiki/api_params';
 import winston = require( 'winston' );
 
 import {
-	$, encodeURI, HTMLNoNeedEscape, htmlToIRC, makeHTMLLink,
+	$, encodeURI, handleMwnRequestError, HTMLNoNeedEscape, htmlToIRC, makeHTMLLink,
 	mwbot, recentChange, RecentChangeEvent,
 	registerEvent, send, turndown, wikitextParseAndClean
 } from '@app/modules/afc/util';
@@ -34,7 +34,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		fromrev: event.old_revid,
 		torev: event.revid,
 		formatversion: '2'
-	} as AP.ApiComparePagesParams as ApiParams );
+	} as AP.ApiComparePagesParams as ApiParams ).catch( handleMwnRequestError );
 
 	const $diff = $( '<table>' ).append( compare.body );
 	let diffText = '';

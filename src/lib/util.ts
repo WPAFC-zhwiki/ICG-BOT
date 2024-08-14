@@ -64,3 +64,25 @@ export async function parseHttpResponseJson<T>( response: Response ) {
 	}
 	return resJson;
 }
+
+/**
+ * 建立一個帶有原始錯誤訊息與堆棧但不包含其他屬性的錯誤
+ *
+ * @param {Error} error
+ * @param {string?} [overrideMessage] 覆蓋錯誤訊息
+ * @return {Error}
+ */
+export function createShadowError( error: Error, overrideMessage: string | undefined = undefined ): Error {
+	const shadowError = Object.create( Error.prototype ) satisfies Error;
+	shadowError.name = error.name;
+	shadowError.message = overrideMessage ?? error.message;
+	Object.defineProperty( shadowError, 'stack', {
+		get() {
+			return error.stack;
+		},
+		set( value: string ) {
+			error.stack = value;
+		}
+	} );
+	return shadowError;
+}

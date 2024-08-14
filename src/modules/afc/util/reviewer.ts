@@ -4,7 +4,7 @@ import winston = require( 'winston' );
 
 import { inspect } from '@app/lib/util';
 
-import { mwbot } from '@app/modules/afc/util/index';
+import { handleMwnRequestError, mwbot } from '@app/modules/afc/util/index';
 import { recentChange, RecentChangeEvent } from '@app/modules/afc/util/recentchange';
 
 import { send } from './msg';
@@ -77,7 +77,7 @@ export async function rebuildBlockedExOfficioReviewersCache(): Promise<void> {
 			titles: 'WikiProject:建立條目/參與者/黑名單',
 			plnamespace: 2,
 			pllimit: 500
-		} );
+		} ).catch( handleMwnRequestError );
 
 		const links: {
 			ns: number;
@@ -114,7 +114,7 @@ export async function rebuildParticipatingReviewersCache(): Promise<void> {
 			titles: 'WikiProject:建立條目/參與者',
 			plnamespace: 2,
 			pllimit: 500
-		} );
+		} ).catch( handleMwnRequestError );
 
 		const links: {
 		ns: number;

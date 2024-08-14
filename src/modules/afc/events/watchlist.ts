@@ -7,8 +7,11 @@ import winston = require( 'winston' );
 
 import { inspect } from '@app/lib/util';
 
-import { $, AFCPage, autoReview, encodeURI, getIssusData, htmlToIRC, mwbot,
-	recentChange, RecentChangeEvent, registerEvent, turndown, send } from '@app/modules/afc/util';
+import {
+	$, AFCPage, autoReview, encodeURI, getIssusData, htmlToIRC, mwbot,
+	recentChange, RecentChangeEvent, registerEvent, turndown, send,
+	handleMwnRequestError
+} from '@app/modules/afc/util';
 
 function getReason( $e: cheerio.Cheerio<cheerio.Element>, title: string ) {
 	$e.find( 'a' ).each( function ( _i, a ) {
@@ -196,7 +199,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			tgTags.push( '#接受草稿' );
 			let tpClass: string;
 			try {
-				const talkPage = await mwbot.read( page.getTalkPage() );
+				const talkPage = await mwbot.read( page.getTalkPage() ).catch( handleMwnRequestError );
 				tpClass = talkPage.revisions[ 0 ].content.match( /\|class=([^|]*?)\|/ )[ 1 ];
 			} catch ( e ) {
 				tpClass = '';
