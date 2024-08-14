@@ -122,6 +122,8 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	return false;
 }, async function ( event: RecentChangeEvent.CategorizeEvent ) {
 	try {
+		let shouldMentionDebug = false;
+
 		const title: string = event.comment.replace( /^\[\[:?([^[\]]+)\]\].*$/, '$1' );
 
 		const { user, revid } = event;
@@ -162,7 +164,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					timestamp: new Date(),
 					description: `未預料的錯誤：${ turndown( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。 @sunafterrainwm #監視錯誤`,
+				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。 #監視錯誤`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出AFC審核模板。`
 			}, 'debug' );
 		} else if ( !$parsedHTML( '.afc-submission-pending' ).length && /已添加至分类/.exec( event.comment ) ) {
@@ -171,7 +173,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					timestamp: new Date(),
 					description: `未預料的錯誤：${ turndown( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。 @sunafterrainwm #監視錯誤`,
+				tMsg: `未預料的錯誤：${ pageLink }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。 #監視錯誤`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pageLink ) }已被加入分類正在等待審核的草稿，但機器人沒法從裡面找出等待審核的AFC審核模板。`
 			}, 'debug' );
 		} else if ( $parsedHTML( '.afc-submission-pending' ).length && /已从分类中移除/.exec( event.comment ) ) {
@@ -181,7 +183,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					timestamp: new Date(),
 					description: `未預料的錯誤：${ turndown( pageLink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pending.length }個等待審核的AFC審核模板。`
 				} ),
-				tMsg: `未預料的錯誤：${ pageLink }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pending.length }個等待審核的AFC審核模板。 @sunafterrainwm #監視錯誤`,
+				tMsg: `未預料的錯誤：${ pageLink }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pending.length }個等待審核的AFC審核模板。 #監視錯誤`,
 				iMsg: `未預料的錯誤：${ htmlToIRC( pageLink ) }已被移出分類正在等待審核的草稿，但機器人從裡面找到${ $pending.length }個等待審核的AFC審核模板。`
 			}, 'debug' );
 		}
@@ -314,13 +316,14 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					} ] );
 			}
 			if ( warning.length ) {
+				shouldMentionDebug = true;
 				if ( warning.length === 1 ) {
-					tMsg += '\n<b>警告：</b>' + warning[ 0 ] + ' @sunafterrainwm';
+					tMsg += `\n<b>警告：</b>${ warning[ 0 ] }`;
 					dMsg.setFooter( {
 						text: '警告：' + warning[ 0 ]
 					} );
 				} else {
-					tMsg += '\n<b>警告：</b> @sunafterrainwm\n' + warning.map( function ( x ) {
+					tMsg += '\n<b>警告：</b>\n' + warning.map( function ( x ) {
 						return `• ${ x }`;
 					} ).join( '\n' );
 					dMsg.setFooter( {
@@ -398,7 +401,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			dMsg,
 			tMsg,
 			iMsg
-		}, 'watchlist' );
+		}, shouldMentionDebug ? 'watchlist+debug' : 'watchlist' );
 	} catch ( error ) {
 		winston.error( '[afc/event/watchlist] RecentChange Error: (Throw by Async Function) ', inspect( error ) );
 	}

@@ -63,7 +63,7 @@ export async function rebuildExOfficioReviewersCache(): Promise<void> {
 	} catch ( error ) {
 		winston.error( `[afc/util/reviewer] rebuild ex officio reviewer caches fail: ${ inspect( error ) }` );
 		send( {
-			tMsg: `rebuildExOfficioReviewersCache 失敗：${ escapeHTML( String( error ) ) }。 @sunafterrainwm`
+			tMsg: `rebuildExOfficioReviewersCache 失敗：${ escapeHTML( String( error ) ) }。`
 		}, 'debug' );
 	}
 }
@@ -100,7 +100,7 @@ export async function rebuildBlockedExOfficioReviewersCache(): Promise<void> {
 	} catch ( error ) {
 		winston.error( `[afc/util/reviewer] rebuild ex officio reviewer blocked caches fail: ${ inspect( error ) }` );
 		send( {
-			tMsg: `rebuildBlockedExOfficioReviewersCache 失敗：${ escapeHTML( String( error ) ) }。 @sunafterrainwm`
+			tMsg: `rebuildBlockedExOfficioReviewersCache 失敗：${ escapeHTML( String( error ) ) }。`
 		}, 'debug' );
 	}
 }
@@ -133,7 +133,7 @@ export async function rebuildParticipatingReviewersCache(): Promise<void> {
 	} catch ( error ) {
 		winston.error( `[afc/util/reviewer] rebuild participating reviewer caches fail: ${ inspect( error ) }` );
 		send( {
-			tMsg: `rebuildParticipatingReviewersCache 失敗：${ escapeHTML( String( error ) ) }。 @sunafterrainwm`
+			tMsg: `rebuildParticipatingReviewersCache 失敗：${ escapeHTML( String( error ) ) }。`
 		}, 'debug' );
 	}
 }

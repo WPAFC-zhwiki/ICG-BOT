@@ -143,7 +143,7 @@ export async function reply( context: Context, msg: {
 	return output;
 }
 
-const enableEvents: Record<string, string[]> = {};
+const enableEventsMap: Map<string, string[]> = new Map();
 
 const registeredEvents: string[] = [];
 
@@ -163,6 +163,11 @@ export function send( msg: {
 	tMsg?: string;
 	iMsg?: string;
 }, event: string ): Promise<Response>[] {
+	let isDebug = event === 'debug';
+	if ( event.endsWith( '+debug' ) ) {
+		isDebug = true;
+		event = event.slice( 0, -'+debug'.length );
+	}
 	const output: Promise<Response>[] = [];
 
 	// 將ircMessage前後加上分隔符
@@ -173,15 +178,23 @@ ${ msg.iMsg }
 ——————————————————————————————
 `.trim();
 	}
-	Object.keys( enableEvents ).forEach( function ( k ) {
-		if ( !enableEvents[ k ].includes( event ) ) {
+	for ( const [ chatId, enableEvents ] of enableEventsMap ) {
+		if ( !enableEvents.includes( event ) ) {
 			return;
 		}
-		const f = parseUID( k );
+		const f = parseUID( chatId );
 		if ( f.client === 'Discord' && msg.dMsg ) {
 			output.push( dc.say( f.id, discordEmbedToOption( msg.dMsg ) ) );
 		} else if ( f.client === 'Telegram' && msg.tMsg ) {
-			output.push( tg.sayWithHTML( f.id, msg.tMsg, {
+			let msgToSend = msg.tMsg;
+			if ( isDebug && enableEvents.includes( 'debug' ) && Manager.config.afc.errorDebugTelegramNotifyString ) {
+				if ( ![ '\n', ' ' ].includes( Manager.config.afc.errorDebugTelegramNotifyString.charAt( 0 ) ) ) {
+					msgToSend += `\n\n${ Manager.config.afc.errorDebugTelegramNotifyString }`;
+				} else {
+					msgToSend += Manager.config.afc.errorDebugTelegramNotifyString;
+				}
+			}
+			output.push( tg.sayWithHTML( f.id, msgToSend, {
 				link_preview_options: {
 					is_disabled: true
 				}
@@ -191,7 +204,8 @@ ${ msg.iMsg }
 				doNotSplitText: true
 			} ) );
 		}
-	} );
+	}
+
 	return output;
 }
 
@@ -207,15 +221,13 @@ export async function pinMessage( promises: Promise<Response>[] ): Promise<void>
 		if ( msg ) {
 			if ( 'message_id' in msg && 'chat' in msg ) { // Telegram
 				if (
-					enableEvents[ getUIDFromHandler( tg, msg.chat.id ) ] &&
-					enableEvents[ getUIDFromHandler( tg, msg.chat.id ) ].includes( 'pin' )
+					enableEventsMap.get( getUIDFromHandler( tg, msg.chat.id ) )?.includes( 'pin' )
 				) {
 					tg.rawClient.telegram.pinChatMessage( msg.chat.id, msg.message_id );
 				}
 			} else if ( 'id' in msg && 'channel' in msg ) { // Discord
 				if (
-					enableEvents[ getUIDFromHandler( dc, msg.channel.id ) ] &&
-					enableEvents[ getUIDFromHandler( dc, msg.channel.id ) ].includes( 'pin' )
+					enableEventsMap.get( getUIDFromHandler( dc, msg.channel.id ) )?.includes( 'pin' )
 				) {
 					msg.pin();
 				}
@@ -261,7 +273,7 @@ export function checkRegister(): void {
 	winston.debug( '[afc/util/msg] Event enable list:' );
 	Manager.config.afc.enableEvents.forEach( function ( v ) {
 		if ( typeof v === 'string' ) {
-			enableEvents[ parseUID( v ).uid ] = [].concat( registeredEvents || [] );
+			enableEventsMap.set( parseUID( v ).uid, [].concat( registeredEvents || [] ) );
 
 			winston.debug( `\t${ parseUID( v ).uid }: all` );
 		} else {
@@ -297,7 +309,7 @@ export function checkRegister(): void {
 
 			v.groups.forEach( function ( g ) {
 				winston.debug( `\t${ parseUID( g ).uid }: ${ events.join( ', ' ) }` );
-				enableEvents[ parseUID( g ).uid ] = events;
+				enableEventsMap.set( parseUID( g ).uid, [].concat( events ) );
 			} );
 		}
 	} );
