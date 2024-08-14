@@ -405,7 +405,7 @@ class RecentChanges {
 			delete this._abortController;
 			this._timeout = setTimeout( () => {
 				this._requestInterval();
-			}, 15000 );
+			}, 5000 );
 		}
 	}
 
