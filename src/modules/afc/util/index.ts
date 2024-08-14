@@ -7,6 +7,7 @@ import winston = require( 'winston' );
 
 import { version, repository } from '@app/config';
 import { Manager } from '@app/init';
+
 import { createShadowError } from '@app/lib/util';
 
 const service = new TurndownService();
