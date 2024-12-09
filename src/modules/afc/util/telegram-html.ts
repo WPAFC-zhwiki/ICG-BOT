@@ -1,6 +1,7 @@
 import util = require( 'node:util' );
 
 import cheerio = require( 'cheerio' );
+import type { Element } from 'domhandler';
 import removeExcessiveNewline = require( 'remove-excessive-newline' );
 
 import { $, handleMwnRequestError, mwbot } from '@app/modules/afc/util/index';
@@ -59,23 +60,23 @@ export function filterLongerOutputWikitext( wt: string ) {
 export function cleanToTelegramHTML( rawHtml: string, baseUrl = 'https://zh.wikipedia.org/wiki/' ) {
 	const replaceMap: {
 		selector: string;
-		doReplace( element: cheerio.Element ): string;
+		doReplace( element: Element ): string;
 	}[] = [
 		{
 			selector: 'b, h1, h2, h3, h4, h5, h6',
-			doReplace( element: cheerio.Element ) {
+			doReplace( element: Element ) {
 				return `<b>${ $( element ).text() }</b>`;
 			}
 		},
 		{
 			selector: 'i',
-			doReplace( element: cheerio.Element ) {
+			doReplace( element: Element ) {
 				return `<i>${ $( element ).text() }</i>`;
 			}
 		},
 		{
 			selector: 'a',
-			doReplace( element: cheerio.Element ) {
+			doReplace( element: Element ) {
 				const $a = $( element );
 				const text = $a.text();
 				if ( !text.trim() ) {
@@ -100,7 +101,7 @@ export function cleanToTelegramHTML( rawHtml: string, baseUrl = 'https://zh.wiki
 
 	for ( const item of replaceMap ) {
 		$parse( item.selector ).text( function () {
-			return item.doReplace( <cheerio.Element>( this ) );
+			return item.doReplace( <Element>( this ) );
 		} );
 	}
 

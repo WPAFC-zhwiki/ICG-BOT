@@ -1,4 +1,5 @@
 import cheerio = require( 'cheerio' );
+import type { Element } from 'domhandler';
 import { ApiPage, ApiParams, ApiRevision, MwnPage, MwnTitle } from 'mwn';
 import { ApiEditPageParams, ApiQueryRevisionsParams } from 'mwn/build/api_params';
 import { MwnError } from 'mwn/build/error';
@@ -218,10 +219,10 @@ export class AFCPage {
 		 * with recursion and all that mess, /g is our friend...which is
 		 * perfectly satisfactory for our purposes.
 		 *
-		 * @param {cheerio.Cheerio<cheerio.Element>} $v
+		 * @param {cheerio.Cheerio<Element>} $v
 		 * @return {string}
 		 */
-		function parseValue( $v: cheerio.Cheerio<cheerio.Element> ): string {
+		function parseValue( $v: cheerio.Cheerio<Element> ): string {
 			let text: string = $( '<div>' ).append( $v.clone() ).html();
 
 			// Convert templates to look more template-y
