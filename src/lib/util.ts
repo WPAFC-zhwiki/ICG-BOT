@@ -1,15 +1,17 @@
 import path = require( 'node:path' );
 import util = require( 'node:util' );
 
+import { Response } from '@app/lib/fetch';
+
 export function getFriendlySize( size: number ): string {
 	if ( size <= 1126 ) {
 		return `${ size.toLocaleString() } B`;
-	} else if ( size <= 1153433 ) {
+	} else if ( size <= 1_153_433 ) {
 		return `${ ( size / 1024 ).toLocaleString() } KB`;
-	} else if ( size <= 1181116006 ) {
-		return `${ ( size / 1048576 ).toLocaleString() } MB`;
+	} else if ( size <= 1_181_116_006 ) {
+		return `${ ( size / 1_048_576 ).toLocaleString() } MB`;
 	} else {
-		return `${ ( size / 1073741824 ).toLocaleString() } GB`;
+		return `${ ( size / 1_073_741_824 ).toLocaleString() } GB`;
 	}
 }
 
@@ -27,7 +29,7 @@ export function inspect( object: unknown ) {
 	return util.inspect( object, {
 		showHidden: false,
 		colors: false,
-		depth: 1
+		depth: 1,
 	} );
 }
 
@@ -43,26 +45,25 @@ export function getFileNameFromUrl( urlString: string ) {
 }
 
 export async function parseHttpResponseJson<T>( response: Response ) {
-	const res = await Promise.resolve( response );
-	let resJsonTxt = await res.text();
-	let resJson: T;
+	let responseJsonTxt = await response.text();
+	let responseJson: T;
 	try {
-		resJson = JSON.parse( resJsonTxt ) satisfies T;
+		responseJson = JSON.parse( responseJsonTxt ) satisfies T;
 	} catch {
-		if ( [ 502, 503, 504 ].includes( res.status ) && res.headers.get( 'Content-Type' )?.includes( 'html' ) ) {
+		if ( [ 502, 503, 504 ].includes( response.status ) && response.headers.get( 'Content-Type' )?.includes( 'html' ) ) {
 			// 不要把502 503 504錯誤頁面的html吐出來
-			const errorMsg = {
+			const errorMessage = {
 				502: 'Bad Gateway',
 				503: 'Service Unavailable',
-				504: 'Gateway Timeout'
+				504: 'Gateway Timeout',
 			};
-			resJsonTxt = `<!-- redacted -->${ errorMsg[ res.status ] }`;
+			responseJsonTxt = `<!-- redacted -->${ errorMessage[ response.status ] }`;
 		} else {
-			resJsonTxt = resJsonTxt.slice( 0, 1000 );
+			responseJsonTxt = responseJsonTxt.slice( 0, 1000 );
 		}
-		throw new Error( `Request fail, status: ${ res.status }, response: ${ resJsonTxt }` );
+		throw new Error( `Request fail, status: ${ response.status }, response: ${ responseJsonTxt }` );
 	}
-	return resJson;
+	return responseJson;
 }
 
 /**
@@ -82,7 +83,7 @@ export function createShadowError( error: Error, overrideMessage: string | undef
 		},
 		set( value: string ) {
 			error.stack = value;
-		}
+		},
 	} );
 	return shadowError;
 }

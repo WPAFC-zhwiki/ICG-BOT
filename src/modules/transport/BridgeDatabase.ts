@@ -16,7 +16,7 @@ export class BridgeDatabase {
 	public constructor() {
 		this.#cache = new LRUCache( {
 			max: 5000,
-			ttl: 86400 * 1e3
+			ttl: 86_400 * 1e3,
 		} );
 	}
 
@@ -30,7 +30,7 @@ export class BridgeDatabase {
 		messageId: string | number
 	): Promise<AssociateMessage | false> {
 		if ( !redisWrapper.isEnable || !this.isEnable ) {
-			return Promise.resolve( false );
+			return false;
 		}
 
 		const key = this._getKey( targetClient, chatId, messageId );
@@ -46,7 +46,7 @@ export class BridgeDatabase {
 
 	public async setMessageAssociation( association: AssociateMessage ): Promise<boolean> {
 		if ( !redisWrapper.isEnable || !this.isEnable ) {
-			return Promise.resolve( false );
+			return false;
 		}
 
 		winston.debug( '[transport/RedisBridgeDatabase] Insert: ' + JSON.stringify( association ) );
@@ -57,9 +57,9 @@ export class BridgeDatabase {
 		const setter = redisWrapper.setPipeline();
 		for ( const key of keysToAssociate ) {
 			this.#cache.set( key, association );
-			setter?.setJson<AssociateMessage>( key, association );
+			setter.setJson<AssociateMessage>( key, association );
 		}
-		await setter?.exec();
+		await setter.exec();
 		return true;
 	}
 }

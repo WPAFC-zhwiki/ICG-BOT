@@ -17,36 +17,36 @@ export const configRoot = path.join( programRoot, 'config' );
 export let configPath: string;
 
 if ( process.argv.includes( '--icconfig' ) ) {
-	const argConfigPath: string = process.argv[ process.argv.indexOf( '--icconfig' ) + 1 ];
+	const argumentConfigPath: string = process.argv[ process.argv.indexOf( '--icconfig' ) + 1 ];
 	try {
-		global.configPath = require.resolve( path.join( configRoot, argConfigPath ) );
-	} catch ( err1 ) {
-		if ( String( err1 ).match( 'Cannot find module' ) ) {
+		globalThis.configPath = require.resolve( path.join( configRoot, argumentConfigPath ) );
+	} catch ( error ) {
+		if ( String( error ).match( 'Cannot find module' ) ) {
 			try {
-				global.configPath = require.resolve( path.join( programRoot, argConfigPath ) );
-			} catch ( err2 ) {
-				if ( String( err2 ).match( 'Cannot find module' ) ) {
-					global.configPath = require.resolve( argConfigPath );
+				globalThis.configPath = require.resolve( path.join( programRoot, argumentConfigPath ) );
+			} catch ( error2 ) {
+				if ( String( error2 ).match( 'Cannot find module' ) ) {
+					globalThis.configPath = require.resolve( argumentConfigPath );
 				} else {
-					throw err2;
+					throw error2;
 				}
 			}
 		} else {
-			throw err1;
+			throw error;
 		}
 	}
 } else {
-	global.configPath = require.resolve( path.join( configRoot, 'config' ) );
+	globalThis.configPath = require.resolve( path.join( configRoot, 'config' ) );
 }
 
 if ( fs.existsSync( path.join( configRoot, '.env' ) ) ) {
 	dotenv.config( {
-		path: path.join( configRoot, '.env' )
+		path: path.join( configRoot, '.env' ),
 	} );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
-const config: ConfigTS = require( global.configPath ).default;
+// eslint-disable-next-line security/detect-non-literal-require, @typescript-eslint/no-require-imports
+const config: ConfigTS = require( globalThis.configPath ).default;
 
 // winston.debug( 'load config from "' + global.configPath + '".' );
 

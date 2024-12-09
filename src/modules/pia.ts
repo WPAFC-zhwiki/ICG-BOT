@@ -9,13 +9,14 @@
  * 後來，中文維基百科也增加了這幾個指令的模板，例如 [{{pia}}](https://zh.wikipedia.org/wiki/Template:Pia)。
  * 於是，中文維基百科其他幾個花式 ping 也成為了機器人的指令。
  */
+import { scheduler } from 'node:timers/promises';
+
 import { Manager } from '@app/init';
 
-import delay from '@app/lib/delay';
 import { Context } from '@app/lib/handlers/Context';
 import { addCommand } from '@app/lib/message';
 
-import { transportMessage, BridgeMsg } from '@app/modules/transport';
+import { transportMessage, BridgeMessage } from '@app/modules/transport';
 
 const piaMap = new Map<string, string>( [
 	[ 'pia', '(╯°Д°)╯︵ ~~~~~┻━┻' ],
@@ -27,27 +28,27 @@ const piaMap = new Map<string, string>( [
 	[ 'idk', '╮(￣▽￣)╭' ],
 	[ 'kick', '(ｏﾟﾛﾟ)┌┛Σ(ﾉ´*ω*`)ﾉ' ],
 	[ 'panic', '(ﾟДﾟ≡ﾟдﾟ)' ],
-	[ 'ping', 'pong' ]
+	[ 'ping', 'pong' ],
 ] );
 
 function buildPia( action: string ) {
 	return async function pia( context: Context ) {
-		let param: string = context.param;
+		let parameter: string = context.param;
 
-		if ( !param && context.extra.reply ) {
-			param = context.extra.reply.nick;
+		if ( !parameter && context.extra.reply ) {
+			parameter = context.extra.reply.nick;
 		}
 
-		context.reply( `${ action }${ param ? ` ${ param }` : '' }`, {
-			withNick: true
+		context.reply( `${ action }${ parameter ? ` ${ parameter }` : '' }`, {
+			withNick: true,
 		} );
 
 		if ( Manager.global.isEnable( 'transport' ) ) {
-			await delay( 1000 );
+			await scheduler.wait( 1000 );
 
-			transportMessage( new BridgeMsg( context, {
-				text: `${ action }${ param ? ` ${ param }` : '' }`,
-				isNotice: true
+			transportMessage( new BridgeMessage( context, {
+				text: `${ action }${ parameter ? ` ${ parameter }` : '' }`,
+				isNotice: true,
 			} ), true );
 		}
 	};

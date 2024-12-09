@@ -1,3 +1,5 @@
+import { scheduler } from 'node:timers/promises';
+
 import color = require( 'irc-colors' );
 import irc = require( 'irc-upd' );
 import lodash = require( 'lodash' );
@@ -5,7 +7,6 @@ import winston = require( 'winston' );
 
 import { ConfigTS } from '@app/config';
 
-import delay from '@app/lib/delay';
 import { Context } from '@app/lib/handlers/Context';
 import { BaseEvents, MessageHandler } from '@app/lib/handlers/MessageHandler';
 
@@ -31,7 +32,7 @@ type Me = {
  * 使用通用接口处理 IRC 消息
  */
 export class IRCMessageHandler extends MessageHandler<IRCEvents> {
-	protected readonly _client: irc.Client;
+	declare protected readonly _client: irc.Client;
 	protected readonly _type = 'IRC' as const;
 	protected readonly _id = 'I' as const;
 
@@ -42,7 +43,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		postfix: string;
 	} = {
 			prefix: '',
-			postfix: 'string'
+			postfix: 'string',
 		};
 
 	public get rawClient(): irc.Client {
@@ -71,19 +72,17 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 			floodProtectionDelay: botConfig.floodProtectionDelay || 300,
 			sasl: botConfig.sasl,
 			password: botConfig.sasl_password,
-			encoding: botConfig.encoding || 'UTF-8',
-			autoConnect: false
+			// eslint-disable-next-line unicorn/text-encoding-identifier-case
+			encoding: botConfig.encoding || 'utf-8',
+			autoConnect: false,
 		} );
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const that = this;
-
-		client.on( 'registered', async function () {
+		client.on( 'registered', async () => {
 			winston.info( 'IRCBot has been registered' );
 			while ( client.nick === client.hostMask ) {
-				await delay( 100 );
+				await scheduler.wait( 100 );
 			}
-			that._me.nick = client.nick;
+			this._me.nick = client.nick;
 			winston.info( `IRCBot is ready, login as: ${ client.nick }!${ client.hostMask }.` );
 		} );
 
@@ -106,21 +105,21 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 			nick: this._client.nick,
 			userName: botConfig.userName,
 			realName: botConfig.realName,
-			chans: this.chans
+			chans: this.chans,
 		};
 
 		// 绑定事件
-		function processMessage( from: string, to: string, text: string, rawData: irc.IMessage, isAction = false ) {
+		const processMessage = ( from: string, to: string, text: string, rawData: irc.IMessage, isAction = false ) => {
 
 			if (
-				!that._enabled ||
+				!this._enabled ||
 				from === client.nick ||
 				ircOptions.ignore.map( function ( name ) {
 					// eslint-disable-next-line security/detect-non-literal-regexp
 					return new RegExp( `^${ lodash.escapeRegExp( name ) }\\d*$` );
-				} ).filter( function ( reg ) {
+				} ).some( function ( reg ) {
 					return reg.exec( from );
-				} ).length
+				} )
 			) {
 				return;
 			}
@@ -135,8 +134,8 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 				text: plainText,
 				isPrivate: to === client.nick,
 				extra: {},
-				handler: that,
-				_rawData: rawData
+				handler: this,
+				_rawData: rawData,
 			} );
 			context.messageId = context.programMessageId; // 以 programMessageId 代替根本不存在的 messageId 方便映射
 
@@ -147,63 +146,63 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 			// 檢查是不是命令
 			if ( plainText.startsWith( '!' ) ) {
 				const cmd = plainText.slice( 1, plainText.match( ' ' ) ? plainText.match( ' ' ).index : plainText.length );
-				if ( that._commands.has( cmd ) ) {
-					const callback = that._commands.get( cmd );
-					let param = plainText.trim().slice( cmd.length + 1 );
-					if ( param === '' || param.startsWith( ' ' ) ) {
-						param = param.trim();
+				if ( this._commands.has( cmd ) ) {
+					const callback = this._commands.get( cmd );
+					let parameter = plainText.trim().slice( cmd.length + 1 );
+					if ( parameter === '' || parameter.startsWith( ' ' ) ) {
+						parameter = parameter.trim();
 
 						context.command = cmd;
-						context.param = param;
+						context.param = parameter;
 
 						if ( typeof callback === 'function' ) {
-							callback( context, cmd, param );
+							callback( context, cmd, parameter );
 						}
 
-						that.emit( 'command', context, cmd, param );
-						that.emit( `command#${ cmd }`, context, param );
+						this.emit( 'command', context, cmd, parameter );
+						this.emit( `command#${ cmd }`, context, parameter );
 					}
 				}
 			}
 
-			that.emit( 'text', context );
-		}
+			this.emit( 'text', context );
+		};
 
 		client.on( 'message', processMessage );
-		client.on( 'action', ( from: string, to: string, text: string, rawdata: irc.IMessage ) => {
-			processMessage( from, to, text, rawdata, true );
+		client.on( 'action', ( from: string, to: string, text: string, rawData: irc.IMessage ) => {
+			processMessage( from, to, text, rawData, true );
 		} );
 
-		client.on( 'join', function ( channel: string, nick: string, message: irc.IMessage ) {
-			that.emit( 'join', channel, nick, message );
+		client.on( 'join', ( channel: string, nick: string, message: irc.IMessage ) => {
+			this.emit( 'join', channel, nick, message );
 		} );
 
-		client.on( 'nick', function ( oldNick: string, newNick: string, channels: string[], message: irc.IMessage ) {
-			that.emit( 'nick', oldNick, newNick, channels, message );
+		client.on( 'nick', ( oldNick: string, newNick: string, channels: string[], message: irc.IMessage ) => {
+			this.emit( 'nick', oldNick, newNick, channels, message );
 		} );
 
-		client.on( 'quit', function ( nick: string, reason: string, channels: string[], message: irc.IMessage ) {
-			that.emit( 'quit', nick, reason, channels, message );
+		client.on( 'quit', ( nick: string, reason: string, channels: string[], message: irc.IMessage ) => {
+			this.emit( 'quit', nick, reason, channels, message );
 		} );
 
-		client.on( 'part', function ( channel: string, nick: string, reason: string, message: irc.IMessage ) {
-			that.emit( 'part', channel, nick, reason, message );
+		client.on( 'part', ( channel: string, nick: string, reason: string, message: irc.IMessage ) => {
+			this.emit( 'part', channel, nick, reason, message );
 		} );
 
-		client.on( 'kick', function ( channel: string, nick: string, by: string, reason: string, message: irc.IMessage ) {
-			that.emit( 'kick', channel, nick, by, reason, message );
+		client.on( 'kick', ( channel: string, nick: string, by: string, reason: string, message: irc.IMessage ) => {
+			this.emit( 'kick', channel, nick, by, reason, message );
 		} );
 
-		client.on( 'kill', function ( nick: string, reason: string, channels: string[], message: irc.IMessage ) {
-			that.emit( 'kill', nick, reason, channels, message );
+		client.on( 'kill', ( nick: string, reason: string, channels: string[], message: irc.IMessage ) => {
+			this.emit( 'kill', nick, reason, channels, message );
 		} );
 
-		client.on( 'topic', function ( channel: string, topic: string, nick: string, message: irc.IMessage ) {
-			that.emit( 'topic', channel, topic, nick, message );
+		client.on( 'topic', ( channel: string, topic: string, nick: string, message: irc.IMessage ) => {
+			this.emit( 'topic', channel, topic, nick, message );
 		} );
 
-		client.on( 'registered', function ( message: irc.IMessage ) {
-			that.emit( 'registered', message );
+		client.on( 'registered', ( message: irc.IMessage ) => {
+			this.emit( 'registered', message );
 		} );
 	}
 
@@ -239,23 +238,21 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		isAction?: boolean;
 		doNotSplitText?: boolean;
 	} = {} ): Promise<void> {
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const that = this;
-		if ( !that._enabled ) {
+		if ( !this._enabled ) {
 			throw new Error( 'Handler not enabled' );
-		} else if ( !target.length ) {
-			return;
-		} else {
+		} else if ( target.length > 0 ) {
 			const lines = options.doNotSplitText ?
-				[ ...message.split( '\n' ).map( function ( s ) {
-					return that.splitText( s, 449, that._maxLines );
-				} ).flat( Infinity ) ] :
-				that.splitText( message, 449, that._maxLines );
+				message.split( '\n' ).map( ( s ) => {
+					return this.splitText( s, 449, this._maxLines );
+				} ).flat( Infinity ) :
+				this.splitText( message, 449, this._maxLines );
 			if ( options.isAction ) {
-				that._client.action( target, lines.join( '\n' ) );
+				this._client.action( target, lines.join( '\n' ) );
 			} else {
-				that._client.say( target, lines.join( '\n' ) );
+				this._client.say( target, lines.join( '\n' ) );
 			}
+		} else {
+			return;
 		}
 	}
 
@@ -267,11 +264,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 		if ( context.isPrivate ) {
 			await this.say( String( context.from ), message, options );
 		} else {
-			if ( options.withNick ) {
-				return await this.say( String( context.to ), `${ context.nick }: ${ message }`, options );
-			} else {
-				return await this.say( String( context.to ), `${ message }`, options );
-			}
+			return await ( options.withNick ? this.say( String( context.to ), `${ context.nick }: ${ message }`, options ) : this.say( String( context.to ), `${ message }`, options ) );
 		}
 	}
 
@@ -280,15 +273,29 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 	}
 
 	public whois( nick: string ): Promise<irc.IWhoisData> {
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const that: this = this;
-		return new Promise( function ( resolve ) {
-			that._client.whois( nick, resolve );
+		return new Promise( ( resolve ) => {
+			this._client.whois( nick, resolve );
 		} );
 	}
 
+	private getByteSize( code: number ): number {
+		if ( code <= 0x7F ) {
+			return 1;
+		}
+		if ( code <= 0x7_FF ) {
+			return 2;
+		}
+		if ( code <= 0xFF_FF ) {
+			return 3;
+		}
+		if ( code <= 0x10_FF_FF ) {
+			return 4;
+		}
+		return 5;
+	}
+
 	public splitText( text: string, maxBytesPerLine = 449, maxLines = 0 ): string[] {
-		const text2: string = text.replace( /\n+/gu, '\n' ).replace( /\n*$/gu, '' );
+		const text2: string = text.replaceAll( /\n+/gu, '\n' ).replaceAll( /\n*$/gu, '' );
 		const lines: string[] = [];
 		let line: string[] = [];
 		let bytes = 0;
@@ -307,14 +314,7 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 					break;
 				}
 			} else {
-				const code: number = ch.codePointAt( 0 );
-				const b: number = ( code <= 0x7F ) ? 1 : (
-					( code <= 0x7FF ) ? 2 : (
-						( code <= 0xFFFF ) ? 3 : (
-							( code <= 0x10FFFF ) ? 4 : 5
-						)
-					)
-				);
+				const b: number = this.getByteSize( ch.codePointAt( 0 ) );
 
 				if ( bytes + b > maxBytesPerLine - seplen ) {
 					line.push( this._splitsep.postfix );
@@ -364,8 +364,8 @@ export class IRCMessageHandler extends MessageHandler<IRCEvents> {
 	public async stop(): Promise<void> {
 		if ( !this._started ) {
 			this._started = false;
-			// eslint-disable-next-line @typescript-eslint/no-empty-function
-			this._client.disconnect( 'disconnect by operator.', function () { } );
+
+			this._client.disconnect( 'disconnect by operator.', function () {} );
 		}
 	}
 }

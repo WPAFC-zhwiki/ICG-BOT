@@ -28,14 +28,14 @@ for ( const module of Manager.config.modules ) {
 		// ignore
 	}
 
-	if ( path.relative( path.join( __dirname, 'modules' ), realPath ).match( /^\.\.($|[\\/])/ ) ) {
+	if ( /^\.\.($|[\\/])/.test( path.relative( path.join( __dirname, 'modules' ), realPath ) ) ) {
 		winston.error( `Module ${ module } has been blocked because security reason. Module could only load from "${ path.join( __dirname, 'modules' ) + path.sep }".` );
 		continue;
 	}
 
 	try {
 		winston.info( `Loading module: ${ module }` );
-		// eslint-disable-next-line security/detect-non-literal-require
+		// eslint-disable-next-line security/detect-non-literal-require, @typescript-eslint/no-require-imports
 		require( `@app/modules/${ module }` );
 	} catch ( error ) {
 		winston.error( `Error while loading plugin ${ module }: ` + inspect( error ) );

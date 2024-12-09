@@ -15,7 +15,7 @@ const categoryRegex = /\[\[:?(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):([^
 
 async function fetchRevisionsByTitle(
 	title: string,
-	props: ApiQueryRevisionsParams[ 'rvprop' ],
+	properties: ApiQueryRevisionsParams[ 'rvprop' ],
 	limit: number,
 	customOptions?: ApiQueryRevisionsParams
 ) {
@@ -23,11 +23,11 @@ async function fetchRevisionsByTitle(
 		action: 'query',
 		prop: 'revisions',
 		titles: title,
-		rvprop: props || 'ids|timestamp|flags|comment|user',
+		rvprop: properties || 'ids|timestamp|flags|comment|user',
 		rvlimit: limit || 50,
 		rvslots: 'main',
 		formatversion: '2',
-		...customOptions
+		...customOptions,
 	} as ApiQueryRevisionsParams as ApiParams ).catch( handleMwnRequestError );
 	const page: ApiPage = data.query.pages[ 0 ];
 	if ( page.missing ) {
@@ -35,23 +35,23 @@ async function fetchRevisionsByTitle(
 	}
 	return {
 		page,
-		revisions: page.revisions
+		revisions: page.revisions,
 	};
 }
 
 async function fetchRevisionByRevId(
 	revId: number,
-	props: ApiQueryRevisionsParams[ 'rvprop' ],
+	properties: ApiQueryRevisionsParams[ 'rvprop' ],
 	customOptions?: ApiQueryRevisionsParams
 ) {
 	const data = await mwbot.request( {
 		action: 'query',
 		prop: 'revisions',
 		revids: revId,
-		rvprop: props || 'ids|timestamp|flags|comment|user',
+		rvprop: properties || 'ids|timestamp|flags|comment|user',
 		rvslots: 'main',
 		formatversion: '2',
-		...customOptions
+		...customOptions,
 	} as ApiQueryRevisionsParams as ApiParams ).catch( handleMwnRequestError );
 	const page: ApiPage = data.query.pages[ 0 ];
 	if ( page.missing ) {
@@ -59,7 +59,7 @@ async function fetchRevisionByRevId(
 	}
 	return {
 		page,
-		revision: page.revisions[ 0 ]
+		revision: page.revisions[ 0 ],
 	};
 }
 
@@ -113,12 +113,12 @@ export class AFCPage {
 	}[] = [];
 	private _submissions: {
 		status: string;
-		timestamp: string | null;
+		timestamp: string | false;
 		params: Record<string, string>;
 	}[] = [];
 	// Holds all comments on the page
 	private _comments: {
-		timestamp: string | null;
+		timestamp: string | false;
 		text: string;
 	}[] = [];
 
@@ -227,15 +227,17 @@ export class AFCPage {
 
 			// Convert templates to look more template-y
 			// eslint-disable-next-line security/detect-unsafe-regex
-			text = text.replace( /<template([^>]+)?>/g, '{{' );
-			text = text.replace( /<\/template>/g, '}}' );
-			text = text.replace( /<part>/g, '|' );
+			text = text.replaceAll( /<template([^>]+)?>/g, '{{' );
+			text = text.replaceAll( '</template>', '}}' );
+			text = text.replaceAll( '<part>', '|' );
 
 			// Expand embedded tags (like <nowiki>)
-			text = text.replace(
+			text = text.replaceAll(
+				// 只是切成兩半而已
+				// eslint-disable-next-line security/detect-non-literal-regexp
 				new RegExp(
-					'<ext><name>(.*?)<\\/name>(?:<attr>.*?<\\/attr>)*' +
-						'<inner>(.*?)<\\/inner><close>(.*?)<\\/close><\\/ext>',
+					String.raw`<ext><name>(.*?)<\/name>(?:<attr>.*?<\/attr>)*` +
+						String.raw`<inner>(.*?)<\/inner><close>(.*?)<\/close><\/ext>`,
 					'g' ),
 				'&lt;$1&gt;$2$3' );
 
@@ -243,7 +245,7 @@ export class AFCPage {
 			// tags
 			try {
 				return $( text ).text();
-			} catch ( e ) {
+			} catch {
 				return $( $.parseHTML( text ) ).text();
 			}
 		}
@@ -252,7 +254,7 @@ export class AFCPage {
 			action: 'expandtemplates',
 			title: title,
 			text: this._text,
-			prop: 'parsetree'
+			prop: 'parsetree',
 		} ).catch( handleMwnRequestError ) as {
 			expandtemplates: {
 				parsetree: string;
@@ -260,14 +262,14 @@ export class AFCPage {
 		};
 
 		const $templateDom = cheerio.load( expandtemplates.parsetree, {
-			xmlMode: true
+			xmlMode: true,
 		} )( 'root' );
 
 		$templateDom.children( 'template' ).each( function () {
-			const $el = $( this ),
-				data: typeof AFCPage.prototype._templates[ 0 ] = { target: $el.children( 'title' ).text(), params: {} };
+			const $element = $( this ),
+				data: typeof AFCPage.prototype._templates[ 0 ] = { target: $element.children( 'title' ).text(), params: {} };
 
-			$el.children( 'part' ).each( function () {
+			$element.children( 'part' ).each( function () {
 				const $part = $( this );
 				const $name = $part.children( 'name' );
 				// Use the name if set, or fall back to index if implicitly
@@ -284,76 +286,77 @@ export class AFCPage {
 		this._parseSubmissionTemplate();
 	}
 
-	private _parseSubmissionTemplate(): void {
-		function getAndDelete<O, V extends keyof O>( obj: O, key: V ): O[ V ] {
-			if ( Object.prototype.hasOwnProperty.call( obj, key ) ) {
-				const value = obj[ key ];
-				delete obj[ key ];
-				return value;
-			}
-			return undefined;
+	private _getAndDelete<O, V extends keyof O>( object: O, key: V ): O[ V ] {
+		if ( Object.prototype.hasOwnProperty.call( object, key ) ) {
+			const value = object[ key ];
+			delete object[ key ];
+			return value;
 		}
+		return undefined;
+	}
+
+	private _parseTimestamp( str: string ): string | false {
+		if ( !str ) {
+			return false;
+		}
+		let exp: RegExp;
+		if ( !Number.isNaN( +new Date( str ) ) ) {
+			return new Date( str ).toISOString().replaceAll( /[^\d]/g, '' ).slice( 0, 14 );
+		} else if ( /^\d+$/.test( str ) ) {
+			return str;
+		} else {
+			exp = /^(\d{4})年(\d{1,2})月(\d{1,2})日 \([一二三四五六日]\) (\d\d):(\d\d) \(UTC\)$/g;
+		}
+
+		const match = exp.exec( str );
+
+		if ( !match ) {
+			return false;
+		}
+
+		const date = new Date();
+		date.setUTCFullYear( +match[ 1 ] );
+		date.setUTCMonth( +match[ 2 ] - 1 ); // stupid javascript
+		date.setUTCDate( +match[ 3 ] );
+		date.setUTCHours( +match[ 4 ] );
+		date.setUTCMinutes( +match[ 5 ] );
+		if ( +match[ 6 ] ) {
+			date.setMilliseconds( +match[ 6 ] );
+		}
+		date.setUTCSeconds( 0 );
+
+		return date.toISOString().replaceAll( /[^\d]/g, '' ).slice( 0, 14 );
+	}
+
+	private _parseSubmissionTemplate(): void {
 		this._submissions = [];
 		this._comments = [];
-
-		function parseTimestamp( str: string ) {
-			if ( !str ) {
-				return false;
-			}
-			let exp: RegExp;
-			if ( !isNaN( +new Date( str ) ) ) {
-				return new Date( str ).toISOString().replace( /[^\d]/g, '' ).slice( 0, 14 );
-			} else if ( str.match( /^\d+$/ ) ) {
-				return str;
-			} else {
-				exp = /^(\d{4})年(\d{1,2})月(\d{1,2})日 \([一二三四五六日]\) (\d\d):(\d\d) \(UTC\)$/g;
-			}
-
-			const match = exp.exec( str );
-
-			if ( !match ) {
-				return false;
-			}
-
-			const date = new Date();
-			date.setUTCFullYear( +match[ 1 ] );
-			date.setUTCMonth( +match[ 2 ] - 1 ); // stupid javascript
-			date.setUTCDate( +match[ 3 ] );
-			date.setUTCHours( +match[ 4 ] );
-			date.setUTCMinutes( +match[ 5 ] );
-			if ( +match[ 6 ] ) {
-				date.setMilliseconds( +match[ 6 ] );
-			}
-			date.setUTCSeconds( 0 );
-
-			return date.toISOString().replace( /[^\d]/g, '' ).slice( 0, 14 );
-		}
 
 		for ( const template of this._templates ) {
 			const name = template.target.toLowerCase();
 			if ( name === 'afc submission' ) {
 				this._submissions.push( {
-					status: ( getAndDelete( template.params, '1' ) || '' ).toLowerCase(),
-					timestamp: parseTimestamp( getAndDelete( template.params, 'ts' ) ) || null,
-					params: template.params
+					status: ( this._getAndDelete( template.params, '1' ) || '' ).toLowerCase(),
+					timestamp: this._parseTimestamp( this._getAndDelete( template.params, 'ts' ) ),
+					params: template.params,
 				} );
 			} else if ( name === 'afc comment' ) {
 				this._comments.push( {
-					timestamp: parseTimestamp( template.params[ '1' ] ) || null,
-					text: template.params[ '1' ]
+					timestamp: this._parseTimestamp( template.params[ '1' ] ),
+					text: template.params[ '1' ],
 				} );
 			}
 		}
 
-		type timestampSortObj = typeof AFCPage.prototype._submissions[ 0 ] | typeof AFCPage.prototype._comments[ 0 ];
+		type timestampSortObject = typeof AFCPage.prototype._submissions[ 0 ] | typeof AFCPage.prototype._comments[ 0 ];
 
-		function timestampSortHelper( a: timestampSortObj, b: timestampSortObj ) {
+		function timestampSortHelper( a: timestampSortObject, b: timestampSortObject ) {
 			// If we're passed something that's not a number --
 			// for example, {{REVISIONTIMESTAMP}} -- just sort it
 			// first and be done with it.
-			if ( isNaN( +a.timestamp ) ) {
+			if ( Number.isNaN( +a.timestamp ) ) {
 				return -1;
-			} else if ( isNaN( +b.timestamp ) ) {
+			} else if ( Number.isNaN( +b.timestamp ) ) {
 				return 1;
 			}
 
@@ -407,7 +410,7 @@ export class AFCPage {
 				isDraft = false;
 				isUnderReview = false;
 				return true;
-			}
+			},
 		};
 
 		// Process the submission templates in order, from the most recent to
@@ -417,12 +420,11 @@ export class AFCPage {
 		this._submissions = this._submissions.filter( function ( template ) {
 			let keepTemplate = true;
 
-			if ( Object.prototype.hasOwnProperty.call( statusCases, template.status ) ) {
-				keepTemplate = statusCases[ template.status ]();
-			} else {
-				// Default pending status
-				keepTemplate = statusCases[ '' ]();
-			}
+			keepTemplate = statusCases[
+				Object.prototype.hasOwnProperty.call( statusCases, template.status ) ?
+					template.status :
+					''
+			]();
 
 			if ( keepTemplate ) {
 				// Will be re-added in updateAfcTemplates() if necessary
@@ -435,9 +437,9 @@ export class AFCPage {
 
 	private _removeExcessNewlines(): void {
 		this._text = removeExcessiveNewline( this._text, 2 )
-			.replace( /=+([^=\n]+)=+[\t\n\s]*$/gi, function ( _all: string, title: string ) {
+			.replaceAll( /=+([^=\n]+)=+[\t\n\s]*$/gi, function ( _all: string, title: string ) {
 				const regexp = /^(?:外部(?:[链鏈]接|[连連]結)|[参參]考(?:[资資]料|[来來]源|文[档檔献獻]))$/;
-				return regexp.exec( title ) ? `== ${ title } ==` : '';
+				return regexp.test( title ) ? `== ${ title } ==` : '';
 			} )
 			.trim();
 	}
@@ -449,19 +451,21 @@ export class AFCPage {
 		// example "{{hi|{ foo}}" -- note the extra bracket). Ideally Parsoid
 		// would just return the raw template text as well (currently
 		// working on a patch for that, actually).
-		this._text = this._text.replace(
+		this._text = this._text.replaceAll(
+			// 只是切成兩半而已
+			// eslint-disable-next-line security/detect-non-literal-regexp
 			new RegExp(
-				'\\{\\{\\s*afc submission\\s*(?:\\||[^{{}}]*|{{.*?}})*?\\}\\}' +
+				String.raw`\{\{\s*afc submission\s*(?:\||[^{{}}]*|{{.*?}})*?\}\}` +
 				// Also remove the AFCH-generated warning message, since if
 				// necessary the script will add it again
 				'(<!-- 请不要移除这一行代码 -->)?',
 				'gi' ),
 			'' );
 
-		this._text = this._text.replace( /\{\{\s*afc comment[\s\S]+?\(UTC\)\}\}/gi, '' );
+		this._text = this._text.replaceAll( /\{\{\s*afc comment[\s\S]+?\(UTC\)\}\}/gi, '' );
 
 		// Remove horizontal rules that were added by AFCH after the comments
-		this._text = this._text.replace( /^----+$/gm, '' );
+		this._text = this._text.replaceAll( /^----+$/gm, '' );
 
 		// Remove excess newlines created by AFC templates
 		this._removeExcessNewlines();
@@ -474,9 +478,9 @@ export class AFCPage {
 		let hasDeclineTemplate = false;
 
 		// Submission templates go first
-		this._submissions.forEach( function ( template ) {
+		for ( const template of this._submissions ) {
 			let tout = '{{AFC submission|' + template.status;
-			const paramKeys: string[] = [];
+			const parameterKeys: string[] = [];
 
 			// FIXME: Think about if we really want this elaborate-ish
 			// positional parameter ouput, or if it would be a better
@@ -486,15 +490,15 @@ export class AFCPage {
 			// can scrap this. Until then, though, we can only dream...
 
 			// Make an array of the parameters
-			Object.keys( template.params ).forEach( function ( key ) {
+			for ( const key of Object.keys( template.params ) ) {
 				// Parameters set to false are ignored
 				if ( template.params[ key ] ) {
-					paramKeys.push( key );
+					parameterKeys.push( key );
 				}
-			} );
+			}
 
-			paramKeys.sort( function ( a, b ) {
-				const aIsNumber = !isNaN( +a ), bIsNumber = !isNaN( +b );
+			parameterKeys.sort( function ( a, b ) {
+				const aIsNumber = !Number.isNaN( +a ), bIsNumber = !Number.isNaN( +b );
 
 				// If we're passed two numerical parameters then
 				// sort them in order (1,2,3)
@@ -514,24 +518,21 @@ export class AFCPage {
 
 				// Otherwise just leave the positions as they were
 				return 0;
+			// eslint-disable-next-line unicorn/no-array-for-each
 			} ).forEach( function ( key: string, index: number ) {
 				const value = template.params[ key ];
-				if (
-
+				const skipParameterName =
 					// If it is a numerical parameter, doesn't include
 					// `=` in the value, AND is in sequence with the other
 					// numerical parameters, we can omit the key= part
 					// (positional parameters, joyous day :/ )
-					!isNaN( +key ) && +key % 1 === 0 && !value.includes( '=' ) &&
+					!Number.isNaN( +key ) && +key % 1 === 0 && !value.includes( '=' ) &&
 
 					// Parameter 2 will be the first positional parameter,
 					// since 1 is always going to be the submission status.
-					( key === '2' || +paramKeys[ index - 1 ] === +key - 1 )
-				) {
-					tout += '|' + value.trim();
-				} else {
-					tout += '|' + key + '=' + value;
-				}
+					( key === '2' || +parameterKeys[ index - 1 ] === +key - 1 );
+
+				tout += '|' + ( skipParameterName ? '' : key + '=' ) + value;
 			} );
 
 			// Collapse old decline template if a newer decline
@@ -549,15 +550,15 @@ export class AFCPage {
 			tout += '|ts=' + template.timestamp + '}}';
 
 			templates.push( tout );
-		} );
+		}
 
 		// Then comment templates
-		this._comments.forEach( function ( comment ) {
+		for ( const comment of this._comments ) {
 			templates.push( '\n{{AFC comment|1=' + comment.text + '}}' );
-		} );
+		}
 
 		// If there were comments, add a horizontal rule beneath them
-		if ( this._comments.length ) {
+		if ( this._comments.length > 0 ) {
 			templates.push( '\n----' );
 		}
 
@@ -571,12 +572,12 @@ export class AFCPage {
 		while ( match ) {
 			const split = match[ 1 ].split( '|' );
 			if ( !Object.prototype.hasOwnProperty.call( this.categories, split[ 0 ] ) ) {
-				this.categories[ split.shift() ] = split.length ? split.join( '|' ) : false;
+				this.categories[ split.shift() ] = split.length > 0 ? split.join( '|' ) : false;
 			}
 			match = categoryRegex.exec( this._text );
 		}
 
-		this._text = this._text.replace( categoryRegex, '' );
+		this._text = this._text.replaceAll( categoryRegex, '' );
 
 		this._removeExcessNewlines();
 	}
@@ -590,17 +591,48 @@ export class AFCPage {
 			for ( const cat of categories ) {
 				const split = cat.split( '|' );
 				if ( !Object.prototype.hasOwnProperty.call( this.categories, split[ 0 ] ) ) {
-					this.categories[ split.shift() ] = split.length ? split.join( '|' ) : false;
+					this.categories[ split.shift() ] = split.length > 0 ? split.join( '|' ) : false;
 				}
 			}
 		}
 
-		const CategoriesNeedRemove = [ '使用创建条目精灵建立的页面', '用条目向导创建的草稿', '正在等待審核的草稿' ];
+		const CategoriesNeedRemove = new Set( [ '使用创建条目精灵建立的页面', '用条目向导创建的草稿', '正在等待審核的草稿' ] );
 		for ( const cat in this.categories ) {
-			if ( !CategoriesNeedRemove.includes( cat ) ) {
+			if ( !CategoriesNeedRemove.has( cat ) ) {
 				this._text += `\n[[:Category:${ cat }${ ( this.categories[ cat ] ? `|${ this.categories[ cat ] }` : '' ) }]]`;
 			}
 		}
+	}
+
+	/**
+	 * Convert http://-style links to other wikipages to wikicode syntax
+	 *
+	 * FIXME: Break this out into its own core function? Will it be used elsewhere?
+	 *
+	 * @param {string} text
+	 * @return {string}
+	 */
+	private _convertExternalLinksToWikiLinks( text: string ): string {
+		const linkRegex =
+		// eslint-disable-next-line security/detect-unsafe-regex
+		/\[{1,2}(?:https?:)?\/\/(?:(?:zh\.wikipedia\.org|zhwp\.org)\/(?:wiki|zh|zh-hans|zh-hant|zh-cn|zh-my|zh-sg|zh-tw|zh-hk|zh-mo)|zhwp\.org)\/([^\s|\][]+)(?:\s|\|)?((?:\[\[[^[\]]*\]\]|[^\][])*)\]{1,2}/ig;
+		let linkMatch = linkRegex.exec( text );
+		let title: string;
+		let displayTitle: string;
+		let newLink: string;
+
+		while ( linkMatch ) {
+			title = decodeURI( linkMatch[ 1 ] ).replaceAll( '_', ' ' );
+			displayTitle = decodeURI( linkMatch[ 2 ] ).replaceAll( '_', ' ' );
+
+			// Don't include the displayTitle if it is equal to the title
+			newLink = displayTitle && title !== displayTitle ? '[[' + title + '|' + displayTitle + ']]' : '[[' + title + ']]';
+
+			text = text.replace( linkMatch[ 0 ], newLink );
+			linkMatch = linkRegex.exec( text );
+		}
+
+		return text;
 	}
 
 	public cleanUp(): void {
@@ -608,29 +640,29 @@ export class AFCPage {
 
 		let text = this._text;
 		const commentsToRemove = [
-			'请不要移除这一行代码', '請勿刪除此行，並由下一行開始編輯'
+			'请不要移除这一行代码', '請勿刪除此行，並由下一行開始編輯',
 		];
 
 		// Assemble a master regexp and remove all now-unneeded comments
 		// (commentsToRemove)
 		// eslint-disable-next-line security/detect-non-literal-regexp
 		const commentRegex = new RegExp(
-			'<!-{2,}\\s*(' + commentsToRemove.join( '|' ) + ')\\s*-{2,}>',
+			String.raw`<!-{2,}\s*(` + commentsToRemove.join( '|' ) + String.raw`)\s*-{2,}>`,
 			'gi'
 		);
 
 		text = text
-			.replace( commentRegex, '' )
+			.replaceAll( commentRegex, '' )
 
 			// Remove sandbox templates
-			.replace(
+			.replaceAll(
 				// eslint-disable-next-line security/detect-unsafe-regex
 				/\{\{(userspacedraft|userspace draft|user sandbox|用戶沙盒|用户沙盒|draft copyvio|七日草稿|7D draft|Draft|草稿|Please leave this line alone \(sandbox heading\))(?:\{\{[^{}]*\}\}|[^}{])*\}\}/ig,
 				''
 			)
 
 			// 把分類當成模板來加？
-			.replace( /\{\{:?(?:Cat|Category|分[类類]):([^{}]+)\}\}/gi, '[[:Category:$1]]' )
+			.replaceAll( /\{\{:?(?:Cat|Category|分[类類]):([^{}]+)\}\}/gi, '[[:Category:$1]]' )
 
 			// 移除掉不知道為甚麼沒移除的預設內容
 			.replace( /'''此处改为条目主题'''(?:是一个)?/, '' )
@@ -638,26 +670,26 @@ export class AFCPage {
 			.replace( /==\s*章节标题\s*==/, '' )
 
 			// eslint-disable-next-line security/detect-unsafe-regex
-			.replace( /<([A-Za-z]+)(\s+([^>]+))?>/g, function ( _all: string, tagName: string, args: string ) {
+			.replaceAll( /<([A-Za-z]+)(\s+([^>]+))?>/g, function ( _all: string, tagName: string, args: string ) {
 				return `<${ tagName.toLowerCase() }${ args ? ` ${ args.trim() }` : '' }>`;
 			} )
 
 			// eslint-disable-next-line security/detect-unsafe-regex
-			.replace( /<\/([A-Za-z]+)(?:\s+[^>]+)?>/g, function ( _all: string, tagName: string ) {
+			.replaceAll( /<\/([A-Za-z]+)(?:\s+[^>]+)?>/g, function ( _all: string, tagName: string ) {
 				return `</${ tagName.toLowerCase() }>`;
 			} )
 
-			.replace( /<\/?br\s*\/?>/g, '<br />' )
+			.replaceAll( /<\/?br\s*\/?>/g, '<br />' )
 
-			.replace( /<\/?hr\s*\/?>/g, '<hr />' )
+			.replaceAll( /<\/?hr\s*\/?>/g, '<hr />' )
 
 			// Remove html comments (<!--) that surround categories
 			// categoryRegex
 			// eslint-disable-next-line security/detect-non-literal-regexp
-			.replace( new RegExp( '<!--[\\s\\r\\t\\n]*((' + categoryRegex.source + '[\\s\\r\\t\\n]*)+)-->', 'gi' ), '$1' )
+			.replaceAll( new RegExp( String.raw`<!--[\s\r\t\n]*((` + categoryRegex.source + String.raw`[\s\r\t\n]*)+)-->`, 'gi' ), '$1' )
 
 			// Remove spaces/commas between <ref> tags
-			.replace(
+			.replaceAll(
 				// eslint-disable-next-line security/detect-unsafe-regex
 				/\s*(<\/\s*ref\s*>)\s*[,]*\s*(<\s*ref\s*(name\s*=|group\s*=)*\s*[^/]*>)[ \t]*$/gim,
 				'$1$2\n\n'
@@ -665,10 +697,10 @@ export class AFCPage {
 
 			// Remove whitespace before <ref> tags
 			// eslint-disable-next-line security/detect-unsafe-regex
-			.replace( /[\s\t]*(<\s*ref\s*(name\s*=|group\s*=)*\s*.*[^/]+>)[\s\t]*$/gim, '$1\n\n' )
+			.replaceAll( /[\s\t]*(<\s*ref\s*(name\s*=|group\s*=)*\s*.*[^/]+>)[\s\t]*$/gim, '$1\n\n' )
 
 			// Move punctuation before <ref> tags
-			.replace(
+			.replaceAll(
 				// eslint-disable-next-line security/detect-unsafe-regex
 				/\s*((<\s*ref\s*(name\s*=|group\s*=)*\s*.*[/]{1}>)|(<\s*ref\s*(name\s*=|group\s*=)*\s*[^/]*>(?:<[^<>\n]*>|[^<>\n])*<\/\s*ref\s*>))[\s\t]*([.。!！?？,，;；:：])+$/gim,
 				'$6$1\n\n'
@@ -676,43 +708,12 @@ export class AFCPage {
 
 			// Replace {{http://example.com/foo}} with "* http://example.com/foo" (common
 			// newbie error)
-			.replace(
+			.replaceAll(
 				/\n\{\{(http[s]?|ftp[s]?|irc):\/\/(.*?)\}\}/gi,
 				'\n* $1://$3'
 			);
 
-		// Convert http://-style links to other wikipages to wikicode syntax
-		// FIXME: Break this out into its own core function? Will it be used
-		// elsewhere?
-		// eslint-disable-next-line no-shadow
-		function convertExternalLinksToWikiLinks( text: string ) {
-			const linkRegex =
-			// eslint-disable-next-line security/detect-unsafe-regex
-			/\[{1,2}(?:https?:)?\/\/(?:(?:zh\.wikipedia\.org|zhwp\.org)\/(?:wiki|zh|zh-hans|zh-hant|zh-cn|zh-my|zh-sg|zh-tw|zh-hk|zh-mo)|zhwp\.org)\/([^\s|\][]+)(?:\s|\|)?((?:\[\[[^[\]]*\]\]|[^\][])*)\]{1,2}/ig;
-			let linkMatch = linkRegex.exec( text );
-			let title: string;
-			let displayTitle: string;
-			let newLink: string;
-
-			while ( linkMatch ) {
-				title = decodeURI( linkMatch[ 1 ] ).replace( /_/g, ' ' );
-				displayTitle = decodeURI( linkMatch[ 2 ] ).replace( /_/g, ' ' );
-
-				// Don't include the displayTitle if it is equal to the title
-				if ( displayTitle && title !== displayTitle ) {
-					newLink = '[[' + title + '|' + displayTitle + ']]';
-				} else {
-					newLink = '[[' + title + ']]';
-				}
-
-				text = text.replace( linkMatch[ 0 ], newLink );
-				linkMatch = linkRegex.exec( text );
-			}
-
-			return text;
-		}
-
-		text = convertExternalLinksToWikiLinks( text );
+		text = this._convertExternalLinksToWikiLinks( text );
 
 		this._text = text;
 
@@ -725,7 +726,7 @@ export class AFCPage {
 
 	public get hasValidAFCTemplates(): boolean {
 		this._checkIsInitialed( '[getter hasValidAFCTemplates]' );
-		return !!this._submissions.length;
+		return this._submissions.length > 0;
 	}
 
 	public get text(): string {
@@ -754,7 +755,7 @@ export class AFCPage {
 			action: 'parse',
 			contentmodel: 'wikitext',
 			uselang: 'zh-hant',
-			oldid: this._baseRevId
+			oldid: this._baseRevId,
 		} ).catch( handleMwnRequestError ).then( function ( data ) {
 			return ( data as { parse: { text: string } } ).parse.text;
 		} );
@@ -786,7 +787,7 @@ export class AFCPage {
 				minor: true,
 				nocreate: !!this._pageId,
 				createonly: !this._pageId,
-				...extraOptions
+				...extraOptions,
 			} ).catch( handleMwnRequestError );
 
 			winston.debug( '[afc/util/AFCPage] Edit success:' + JSON.stringify( data ) );

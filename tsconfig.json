@@ -17,7 +17,7 @@
 		"strict": true,
 		"strictNullChecks": false,
 		"strictBindCallApply": true,
-		"target": "es2020",
+		"target": "es2023",
 		"paths": {
 			"@app/*": [
 				"./*"
@@ -32,6 +32,7 @@
 		"skipLibCheck": true
 	},
 	"include": [
+		"types/*.d.ts",
 		"config/*.ts",
 		"src/*",
 		"src/**/*",

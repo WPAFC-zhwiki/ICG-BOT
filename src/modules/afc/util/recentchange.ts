@@ -1,4 +1,4 @@
-import { setTimeout as setTimeoutP } from 'node:timers/promises';
+import { scheduler } from 'node:timers/promises';
 
 import { ApiParams, MwnDate } from 'mwn';
 import { ApiQueryRecentChangesParams } from 'types-mediawiki/api_params';
@@ -170,7 +170,7 @@ class RecentChanges {
 		return Object.assign( {
 			action: 'query',
 			list: 'recentchanges',
-			...this._filter
+			...this._filter,
 		} );
 	}
 
@@ -178,9 +178,9 @@ class RecentChanges {
 		rcprop: [
 			'comment', 'flags', 'ids', 'loginfo',
 			'parsedcomment', 'redirect', 'sha1',
-			'sizes', 'tags', 'timestamp', 'title', 'user', 'userid'
+			'sizes', 'tags', 'timestamp', 'title', 'user', 'userid',
 		],
-		rclimit: 'max'
+		rclimit: 'max',
 	};
 
 	private readonly _processer: Map<RCFilterFunction, RCProcessFunction> = new Map();
@@ -193,8 +193,8 @@ class RecentChanges {
 	private _lock = false;
 
 	private static readonly _timeoutPlaceholder = Symbol( 'timeout' );
-	private _timeout: NodeJS.Timeout | typeof RecentChanges['_timeoutPlaceholder'];
-	private _abortController: AbortController | null = null;
+	private _timeout: NodeJS.Timeout | typeof RecentChanges['_timeoutPlaceholder'] | undefined;
+	private _abortController: AbortController | undefined;
 
 	public setRequestFilter( filter: RecentChangeFilter ) {
 		if ( filter.type ) {
@@ -234,7 +234,7 @@ class RecentChanges {
 		}
 
 		if ( filter.rcprop ) {
-			this._filter.rcprop = [ 'timestamp', ...( filter.rcprop instanceof Array ? filter.rcprop : [ filter.rcprop ] ) ];
+			this._filter.rcprop = [ 'timestamp', ...( Array.isArray( filter.rcprop ) ? filter.rcprop : [ filter.rcprop ] ) ];
 			this._filter.rcprop = [ ...new Set( this._filter.rcprop ) ];
 		} else {
 			delete this._filter.rcprop;
@@ -282,7 +282,7 @@ class RecentChanges {
 
 			try {
 				mwbot.Title.checkData();
-			} catch ( e ) {
+			} catch {
 				await mwbot.getSiteInfo().catch( handleMwnRequestError );
 			}
 
@@ -299,7 +299,7 @@ class RecentChanges {
 		if ( this._timeout !== RecentChanges._timeoutPlaceholder ) {
 			clearTimeout( this._timeout );
 		}
-		this._timeout = null;
+		this._timeout = undefined;
 	}
 
 	public addProcessFunction<E extends RecentChangeEvent = RecentChangeEvent>(
@@ -311,8 +311,8 @@ class RecentChanges {
 	}
 
 	private async _wrapContinuableRecentChangesRequest(
-		params: ApiParams & ApiQueryRecentChangesParams,
-		abortController: AbortController | null = null,
+		parameters: ApiParams & ApiQueryRecentChangesParams,
+		abortController: AbortController | undefined = undefined,
 		rccontinue: string | undefined = undefined,
 		maxContinueCount = 10
 	): Promise<RecentChangeEvent[]> {
@@ -320,14 +320,14 @@ class RecentChanges {
 			return [];
 		}
 
-		const requestParams = Object.assign( {}, params );
+		const requestParameters = Object.assign( {}, parameters );
 		if ( rccontinue ) {
-			requestParams.continue = '-||';
-			requestParams.rccontinue = rccontinue;
+			requestParameters.continue = '-||';
+			requestParameters.rccontinue = rccontinue;
 		}
-		const data = await mwbot.request( requestParams, {
+		const data = await mwbot.request( requestParameters, {
 			signal: abortController?.signal,
-			timeout: 15000
+			timeout: 15_000,
 		} ).catch( handleMwnRequestError ) as {
 			continue?: {
 				continue: string;
@@ -339,15 +339,15 @@ class RecentChanges {
 		};
 
 		if ( data.continue?.rccontinue ) {
-			return ( data.query?.recentchanges ?? [] )
-				.concat(
-					await this._wrapContinuableRecentChangesRequest(
-						params,
-						abortController,
-						data.continue.rccontinue,
-						--maxContinueCount
-					)
-				);
+			return [
+				...( data.query?.recentchanges ?? [] ),
+				...await this._wrapContinuableRecentChangesRequest(
+					parameters,
+					abortController,
+					data.continue.rccontinue,
+					--maxContinueCount
+				),
+			];
 		}
 
 		return ( data.query?.recentchanges ?? [] );
@@ -358,12 +358,12 @@ class RecentChanges {
 			Object.assign( <ApiQueryRecentChangesParams>{
 				rcstart: 'now',
 				// https://www.mediawiki.org/wiki/API:RecentChanges#Additional_notes
-				rcend: new Date( this._lastTime.getTime() - 30000 ).toISOString()
+				rcend: new Date( this._lastTime.getTime() - 30_000 ).toISOString(),
 			}, this._params ),
 			abortController
 		);
 
-		if ( recentchanges.length ) {
+		if ( recentchanges.length > 0 ) {
 			for ( const rc of recentchanges ) {
 				const time = new Date( rc.timestamp );
 				if (
@@ -395,7 +395,7 @@ class RecentChanges {
 		try {
 			await Promise.race( [
 				this.request( abortController ),
-				await setTimeoutP( 30000 )
+				scheduler.wait( 30_000 ),
 			] );
 		} catch ( error ) {
 			winston.error( `[afc/recentchange] Request Error: ${ inspect( error ) }.` );
@@ -410,11 +410,11 @@ class RecentChanges {
 	}
 
 	private _fire( event: RecentChangeEvent ): void {
-		this._processer.forEach( function ( func, fliter ): void {
+		for ( const [ fliter, func ] of this._processer.entries() ) {
 			if ( fliter( event ) ) {
 				func( event );
 			}
-		} );
+		}
 	}
 }
 

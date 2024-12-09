@@ -9,7 +9,7 @@ import { Manager } from '@app/init';
 import { Context } from '@app/lib/handlers/Context';
 import { addCommand, parseUID } from '@app/lib/message';
 
-import { prepareBridgeMsg } from '@app/modules/transport';
+import { prepareBridgeMessage } from '@app/modules/transport';
 
 const ircHandler = Manager.handlers.get( 'IRC' );
 
@@ -21,11 +21,11 @@ if ( ircHandler && Manager.global.isEnable( 'transport' ) ) {
 
 	addCommand( `${ prefix }command`, async function ( context: Context ) {
 		if ( !context.isPrivate ) {
-			prepareBridgeMsg( context );
+			prepareBridgeMessage( context );
 			if ( context.param && context.extra?.mapTo?.length ) {
 				if ( echo ) {
 					context.reply( context.param, {
-						noPrefix: true
+						noPrefix: true,
 					} );
 				}
 
@@ -35,12 +35,12 @@ if ( ircHandler && Manager.global.isEnable( 'transport' ) ) {
 					if ( client.client === 'IRC' ) {
 						sentCount++;
 						ircHandler.say( client.id, context.param );
-						winston.debug( `[irccommand] Msg #${ context.msgId }: IRC command has sent to ${ client.id }. Param = ${ context.param }` );
+						winston.debug( `[irccommand] Message #${ context.msgId }: IRC command has sent to ${ client.id }. Param = ${ context.param }` );
 					}
 				}
 
 				if ( sentCount === 0 ) {
-					winston.debug( `[irccommand] Msg #${ context.msgId }: No IRC targets.` );
+					winston.debug( `[irccommand] Message #${ context.msgId }: No IRC targets.` );
 				}
 			} else {
 				context.reply( `用法: /${ prefix }command <命令>` );

@@ -5,7 +5,7 @@ import winston = require( 'winston' );
 
 import { ConfigTS } from '@app/config';
 
-import extList from '@app/lib/extToMime';
+import extList from '@app/lib/extensionToMime';
 import { Context, ContextExtra as ContextExtra } from '@app/lib/handlers/Context';
 import { BaseEvents, MessageHandler } from '@app/lib/handlers/MessageHandler';
 import { inspect, getFriendlySize, getFileNameFromUrl } from '@app/lib/util';
@@ -15,8 +15,8 @@ export interface DiscordEvents extends BaseEvents<Discord.Message> {
 		from: Discord.User,
 		to: Discord.Channel;
 		text: string;
-	}, rawdata: Discord.Message ): void;
-	command( context: Context<Discord.Message>, comand: string, param: string ): void;
+	}, rawData: Discord.Message ): void;
+	command( context: Context<Discord.Message>, comand: string, parameter: string ): void;
 	text( context: Context<Discord.Message> ): void;
 	ready( client: Discord.Client ): void;
 }
@@ -28,7 +28,7 @@ export type DiscordSendMessage = string | Discord.MessageCreateOptions;
  */
 export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 	private readonly _token: string;
-	protected readonly _client: Discord.Client;
+	declare protected readonly _client: Discord.Client;
 	protected readonly _type = 'Discord' as const;
 	protected readonly _id = 'D' as const;
 
@@ -69,8 +69,8 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 				Discord.GatewayIntentBits.DirectMessages,
 				// Discord.GatewayIntentBits.DirectMessageReactions,
 				// Discord.GatewayIntentBits.DirectMessageTyping,
-				Discord.GatewayIntentBits.MessageContent
-			]
+				Discord.GatewayIntentBits.MessageContent,
+			],
 		} );
 
 		this._me = client.user;
@@ -89,127 +89,128 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 		this.useProxyURL = discordOptions.useProxyURL;
 		this.relayEmoji = discordOptions.relayEmoji;
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const that: this = this;
-
-		client.on( 'messageCreate', async function ( rawdata: Discord.Message ): Promise<void> {
-			if ( rawdata.partial ) {
-				rawdata = await rawdata.fetch();
+		client.on( 'messageCreate', async ( rawData: Discord.Message ): Promise<void> => {
+			if ( rawData.partial ) {
+				rawData = await rawData.fetch();
 			}
 
 			if (
-				!that._enabled ||
-				rawdata.author.id === client.user.id ||
-				discordOptions.ignoreBot && rawdata.author.bot ||
-				discordOptions.ignore.includes( rawdata.author.id ) ||
+				!this._enabled ||
+				rawData.author.id === client.user.id ||
+				discordOptions.ignoreBot && rawData.author.bot ||
+				discordOptions.ignore.includes( rawData.author.id ) ||
 				// 無視置頂
 				// TODO: 解析置頂訊息
-				rawdata.type === Discord.MessageType.ChannelPinnedMessage ||
+				rawData.type === Discord.MessageType.ChannelPinnedMessage ||
 				// TODO: EmbedBuilder轉文字
-				!rawdata.content && rawdata.embeds && rawdata.embeds.length
+				!rawData.content && rawData.embeds && rawData.embeds.length > 0
 			) {
 				return;
 			}
 
-			let text = rawdata.content;
+			let text = rawData.content;
 			const extra: ContextExtra = {
-				discriminator: rawdata.author.discriminator
+				discriminator: rawData.author.discriminator,
 			};
 
-			if ( rawdata.attachments && rawdata.attachments.size ) {
+			if ( rawData.attachments && rawData.attachments.size > 0 ) {
 				extra.files = [];
-				for ( const [ , p ] of rawdata.attachments ) {
+				for ( const [ , p ] of rawData.attachments ) {
 					const type = ( extList.get( path.extname( getFileNameFromUrl( p.url ) ) ) || 'unknown' ).split( '/' )[ 0 ];
 					extra.files.push( {
 						client: 'Discord',
 						type,
 						id: p.id,
 						size: p.size,
-						url: that.useProxyURL ? p.proxyURL : p.url
+						url: this.useProxyURL ? p.proxyURL : p.url,
 					} );
 					switch ( type ) {
-						case 'image':
+						case 'image': {
 							text += ` <Photo: ${ p.width }x${ p.height }, ${ getFriendlySize( p.size ) }>`;
 							break;
-						case 'video':
+						}
+						case 'video': {
 							text += ` <Video: ${ p.width }x${ p.height }, ${ getFriendlySize( p.size ) }>`;
 							break;
-						case 'audio':
+						}
+						case 'audio': {
 							text += ` <Audio: ${ getFriendlySize( p.size ) }>`;
 							break;
-						default:
+						}
+						default: {
 							text += ` <Attachment: ${ getFriendlySize( p.size ) }>`;
 							break;
+						}
 					}
 				}
 			}
 
-			if ( rawdata.reference && rawdata.reference.messageId ) {
-				if ( rawdata.channel.id === rawdata.reference.channelId ) {
-					const msg = await rawdata.channel.messages.fetch( rawdata.reference.messageId );
+			if (
+				rawData.reference &&
+				rawData.reference.messageId &&
+				rawData.channel.id === rawData.reference.channelId
+			) {
+				const message = await rawData.channel.messages.fetch( rawData.reference.messageId );
 
-					extra.reply = {
-						origClient: that._type,
-						origChatId: rawdata.channel.id,
-						origMessageId: msg.id,
-						id: msg.author.id,
-						nick: that.getNick( msg.member || msg.author ),
-						username: msg.author.username,
-						discriminator: msg.author.discriminator,
-						message: that._convertToText( msg ),
-						isText: msg.content && true,
-						_rawData: msg
-					};
-				}
+				extra.reply = {
+					origClient: this._type,
+					origChatId: rawData.channel.id,
+					origMessageId: message.id,
+					id: message.author.id,
+					nick: this.getNick( message.member || message.author ),
+					username: message.author.username,
+					discriminator: message.author.discriminator,
+					message: this._convertToText( message ),
+					isText: message.content && true,
+					_rawData: message,
+				};
 			}
 
 			const context = new Context<Discord.Message>( {
-				from: rawdata.author.id,
-				to: rawdata.channel.id,
-				messageId: rawdata.id,
-				nick: that.getNick( rawdata.member || rawdata.author ),
+				from: rawData.author.id,
+				to: rawData.channel.id,
+				messageId: rawData.id,
+				nick: this.getNick( rawData.member || rawData.author ),
 				text: text,
-				isPrivate: rawdata.channel.type === Discord.ChannelType.DM,
+				isPrivate: rawData.channel.type === Discord.ChannelType.DM,
 				extra: extra,
-				handler: that,
-				_rawData: rawdata
+				handler: this,
+				_rawData: rawData,
 			} );
 
 			// 檢查是不是命令
-			if ( rawdata.content.startsWith( '!' ) || rawdata.content.startsWith( '/' ) ) {
-				const cmd = rawdata.content.slice( 1, rawdata.content.match( ' ' ) ? rawdata.content.match( ' ' ).index : rawdata.content.length );
-				if ( that._commands.has( cmd ) ) {
-					const callback = that._commands.get( cmd );
-					let param = rawdata.content.trim().slice( cmd.length + 1 );
-					if ( param === '' || param.startsWith( ' ' ) ) {
-						param = param.trim();
+			if ( rawData.content.startsWith( '!' ) || rawData.content.startsWith( '/' ) ) {
+				const cmd = rawData.content.slice( 1, rawData.content.match( ' ' ) ? rawData.content.match( ' ' ).index : rawData.content.length );
+				if ( this._commands.has( cmd ) ) {
+					const callback = this._commands.get( cmd );
+					let parameter = rawData.content.trim().slice( cmd.length + 1 );
+					if ( parameter === '' || parameter.startsWith( ' ' ) ) {
+						parameter = parameter.trim();
 
 						context.command = cmd;
-						context.param = param;
+						context.param = parameter;
 
 						if ( typeof callback === 'function' ) {
-							callback( context, cmd, param );
+							callback( context, cmd, parameter );
 						}
 
-						that.emit( 'command', context, cmd, param );
-						that.emit( `command#${ cmd }`, context, param );
+						this.emit( 'command', context, cmd, parameter );
+						this.emit( `command#${ cmd }`, context, parameter );
 					}
 				}
 			}
 
-			that.emit( 'text', context );
+			this.emit( 'text', context );
 		} );
 
-		client.on( 'ready', function () {
+		client.on( 'ready', () => {
 			// eslint-disable-next-line prefer-rest-params
-			that.emit( 'ready', arguments[ 0 ] );
+			this.emit( 'ready', arguments[ 0 ] );
 		} );
 	}
 
 	public async say( target: string, message: DiscordSendMessage ): Promise<Discord.Message> {
-		if ( !this._enabled ) {
-			throw new Error( 'Handler not enabled' );
-		} else {
+		if ( this._enabled ) {
 			const channel = this._client.channels.cache.has( target ) ?
 				this._client.channels.cache.get( target ) :
 				await this._client.channels.fetch( target );
@@ -219,38 +220,32 @@ export class DiscordMessageHandler extends MessageHandler<DiscordEvents> {
 				return await channel.send( message );
 			}
 			throw new Error( `Channel ${ target } is not't a text channel.` );
+		} else {
+			throw new Error( 'Handler not enabled' );
 		}
 	}
 
 	public async reply( context: Context, message: DiscordSendMessage, options: {
 		withNick?: boolean
 	} = {} ): Promise<Discord.Message> {
-		if ( context.isPrivate ) {
-			return await this.say( String( context.from ), message );
-		} else {
-			if ( options.withNick ) {
-				return await this.say( String( context.to ), `${ context.nick }: ${ message }` );
-			} else {
-				return await this.say( String( context.to ), `${ message }` );
-			}
-		}
+		return context.isPrivate ? ( await this.say( String( context.from ), message ) ) : ( await ( options.withNick ? this.say( String( context.to ), `${ context.nick }: ${ message }` ) : this.say( String( context.to ), `${ message }` ) ) );
 	}
 
-	public getNick( userobj: Discord.GuildMember | {
+	public getNick( userObject: Discord.GuildMember | {
 		username: string;
 		id: string;
 	} ): string {
-		if ( userobj ) {
+		if ( userObject ) {
 			let nickname: string, id: string, username: string;
-			if ( userobj instanceof Discord.GuildMember ) {
-				nickname = userobj.nickname;
-				id = userobj.id;
-				const user = userobj.user;
+			if ( userObject instanceof Discord.GuildMember ) {
+				nickname = userObject.nickname;
+				id = userObject.id;
+				const user = userObject.user;
 				username = user.username;
 			} else {
-				username = userobj.username;
-				id = userobj.id;
-				nickname = null;
+				username = userObject.username;
+				id = userObject.id;
+				nickname = undefined;
 			}
 
 			if ( this._nickStyle === 'nickname' ) {

@@ -33,13 +33,13 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		format: 'json',
 		fromrev: event.old_revid,
 		torev: event.revid,
-		formatversion: '2'
+		formatversion: '2',
 	} as AP.ApiComparePagesParams as ApiParams ).catch( handleMwnRequestError );
 
 	const $diff = $( '<table>' ).append( compare.body );
 	let diffText = '';
 
-	$diff.find( '.diff-addedline' ).each( ( _i, ele ) => {
+	$diff.find( '.diff-addedline' ).each( ( _index, ele ) => {
 		diffText += $( ele ).text() + '\n';
 	} );
 
@@ -53,31 +53,31 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	winston.debug( `[afc/events/helpdesk] comment: ${ event.comment }, diff: ${ event.old_revid } -> ${ event.revid }, user: ${ event.user }, title: ${ event.title }, new: ${ parsedHTML }` );
 
 	const diff = `Special:Diff/${ event.old_revid }/${ event.revid }`;
-	const dMsg = new Discord.EmbedBuilder( {
+	const dMessage = new Discord.EmbedBuilder( {
 		title: '詢問桌有新留言！',
 		color: Discord.Colors.Blue,
 		url: `https://zh.wikipedia.org/wiki/${ diff }`,
 		description: `留言者：${ makeMarkdownWikiLink( `User:${ event.user }`, event.user ) }`,
 		fields: [ {
 			name: '留言內容',
-			value: parseMarkDown.length > 1024 ? parseMarkDown.slice( 0, 1021 ) + '...' : parseMarkDown
+			value: parseMarkDown.length > 1024 ? parseMarkDown.slice( 0, 1021 ) + '...' : parseMarkDown,
 		} ],
-		timestamp: new Date( event.timestamp ).getTime()
+		timestamp: new Date( event.timestamp ).getTime(),
 	} );
 
-	let tMsg = `${ makeHTMLWikiLink( diff, new HTMLNoNeedEscape( '<b>詢問桌有新留言！</b>' ) ) }
+	let tMessage = `${ makeHTMLWikiLink( diff, new HTMLNoNeedEscape( '<b>詢問桌有新留言！</b>' ) ) }
 留言者：${ makeHTMLWikiLink( `User:${ event.user }`, event.user ) }
 留言內容：
 ${ ( parsedHTML.length > 2048 ? parsedHTML.slice( 0, 2045 ) + '...' : parsedHTML ) }`;
 
-	const iMsg = htmlToIRC( tMsg );
+	const indexMessage = htmlToIRC( tMessage );
 
-	tMsg += '\n\n#詢問桌留言';
+	tMessage += '\n\n#詢問桌留言';
 
 	send( {
-		dMsg,
-		tMsg,
-		iMsg
+		dMessage: dMessage,
+		tMessage: tMessage,
+		iMessage: indexMessage,
 	}, 'helpdesk' );
 } );
 

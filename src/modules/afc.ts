@@ -10,7 +10,7 @@ const commandFiles = fs
 	.filter( ( file ) => file.match( /\.[jt]s$/ ) );
 
 for ( const file of commandFiles ) {
-	// eslint-disable-next-line security/detect-non-literal-require
+	// eslint-disable-next-line security/detect-non-literal-require, @typescript-eslint/no-require-imports
 	require( `@app/modules/afc/commands/${ file }` );
 	winston.debug( `[afc] - ${ path.parse( file ).name }` );
 }
@@ -22,7 +22,7 @@ const eventFiles = fs
 	.filter( ( file ) => file.match( /\.[jt]s$/ ) );
 
 for ( const file of eventFiles ) {
-	// eslint-disable-next-line security/detect-non-literal-require
+	// eslint-disable-next-line security/detect-non-literal-require, @typescript-eslint/no-require-imports
 	require( `@app/modules/afc/events/${ file }` );
 	winston.debug( `[afc] - ${ path.parse( file ).name }` );
 }

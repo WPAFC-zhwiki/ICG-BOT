@@ -14,7 +14,7 @@ import { Context } from '@app/lib/handlers/Context';
 import { MessageHandler, Command, BaseEvents } from '@app/lib/handlers/MessageHandler';
 import { inspect, getFriendlySize, getFriendlyLocation } from '@app/lib/util';
 
-type FilterFunctionPropName<O extends object> = {
+type FilterFunctionPropertyName<O extends object> = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[K in keyof O]: O[K] extends ( ...args: any ) => any ? K : never;
 }[keyof O];
@@ -30,40 +30,40 @@ export interface TelegramEvents extends BaseEvents<TContext> {
 		},
 		to: number;
 		text: string;
-	}, ctx: TContext ): void;
+	}, context: TContext ): void;
 	leave( group: number, from: {
 		id: number;
 		nick: string;
 		username?: string;
 	}, target: {
-		id: number;
-		nick: string;
-		username?: string;
-	}, ctx: TContext ): void;
+			id: number;
+			nick: string;
+			username?: string;
+		}, context: TContext ): void;
 	join( group: number, from: {
 		id: number;
 		nick: string;
 		username?: string;
 	}, target: {
-		id: number;
-		nick: string;
-		username?: string;
-	}, ctx: TContext ): void;
+			id: number;
+			nick: string;
+			username?: string;
+		}, context: TContext ): void;
 	richMessage( context: Context<TContext> ): void;
-	channelPost( channel: TT.Chat.ChannelChat, msg: TT.Message, ctx: TContext ): void;
+	channelPost( channel: TT.Chat.ChannelChat, message: TT.Message, context: TContext ): void;
 	groupChannelText( channel: TT.Chat.ChannelChat, context: Context<TContext> ): void;
 	groupChannelRichMessage( channel: TT.Chat.ChannelChat, context: Context<TContext> ): void;
 }
 
 export type TelegramSendMessageOptions<E extends ExtraPhoto | ExtraReplyMessage = ExtraReplyMessage> = E & {
 	withNick?: boolean
-}
+};
 
 /**
  * 使用通用介面處理 Telegram 訊息
  */
 export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
-	protected readonly _client: Telegraf<TContext>;
+	declare protected readonly _client: Telegraf<TContext>;
 	protected readonly _type = 'Telegram' as const;
 	protected readonly _id = 'T' as const;
 
@@ -99,12 +99,12 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			token: '',
 			timeout: 0,
 			webhook: {
-				port: 0
+				port: 0,
 			},
-			apiRoot: 'https://api.telegram.org'
+			apiRoot: 'https://api.telegram.org',
 		};
 		const tgOptions: ConfigTS[ 'Telegram' ][ 'options' ] = config.options || {
-			nickStyle: 'username'
+			nickStyle: 'username',
 		};
 
 		// 配置文件兼容性处理
@@ -124,20 +124,20 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		const client = new Telegraf( botConfig.token, {
 			telegram: {
 				agent: myAgent,
-				apiRoot: botConfig.apiRoot || 'https://api.telegram.org'
+				apiRoot: botConfig.apiRoot || 'https://api.telegram.org',
 			},
-			handlerTimeout: botConfig.timeout
+			handlerTimeout: botConfig.timeout,
 		} );
 
-		client.telegram.getMe().then( function ( me ) {
-			that.#username = me.username;
-			that.#me = me;
+		client.telegram.getMe().then( ( me ) => {
+			this.#username = me.username;
+			this.#me = me;
 			winston.info( `TelegramBot is ready, login as: ${ me.first_name }${ me.last_name ? ` ${ me.last_name }` : '' }@${ me.username }(${ me.id })` );
 		} );
 
 		client.catch( function ( error ) {
 			if ( error instanceof Error ) {
-				error.message = error.message.replace(
+				error.message = error.message.replaceAll(
 					/\/bot(\d+):[^/]+\//g,
 					'/bot$1:<password>/'
 				);
@@ -149,15 +149,15 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 			const webhookConfig = botConfig.webhook;
 
 			// 启动Webhook服务器
-			let tlsOptions: Tls.TlsOptions = null;
+			let tlsOptions: Tls.TlsOptions;
 			if ( webhookConfig.ssl && webhookConfig.ssl.certPath ) {
 				tlsOptions = {
 					key: fs.readFileSync( webhookConfig.ssl.keyPath ),
-					cert: fs.readFileSync( webhookConfig.ssl.certPath )
+					cert: fs.readFileSync( webhookConfig.ssl.certPath ),
 				};
 				if ( webhookConfig.ssl.caPath ) {
 					tlsOptions.ca = [
-						fs.readFileSync( webhookConfig.ssl.caPath )
+						fs.readFileSync( webhookConfig.ssl.caPath ),
 					];
 				}
 			}
@@ -168,63 +168,22 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					domain: webhookConfig.domain,
 					path: webhookConfig.path,
 					tlsOptions: tlsOptions,
-					port: webhookConfig.port
-				}
+					port: webhookConfig.port,
+				},
 			};
 		} else {
 			// 使用轮询机制
 			this.#start = {
-				mode: 'poll'
+				mode: 'poll',
 			};
 		}
 
 		this._client = client;
 		this.#nickStyle = tgOptions.nickStyle || 'username';
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const that: this = this;
-
-		async function setFile( context: Context,
-			msg: ( TT.PhotoSize | TT.Sticker | TT.Audio | TT.Voice | TT.Video | TT.Document ) & {
-				mime_type?: string;
-			},
-			type: string ): Promise<void> {
-			context.extra.files = [ {
-				client: 'Telegram',
-				url: ( await that.getFileLink( msg.file_id ) ).href,
-				type: type,
-				id: msg.file_id,
-				size: msg.file_size,
-				mime_type: msg.mime_type
-			} ];
-			context.extra.fileIdUploads = [ ( chatId: string | number, messageId: number ) => {
-				const replyOptions: TelegramSendMessageOptions = {
-					reply_parameters: {
-						message_id: messageId
-					}
-				};
-				switch ( type ) {
-					case 'photo':
-						return that._client.telegram.sendPhoto( chatId, msg.file_id, replyOptions );
-					case 'sticker':
-						return that._client.telegram.sendSticker( chatId, msg.file_id, replyOptions );
-					case 'audio':
-						return that._client.telegram.sendAudio( chatId, msg.file_id, replyOptions );
-					case 'voice':
-						return that._client.telegram.sendVoice( chatId, msg.file_id, replyOptions );
-					case 'video':
-						return that._client.telegram.sendVideo( chatId, msg.file_id, replyOptions );
-					case 'document':
-						return that._client.telegram.sendDocument( chatId, msg.file_id, replyOptions );
-					default:
-						return Promise.resolve( null );
-				}
-			} ];
-		}
-
-		client.on( 'message', async function ( ctx, next ) {
-			if ( that._enabled && ctx.message && ctx.chat ) {
-				if ( ctx.message.date < that.#startTime ) {
+		client.on( 'message', async ( ctx, next ) => {
+			if ( this._enabled && ctx.message && ctx.chat ) {
+				if ( ctx.message.date < this.#startTime ) {
 					return;
 				}
 
@@ -232,17 +191,17 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					from: ctx.message.from.id,
 					to: ctx.chat.id,
 					messageId: ctx.message.message_id,
-					nick: that.#getNick( ctx.message.from ),
+					nick: this.#getNick( ctx.message.from ),
 					text: '',
 					isPrivate: ( ctx.chat.id > 0 ),
 					extra: {
-						username: ctx.message.from.username
+						username: ctx.message.from.username,
 					},
-					handler: that,
-					_rawData: ctx
+					handler: this,
+					_rawData: ctx,
 				} );
 
-				if ( ctx.from.id === 777000 ) {
+				if ( ctx.from.id === 777_000 ) {
 					if (
 						'forward_origin' in ctx.message &&
 						ctx.message.forward_origin.type === 'channel' &&
@@ -266,50 +225,64 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 				}
 
 				if ( 'forward_origin' in ctx.message ) {
-					if ( ctx.message.forward_origin.type === 'user' ) {
-						const fwd: TT.User = ctx.message.forward_origin.sender_user;
-						context.extra.forward = {
-							nick: that.#getNick( fwd ),
-							username: fwd.username
-						};
-					} else if ( ctx.message.forward_origin.type === 'channel' ) {
-						const fwdChat = ctx.message.forward_origin.chat as TT.Chat.ChannelChat;
-						if ( !( ctx.message.is_automatic_forward && ctx.message.sender_chat?.id === fwdChat.id ) ) {
-							// 不標記實際上根本沒有用「轉傳」的訊息
+					switch ( ctx.message.forward_origin.type ) {
+						case 'user': {
+							const fwd: TT.User = ctx.message.forward_origin.sender_user;
 							context.extra.forward = {
-								nick: `Channel ${ fwdChat.title }`,
-								username: fwdChat.username
+								nick: this.#getNick( fwd ),
+								username: fwd.username,
+							};
+
+							break;
+						}
+						case 'channel': {
+							const fwdChat = ctx.message.forward_origin.chat as TT.Chat.ChannelChat;
+							if ( !( ctx.message.is_automatic_forward && ctx.message.sender_chat?.id === fwdChat.id ) ) {
+							// 不標記實際上根本沒有用「轉傳」的訊息
+								context.extra.forward = {
+									nick: `Channel ${ fwdChat.title }`,
+									username: fwdChat.username,
+								};
+							}
+
+							break;
+						}
+						case 'chat': {
+							const fwdChat: TT.Chat = ctx.message.forward_origin.sender_chat as TT.Chat.SupergroupChat;
+							context.extra.forward = {
+								nick: fwdChat.title,
+								username: fwdChat.username,
+							};
+
+							break;
+						}
+						case 'hidden_user': {
+							context.extra.forward = {
+								nick: ctx.message.forward_origin.sender_user_name,
+								username: undefined,
+							};
+
+							break;
+						}
+						default: {
+							context.extra.forward = {
+								nick: '(Unknown)',
+								username: undefined,
 							};
 						}
-					} else if ( ctx.message.forward_origin.type === 'chat' ) {
-						const fwdChat: TT.Chat = ctx.message.forward_origin.sender_chat as TT.Chat.SupergroupChat;
-						context.extra.forward = {
-							nick: fwdChat.title,
-							username: fwdChat.username
-						};
-					} else if ( ctx.message.forward_origin.type === 'hidden_user' ) {
-						context.extra.forward = {
-							nick: ctx.message.forward_origin.sender_user_name,
-							username: undefined
-						};
-					} else {
-						context.extra.forward = {
-							nick: '(Unknown)',
-							username: undefined
-						};
 					}
 				} else if ( 'reply_to_message' in ctx.message ) {
 					const reply = ctx.message.reply_to_message;
 					context.extra.reply = {
-						origClient: that._type,
+						origClient: this._type,
 						origChatId: ctx.message.chat.id,
 						origMessageId: reply.message_id,
-						nick: that.#getNick( reply.from ),
+						nick: this.#getNick( reply.from ),
 						username: reply.from.username,
-						message: that.#convertToText( reply ),
+						message: this.#convertToText( reply ),
 						isText: 'text' in reply && !!reply.text,
 						id: String( reply.from.id ),
-						_rawData: null
+						_rawData: undefined,
 					};
 				}
 
@@ -319,34 +292,34 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					}
 
 					// 解析命令
-					// eslint-disable-next-line prefer-const
-					let [ , cmd, , param ] = ctx.message.text.match( /^\/([A-Za-z0-9_@]+)(\s+(.*)|\s*)$/u ) || [];
+
+					let [ , cmd, , parameter ] = ctx.message.text.match( /^\/([A-Za-z0-9_@]+)(\s+(.*)|\s*)$/u ) || [];
 					if ( cmd ) {
 						// 如果包含 Bot 名，判断是否为自己
 						const [ , c, , n ] = cmd.match( /^([A-Za-z0-9_]+)(|@([A-Za-z0-9_]+))$/u ) || [];
-						if ( ( n && ( n.toLowerCase() === String( that.#username ).toLowerCase() ) ) || !n ) {
-							param = param || '';
+						if ( ( n && ( n.toLowerCase() === String( this.#username ).toLowerCase() ) ) || !n ) {
+							parameter = parameter || '';
 
 							context.command = c;
-							context.param = param;
+							context.param = parameter;
 
-							if ( typeof that._commands.get( c ) === 'function' ) {
-								that._commands.get( c )( context, c, param || '' );
+							if ( typeof this._commands.get( c ) === 'function' ) {
+								this._commands.get( c )( context, c, parameter || '' );
 							}
 
-							that.emit( 'command', context, c, param || '' );
-							that.emit( `command#${ c }`, context, param || '' );
+							this.emit( 'command', context, c, parameter || '' );
+							this.emit( `command#${ c }`, context, parameter || '' );
 						}
 					}
 
 					if ( context.extra.isChannel ) {
-						that.emit(
+						this.emit(
 							'groupChannelText',
 							'forward_from_chat' in ctx.message && ctx.message.forward_from_chat,
 							context
 						);
 					} else {
-						that.emit( 'text', context );
+						this.emit( 'text', context );
 					}
 				} else {
 					const message = ctx.message;
@@ -355,7 +328,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						let sz = 0;
 						for ( const p of message.photo ) {
 							if ( p.file_size > sz ) {
-								await setFile( context, p, 'photo' );
+								await this.#setFile( context, p, 'photo' );
 								context.text = `<photo: ${ p.width }x${ p.height }, ${ getFriendlySize( p.file_size ) }>`;
 								sz = p.file_size;
 							}
@@ -368,20 +341,20 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						context.extra.imageCaption = message.caption;
 					} else if ( 'sticker' in message ) {
 						context.text = `${ message.sticker.emoji }<Sticker>`;
-						await setFile( context, message.sticker, 'sticker' );
+						await this.#setFile( context, message.sticker, 'sticker' );
 						context.extra.isImage = true;
 					} else if ( 'audio' in message ) {
 						context.text = `<Audio: ${ message.audio.duration }", ${ getFriendlySize( message.audio.file_size ) }>`;
-						await setFile( context, message.audio, 'audio' );
+						await this.#setFile( context, message.audio, 'audio' );
 					} else if ( 'voice' in message ) {
 						context.text = `<Voice: ${ message.voice.duration }", ${ getFriendlySize( message.voice.file_size ) }>`;
-						await setFile( context, message.voice, 'voice' );
+						await this.#setFile( context, message.voice, 'voice' );
 					} else if ( 'video' in message ) {
 						context.text = `<Video: ${ message.video.width }x${ message.video.height }, ${ message.video.duration }", ${ getFriendlySize( message.video.file_size ) }>`;
-						await setFile( context, message.video, 'video' );
+						await this.#setFile( context, message.video, 'video' );
 					} else if ( 'document' in message ) {
 						context.text = `<File: ${ message.document.file_name }, ${ getFriendlySize( message.document.file_size ) }>`;
-						await setFile( context, message.document, 'document' );
+						await this.#setFile( context, message.document, 'document' );
 					} else if ( 'contact' in message ) {
 						context.text = `<Contact: ${ message.contact.first_name }, ${ message.contact.phone_number }>`;
 					} else if ( 'venue' in message ) {
@@ -390,56 +363,104 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					} else if ( 'location' in message ) {
 						context.text = `<Location: ${ getFriendlyLocation( message.location.latitude, message.location.longitude ) }>`;
 					} else if ( 'pinned_message' in message ) {
-						that.emit( 'pin', {
+						this.emit( 'pin', {
 							from: {
 								id: message.from.id,
-								nick: that.#getNick( message.from ),
-								username: message.from.username
+								nick: this.#getNick( message.from ),
+								username: message.from.username,
 							},
 							to: ctx.chat.id,
-							text: that.#convertToText( message.pinned_message )
+							text: this.#convertToText( message.pinned_message ),
 						}, ctx );
 					} else if ( 'left_chat_member' in message ) {
-						that.emit( 'leave', ctx.chat.id, {
+						this.emit( 'leave', ctx.chat.id, {
 							id: message.from.id,
-							nick: that.#getNick( message.from ),
-							username: message.from.username
+							nick: this.#getNick( message.from ),
+							username: message.from.username,
 						}, {
 							id: message.left_chat_member.id,
-							nick: that.#getNick( message.left_chat_member ),
-							username: message.left_chat_member.username
+							nick: this.#getNick( message.left_chat_member ),
+							username: message.left_chat_member.username,
 						}, ctx );
 					} else if ( 'new_chat_members' in message ) {
-						that.emit( 'join', ctx.chat.id, {
+						this.emit( 'join', ctx.chat.id, {
 							id: message.from.id,
-							nick: that.#getNick( message.from ),
-							username: message.from.username
+							nick: this.#getNick( message.from ),
+							username: message.from.username,
 						}, {
 							id: message.new_chat_members[ 0 ].id,
-							nick: that.#getNick( message.new_chat_members[ 0 ] ),
-							username: message.new_chat_members[ 0 ].username
+							nick: this.#getNick( message.new_chat_members[ 0 ] ),
+							username: message.new_chat_members[ 0 ].username,
 						}, ctx );
 					}
 
 					if ( context.extra.isChannel ) {
-						that.emit(
+						this.emit(
 							'groupChannelRichMessage',
 							'forward_from_chat' in ctx.message && ctx.message.forward_from_chat,
 							context
 						);
 					} else {
-						that.emit( 'richMessage', context );
+						this.emit( 'richMessage', context );
 					}
 				}
 			}
 			return next();
 		} );
 
-		client.on( 'channel_post', function ( ctx ) {
-			if ( ctx.chat.type === 'channel' ) { // typescript bug
-				that.emit( 'channelPost', ctx.chat, ctx.channelPost, ctx );
+		client.on( 'channel_post', ( context ) => {
+			if ( context.chat.type === 'channel' ) { // typescript bug
+				this.emit( 'channelPost', context.chat, context.channelPost, context );
 			}
 		} );
+	}
+
+	async #setFile(
+		context: Context,
+		message: ( TT.PhotoSize | TT.Sticker | TT.Audio | TT.Voice | TT.Video | TT.Document ) & {
+			mime_type?: string;
+		},
+		type: string
+	): Promise<void> {
+		context.extra.files = [ {
+			client: 'Telegram',
+			// eslint-disable-next-line unicorn/no-await-expression-member
+			url: ( await this.getFileLink( message.file_id ) ).href,
+			type: type,
+			id: message.file_id,
+			size: message.file_size,
+			mime_type: message.mime_type,
+		} ];
+		context.extra.fileIdUploads = [ ( chatId: string | number, messageId: number ) => {
+			const replyOptions: TelegramSendMessageOptions = {
+				reply_parameters: {
+					message_id: messageId,
+				},
+			};
+			switch ( type ) {
+				case 'photo': {
+					return this._client.telegram.sendPhoto( chatId, message.file_id, replyOptions );
+				}
+				case 'sticker': {
+					return this._client.telegram.sendSticker( chatId, message.file_id, replyOptions );
+				}
+				case 'audio': {
+					return this._client.telegram.sendAudio( chatId, message.file_id, replyOptions );
+				}
+				case 'voice': {
+					return this._client.telegram.sendVoice( chatId, message.file_id, replyOptions );
+				}
+				case 'video': {
+					return this._client.telegram.sendVideo( chatId, message.file_id, replyOptions );
+				}
+				case 'document': {
+					return this._client.telegram.sendDocument( chatId, message.file_id, replyOptions );
+				}
+				default: {
+					return Promise.resolve();
+				}
+			}
+		} ];
 	}
 
 	#getNick( user: TT.User ): string {
@@ -526,18 +547,18 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 
 	public addCommand( command: string, func?: Command<TContext> ): this {
 		// 自動過濾掉 command 中的非法字元
-		const cmd = command.replace( /[^A-Za-z0-9_]/gu, '' );
+		const cmd = command.replaceAll( /[^A-Za-z0-9_]/gu, '' );
 		return super.addCommand( cmd, func );
 	}
 
 	public deleteCommand( command: string ): this {
-		const cmd = command.replace( /[^A-Za-z0-9_]/gu, '' );
+		const cmd = command.replaceAll( /[^A-Za-z0-9_]/gu, '' );
 		return super.deleteCommand( cmd );
 	}
 
 	public aliasCommand( command: string, rawCommand: string ): this {
 		// 自動過濾掉 command 中的非法字元
-		const rawCmd = rawCommand.replace( /[^A-Za-z0-9_]/gu, '' );
+		const rawCmd = rawCommand.replaceAll( /[^A-Za-z0-9_]/gu, '' );
 		return super.aliasCommand( command, rawCmd );
 	}
 
@@ -551,7 +572,7 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		}
 	}
 
-	private static wrapApiFunction<M extends FilterFunctionPropName<Telegram>>(
+	static #wrapApiFunction<M extends FilterFunctionPropertyName<Telegram>>(
 		that: TelegramMessageHandler,
 		method: M
 	) {
@@ -580,15 +601,15 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 		return this.say( target, message, options );
 	}
 
-	public sendPhoto = TelegramMessageHandler.wrapApiFunction( this, 'sendPhoto' );
+	public sendPhoto = TelegramMessageHandler.#wrapApiFunction( this, 'sendPhoto' );
 
-	public sendAudio = TelegramMessageHandler.wrapApiFunction( this, 'sendAudio' );
+	public sendAudio = TelegramMessageHandler.#wrapApiFunction( this, 'sendAudio' );
 
-	public sendVideo = TelegramMessageHandler.wrapApiFunction( this, 'sendVideo' );
+	public sendVideo = TelegramMessageHandler.#wrapApiFunction( this, 'sendVideo' );
 
-	public sendAnimation = TelegramMessageHandler.wrapApiFunction( this, 'sendAnimation' );
+	public sendAnimation = TelegramMessageHandler.#wrapApiFunction( this, 'sendAnimation' );
 
-	public sendDocument = TelegramMessageHandler.wrapApiFunction( this, 'sendDocument' );
+	public sendDocument = TelegramMessageHandler.#wrapApiFunction( this, 'sendDocument' );
 
 	#replyBuildTextAndOptions<E extends Record<string, unknown>>(
 		context: Context<TContext>,
@@ -605,13 +626,9 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 					// throw new Error( 'Duplicate setting reply option detected.' );
 				}
 				options.reply_parameters = {
-					message_id: context._rawData.message.message_id
+					message_id: context._rawData.message.message_id,
 				};
-				if ( options.withNick ) {
-					return [ String( `${ context.nick }: ${ message }` ), options ];
-				} else {
-					return [ String( message ), options ];
-				}
+				return options.withNick ? [ String( `${ context.nick }: ${ message }` ), options ] : [ String( message ), options ];
 			}
 		} else {
 			throw new Error( 'No messages to reply' );
@@ -653,8 +670,8 @@ export class TelegramMessageHandler extends MessageHandler<TelegramEvents> {
 						domain: this.#start.params.domain,
 						hookPath: this.#start.params.path,
 						tlsOptions: this.#start.params.tlsOptions,
-						port: Number( this.#start.params.port )
-					}
+						port: Number( this.#start.params.port ),
+					},
 				} );
 			} else {
 				this._client.launch();

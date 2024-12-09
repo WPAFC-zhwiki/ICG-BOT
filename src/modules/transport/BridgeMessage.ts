@@ -1,12 +1,12 @@
 import { ExtendsMap, handlers } from '@app/init';
 
-import { Context, RawMsg, ContextExtra, ContextOptions } from '@app/lib/handlers/Context';
+import { Context, RawMessage, ContextExtra, ContextOptions } from '@app/lib/handlers/Context';
 import { MessageHandler } from '@app/lib/handlers/MessageHandler';
 import { getUIDFromContext, parseUID } from '@app/lib/message';
 
 let clientFullNames: Record<string, string> = {};
 
-export interface BridgeMsgOptin<rawdata extends RawMsg> extends ContextOptions<rawdata> {
+export interface BridgeMessageOptions<rawData extends RawMessage> extends ContextOptions<rawData> {
 	plainText?: boolean;
 	isNotice?: boolean;
 	from_uid?: string;
@@ -15,24 +15,24 @@ export interface BridgeMsgOptin<rawdata extends RawMsg> extends ContextOptions<r
 	rawTo?: string;
 }
 
-export class BridgeMsg<R extends RawMsg = RawMsg> extends Context<R> implements BridgeMsgOptin<R> {
-	readonly rawFrom: string;
-	readonly rawTo: string;
+export class BridgeMessage<R extends RawMessage = RawMessage> extends Context<R> implements BridgeMessageOptions<R> {
+	public readonly rawFrom: string;
+	public readonly rawTo: string;
 
-	private __from: string = null;
-	get from(): string {
+	private __from: string = undefined;
+	public get from(): string {
 		return this.__from;
 	}
-	set from( f: string ) {
+	public set from( f: string ) {
 		this.__from = String( f );
 		this._from_uid = `${ ( this._from_client || '' ).toLowerCase() }/${ f }`;
 	}
 
-	private __to: string = null;
-	get to(): string {
+	private __to: string = undefined;
+	public get to(): string {
 		return this.__to;
 	}
-	set to( f: string ) {
+	public set to( f: string ) {
 		this.__to = String( f );
 		this._to_uid = `${ ( this._to_client || '' ).toLowerCase() }/${ f }`;
 	}
@@ -41,33 +41,36 @@ export class BridgeMsg<R extends RawMsg = RawMsg> extends Context<R> implements 
 	private _to_client: string;
 
 	private _from_uid: string;
-	get from_uid(): string {
+	public get from_uid(): string {
 		return this._from_uid;
 	}
-	set from_uid( u: string ) {
-		const { client, id, uid } = BridgeMsg.parseUID( u );
+	public set from_uid( u: string ) {
+		const { client, id, uid } = BridgeMessage.parseUID( u );
 		this.__from = id;
 		this._from_uid = uid;
 		this._from_client = client;
 	}
 
 	private _to_uid: string;
-	get to_uid(): string {
+	public get to_uid(): string {
 		return this._to_uid;
 	}
-	set to_uid( u: string ) {
-		const { client, id, uid } = BridgeMsg.parseUID( u );
+	public set to_uid( u: string ) {
+		const { client, id, uid } = BridgeMessage.parseUID( u );
 		this.__to = id;
 		this._to_uid = uid;
 		this._to_client = client;
 	}
 
-	extra: ContextExtra & {
+	public declare extra: ContextExtra & {
 		plainText?: boolean;
 		isNotice?: boolean;
 	};
 
-	constructor( context: BridgeMsg<R> | Context<R> | BridgeMsgOptin<R>, overrides: BridgeMsgOptin<R> = {} ) {
+	public constructor(
+		context: BridgeMessage<R> | Context<R> | BridgeMessageOptions<R>,
+		overrides: BridgeMessageOptions<R> = {}
+	) {
 		super( context, overrides );
 
 		const that = Object.assign( {}, context instanceof Context ? {} : context, overrides );
@@ -92,8 +95,7 @@ export class BridgeMsg<R extends RawMsg = RawMsg> extends Context<R> implements 
 		}
 	}
 
-	// eslint-disable-next-line no-shadow
-	static setHandlers( handlers: ExtendsMap<string, MessageHandler, handlers> ): void {
+	public static setHandlers( handlers: ExtendsMap<string, MessageHandler, handlers> ): void {
 		// 取得用戶端簡稱所對應的全稱
 		clientFullNames = {};
 		for ( const [ type, handler ] of handlers ) {
@@ -102,32 +104,35 @@ export class BridgeMsg<R extends RawMsg = RawMsg> extends Context<R> implements 
 		}
 	}
 
-	static parseUID = parseUID;
+	public static parseUID = parseUID;
 
-	static getUIDFromContext = getUIDFromContext;
+	public static getUIDFromContext = getUIDFromContext;
 
-	static botReply<T extends RawMsg>( context: Context<T>, config: BridgeMsgOptin<T> ): BridgeMsg<null>;
-	static botReply( context: Context, config: BridgeMsgOptin<RawMsg> ): BridgeMsg {
-		const bridgeMsg: BridgeMsg = new BridgeMsg( context, config );
+	public static botReply<T extends RawMessage>(
+		context: Context<T>,
+		config: BridgeMessageOptions<T>
+	): BridgeMessage<null>;
+	public static botReply( context: Context, config: BridgeMessageOptions<RawMessage> ): BridgeMessage {
+		const bridgeMessage: BridgeMessage = new BridgeMessage( context, config );
 
-		bridgeMsg.extra.reply = {
+		bridgeMessage.extra.reply = {
 			origClient: context.handler.type,
 			origChatId: context.to,
 			origMessageId: context.programMessageId,
-			id: bridgeMsg.from,
-			nick: bridgeMsg.nick,
-			message: bridgeMsg.text,
-			username: bridgeMsg.extra.username,
-			isText: !bridgeMsg.extra.isImage,
-			discriminator: bridgeMsg.extra.discriminator,
-			_rawData: bridgeMsg._rawData
+			id: bridgeMessage.from,
+			nick: bridgeMessage.nick,
+			message: bridgeMessage.text,
+			username: bridgeMessage.extra.username,
+			isText: !bridgeMessage.extra.isImage,
+			discriminator: bridgeMessage.extra.discriminator,
+			_rawData: bridgeMessage._rawData,
 		};
-		delete bridgeMsg._rawData;
+		delete bridgeMessage._rawData;
 
-		if ( bridgeMsg.extra.discriminator ) {
-			bridgeMsg.extra.reply.discriminator = bridgeMsg.extra.discriminator;
+		if ( bridgeMessage.extra.discriminator ) {
+			bridgeMessage.extra.reply.discriminator = bridgeMessage.extra.discriminator;
 		}
 
-		return bridgeMsg;
+		return bridgeMessage;
 	}
 }

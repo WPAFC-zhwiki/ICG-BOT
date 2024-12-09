@@ -20,7 +20,7 @@ export interface ExtendsMap<T extends string, S, M extends Record<T, S>> extends
 const allHandlers: ExtendsMap<string, string, Record<string, string>> = new Map( [
 	[ 'IRC', 'IRCMessageHandler' ],
 	[ 'Telegram', 'TelegramMessageHandler' ],
-	[ 'Discord', 'DiscordMessageHandler' ]
+	[ 'Discord', 'DiscordMessageHandler' ],
 ] );
 
 // 日志初始化
@@ -35,15 +35,15 @@ const logFormat: winston.Logform.FormatWrap = winston.format( function ( info: w
 winston.add( new winston.transports.Console( {
 	format: winston.format.combine(
 		removeToken( {
-			apiRoot: config.Telegram?.bot?.apiRoot
+			apiRoot: config.Telegram?.bot?.apiRoot,
 		} ),
 		logFormat(),
 		winston.format.colorize(),
 		winston.format.timestamp( {
-			format: 'YYYY-MM-DD HH:mm:ss'
+			format: 'YYYY-MM-DD HH:mm:ss',
 		} ),
 		winston.format.printf( ( info ) => `${ info.timestamp } [${ info.level }] ${ info.message }` )
-	)
+	),
 } ) );
 
 process.on( 'unhandledRejection', function ( _reason, promise ) {
@@ -65,11 +65,7 @@ process.on( 'warning', function ( warning ) {
 } );
 
 // 日志等级、文件设置
-if ( config.logging && config.logging.level ) {
-	winston.level = config.logging.level;
-} else {
-	winston.level = 'info';
-}
+winston.level = config.logging && config.logging.level ? config.logging.level : 'info';
 
 if ( config.logging && config.logging.logfile ) {
 	const files: winston.transports.FileTransportInstance = new winston.transports.File( {
@@ -77,12 +73,12 @@ if ( config.logging && config.logging.logfile ) {
 		format: winston.format.combine(
 			logFormat(),
 			winston.format.timestamp( {
-				format: 'YYYY-MM-DD HH:mm:ss'
+				format: 'YYYY-MM-DD HH:mm:ss',
 			} ),
 			winston.format.printf( function ( info ) {
 				return `${ info.timestamp } [${ info.level }] ${ info.message }`;
 			} )
-		)
+		),
 	} );
 	winston.add( files );
 }
@@ -91,7 +87,7 @@ export type handlers = {
 	IRC: import( '@app/lib/handlers/IRCMessageHandler' ).IRCMessageHandler;
 	Telegram: import( '@app/lib/handlers/TelegramMessageHandler' ).TelegramMessageHandler;
 	Discord: import( '@app/lib/handlers/DiscordMessageHandler' ).DiscordMessageHandler;
-}
+};
 
 type handlerClasses = {
 	IRC: {
@@ -106,7 +102,7 @@ type handlerClasses = {
 		object: typeof import( '@app/lib/handlers/DiscordMessageHandler' ).DiscordMessageHandler;
 		options: typeof config.Discord;
 	};
-}
+};
 
 // 所有擴充套件包括傳話機器人都只與該物件打交道
 export const Manager: {
@@ -135,8 +131,8 @@ export const Manager: {
 		Context,
 		Message: MessageHandler,
 		ifEnable,
-		isEnable
-	}
+		isEnable,
+	},
 };
 
 // 欢迎信息
@@ -157,7 +153,7 @@ for ( const client of enabledClients ) {
 	winston.info( `Starting ${ client } bot...` );
 
 	const options = config[ client ];
-	// eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
+	// eslint-disable-next-line security/detect-non-literal-require, @typescript-eslint/no-require-imports
 	const Handler: typeof MessageHandler = require( `./lib/handlers/${ allHandlers.get( client ) }` )[ allHandlers.get( client ) ];
 	const handler: MessageHandler = new Handler( options );
 	handler.start();
@@ -165,7 +161,7 @@ for ( const client of enabledClients ) {
 	Manager.handlers.set( client, handler );
 	Manager.handlerClasses.set( client, {
 		object: Handler,
-		options: options
+		options: options,
 	} );
 
 	winston.info( `${ client } bot has started.` );

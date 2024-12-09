@@ -8,7 +8,7 @@ import { preProcess } from '@app/lib/message/processors/Discord';
 import { inspect } from '@app/lib/util';
 
 import * as bridge from '@app/modules/transport/bridge';
-import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
+import { BridgeMessage } from '@app/modules/transport/BridgeMessage';
 
 const config: ConfigTS[ 'transport' ] = Manager.config.transport;
 const discordHandler = Manager.handlers.get( 'Discord' );
@@ -18,14 +18,25 @@ const forwardBots: Record<string, [ string | number, '[]' | '<>' | 'self' ]> = o
 function parseForwardBot( username: string, text: string ) {
 	let realText: string, realNick: string;
 	const symbol = forwardBots[ username ] && forwardBots[ username ][ '1' ];
-	if ( symbol === 'self' ) {
+	switch ( symbol ) {
+		case 'self': {
 		// TODO 更換匹配方式
 		// [ , , realNick, realText ] = text.match(/^(|<.> )\[(.*?)\] ([^]*)$/mu) || [];
-		[ , realNick, realText ] = text.match( /^\[(.*?)\] ([^]*)$/mu ) || [];
-	} else if ( symbol === '[]' ) {
-		[ , realNick, realText ] = text.match( /^\[(.*?)\](?::? |\n)([^]*)$/mu ) || [];
-	} else if ( symbol === '<>' ) {
-		[ , realNick, realText ] = text.match( /^<(.*?)>(?::? |\n)([^]*)$/mu ) || [];
+			[ , realNick, realText ] = text.match( /^\[(.*?)\] ([^]*)$/mu ) || [];
+
+			break;
+		}
+		case '[]': {
+			[ , realNick, realText ] = text.match( /^\[(.*?)\](?::? |\n)([^]*)$/mu ) || [];
+
+			break;
+		}
+		case '<>': {
+			[ , realNick, realText ] = text.match( /^<(.*?)>(?::? |\n)([^]*)$/mu ) || [];
+
+			break;
+		}
+	// No default
 	}
 
 	return { realNick, realText };
@@ -40,8 +51,12 @@ discordHandler.on( 'text', async function ( context ) {
 	const extra = context.extra;
 
 	// 檢查是不是在回覆自己
-	// eslint-disable-next-line max-len
-	if ( extra.reply && String( forwardBots[ extra.reply.username ] && forwardBots[ extra.reply.username ][ 0 ] ) === String( extra.reply.discriminator ) ) {
+
+	if (
+		extra.reply &&
+		String( forwardBots[ extra.reply.username ] && forwardBots[ extra.reply.username ][ 0 ] ) ===
+			String( extra.reply.discriminator )
+	) {
 		const { realNick, realText } = parseForwardBot( extra.reply.username, extra.reply.message );
 		if ( realText ) {
 			[ extra.reply.nick, extra.reply.message ] = [ realNick, realText ];
@@ -56,27 +71,27 @@ discordHandler.on( 'text', async function ( context ) {
 } );
 
 // 收到了來自其他群組的訊息
-export default async function ( msg: BridgeMsg ): Promise<string> {
+export default async function onMessage( message_: BridgeMessage ): Promise<string> {
 	// 元信息，用于自定义样式
 	const meta: Record<string, string> = {
-		nick: msg.nick,
-		from: msg.from,
-		to: msg.to,
-		text: msg.text,
-		client_short: msg.extra.clientName.shortname,
-		client_full: msg.extra.clientName.fullname,
-		command: msg.command,
-		param: msg.param
+		nick: message_.nick,
+		from: message_.from,
+		to: message_.to,
+		text: message_.text,
+		client_short: message_.extra.clientName.shortname,
+		client_full: message_.extra.clientName.fullname,
+		command: message_.command,
+		param: message_.param,
 	};
-	let associationReplyMessageId: string | null = null;
-	if ( msg.extra.reply ) {
-		const reply = msg.extra.reply;
+	let associationReplyMessageId: string | undefined;
+	if ( message_.extra.reply ) {
+		const reply = message_.extra.reply;
 		const associationMessageId = await bridge.fetchMessageAssociation(
 			reply.origClient,
 			reply.origChatId,
 			reply.origMessageId,
 			discordHandler.type,
-			msg.to
+			message_.to
 		);
 		if ( associationMessageId ) {
 			associationReplyMessageId = String( associationMessageId );
@@ -92,28 +107,28 @@ export default async function ( msg: BridgeMsg ): Promise<string> {
 			*/
 		}
 	}
-	if ( msg.extra.forward ) {
-		meta.forward_nick = msg.extra.forward.nick;
-		meta.forward_user = msg.extra.forward.username;
+	if ( message_.extra.forward ) {
+		meta.forward_nick = message_.extra.forward.nick;
+		meta.forward_user = message_.extra.forward.username;
 	}
 
-	const template: string = bridge.getMessageStyle( msg, true );
+	const template: string = bridge.getMessageStyle( message_, true );
 
 	const output = format( template, meta );
-	const attachFileUrls = ( msg.extra.uploads || [] ).map( ( u: { url: string; } ) => ` ${ u.url }` ).join( '' );
+	const attachFileUrls = ( message_.extra.uploads || [] ).map( ( u: { url: string; } ) => ` ${ u.url }` ).join( '' );
 
 	const message = associationReplyMessageId ?
-		await discordHandler.say( BridgeMsg.parseUID( msg.to_uid ).id, {
+		await discordHandler.say( BridgeMessage.parseUID( message_.to_uid ).id, {
 			content: `${ output }${ attachFileUrls }`,
-			files: ( msg.extra.uploads || [] )
+			files: ( message_.extra.uploads || [] )
 				.map( ( upload ) => ( {
-					attachment: upload.url
+					attachment: upload.url,
 				} ) ),
 			reply: {
 				messageReference: associationReplyMessageId,
-				failIfNotExists: false
-			}
+				failIfNotExists: false,
+			},
 		} ) :
-		await discordHandler.say( BridgeMsg.parseUID( msg.to_uid ).id, `${ output }${ attachFileUrls }` );
+		await discordHandler.say( BridgeMessage.parseUID( message_.to_uid ).id, `${ output }${ attachFileUrls }` );
 	return message.id;
 }

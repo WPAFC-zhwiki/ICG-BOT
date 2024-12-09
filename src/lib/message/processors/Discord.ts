@@ -6,12 +6,12 @@ import winston = require( 'winston' );
 import { Manager } from '@app/init';
 
 import { Context } from '@app/lib/handlers/Context';
-import msgManage from '@app/lib/message/msgManage';
+import messageManage from '@app/lib/message/messageManage';
 import { inspect } from '@app/lib/util';
 
 const userInfo = new LRUCache<string, Discord.User>( {
 	max: 500,
-	ttl: 3600 * 1000
+	ttl: 3600 * 1000,
 } );
 
 const discordHandler = Manager.handlers.get( 'Discord' );
@@ -29,18 +29,18 @@ export async function preProcess( context: Context<Discord.Message> ) {
 		const emojis: Emoji[] = [];
 		const animated: Emoji[] = [];
 
-		context.text = context.text.replace( /<:(\w+):(\d*?)>/g, function ( _: string, name: string, id: string ): string {
-			if ( id && !emojis.filter( function ( v ) {
+		context.text = context.text.replaceAll( /<:(\w+):(\d*?)>/g, function ( _: string, name: string, id: string ): string {
+			if ( id && emojis.filter( function ( v ) {
 				return v.id === id;
-			} ).length ) {
+			} ).length === 0 ) {
 				emojis.push( { name: name, id: id } );
 			}
 			return `<emoji: ${ name }>`;
 		} );
-		context.text = context.text.replace( /<a:(\w+):(\d*?)>/g, function ( _: string, name: string, id: string ): string {
-			if ( id && !animated.filter( function ( v ) {
+		context.text = context.text.replaceAll( /<a:(\w+):(\d*?)>/g, function ( _: string, name: string, id: string ): string {
+			if ( id && animated.filter( function ( v ) {
 				return v.id === id;
-			} ).length ) {
+			} ).length === 0 ) {
 				animated.push( { name: name, id: id } );
 			}
 			return `<emoji: ${ name }>`;
@@ -57,8 +57,8 @@ export async function preProcess( context: Context<Discord.Message> ) {
 					client: 'Discord',
 					type: 'photo',
 					id: emoji.id,
-					size: 262144,
-					url: discordHandler.useProxyURL ? proxyURL : url
+					size: 262_144,
+					url: discordHandler.useProxyURL ? proxyURL : url,
 				} );
 			}
 			for ( const emoji of animated ) {
@@ -68,12 +68,12 @@ export async function preProcess( context: Context<Discord.Message> ) {
 					client: 'Discord',
 					type: 'photo',
 					id: emoji.id,
-					size: 262144,
-					url: discordHandler.useProxyURL ? proxyURL : url
+					size: 262_144,
+					url: discordHandler.useProxyURL ? proxyURL : url,
 				} );
 			}
 		}
-		if ( !context.extra.files.length ) {
+		if ( context.extra.files.length === 0 ) {
 			delete context.extra.files;
 		}
 	}
@@ -83,7 +83,7 @@ export async function preProcess( context: Context<Discord.Message> ) {
 		let ats: string[] = [];
 		const promises: ( Discord.User | Promise<Discord.User | void> )[] = [];
 
-		context.text.replace( /<@!?(\d*?)>/gu, function ( _: string, id: string ) {
+		context.text.replaceAll( /<@!?(\d*?)>/gu, function ( _: string, id: string ) {
 			ats.push( id );
 			return '';
 		} );
@@ -106,7 +106,7 @@ export async function preProcess( context: Context<Discord.Message> ) {
 						userInfo.set( info.id, info );
 					}
 
-					context.text = context.text.replace(
+					context.text = context.text.replaceAll(
 						// eslint-disable-next-line security/detect-non-literal-regexp
 						new RegExp( `<@!?${ escapeRegExp( info.id ) }>`, 'gu' ),
 						`<${ info.bot ? 'bot' : 'user' } @${ discordHandler.getNick( info ) }>`
@@ -122,7 +122,7 @@ export async function preProcess( context: Context<Discord.Message> ) {
 
 discordHandler.on( 'text', async function ( context: Context<Discord.Message> ) {
 	await preProcess( context );
-	msgManage.emit( 'discord', context.from, context.to, context.text, context );
-	msgManage.emit( 'text', 'Discord', context.from, context.to, context.text, context );
+	messageManage.emit( 'discord', context.from, context.to, context.text, context );
+	messageManage.emit( 'text', 'Discord', context.from, context.to, context.text, context );
 
 } );

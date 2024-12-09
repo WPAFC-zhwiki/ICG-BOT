@@ -12,7 +12,6 @@ export class RedisWrapper {
 	#client?: redis.Redis;
 	#isEnable: boolean;
 	#config: ConfigTS['redisCache'];
-	#startPromise: Promise<void> | null = null;
 
 	private constructor() {
 		this.#config = config.redisCache;
@@ -82,19 +81,25 @@ export class RedisWrapper {
 		return this.set( key, JSON.stringify( value ) );
 	}
 
-	public setPipeline() {
-		if ( !this.#isEnable ) {
-			return null;
+	public setPipeline(): IRedisSetPipelineWrapper {
+		if ( this.#isEnable ) {
+			return new RedisSetPipelineWrapper( this, this.#client.pipeline() );
 		}
-		return new RedisSetPipelineWrapper( this, this.#client.pipeline() );
+		return new NullRedisSetPipelineWrapper();
 	}
 }
 
-class RedisSetPipelineWrapper {
+interface IRedisSetPipelineWrapper {
+	set( key: string, value: string ): this;
+	setJson<T>( key: string, value: T ): this;
+	exec(): ReturnType<redis.ChainableCommander['exec']>;
+}
+
+class RedisSetPipelineWrapper implements IRedisSetPipelineWrapper {
 	#parent: RedisWrapper;
 	#commander: redis.ChainableCommander;
 
-	constructor( parent: RedisWrapper, commander: redis.ChainableCommander ) {
+	public constructor( parent: RedisWrapper, commander: redis.ChainableCommander ) {
 		this.#parent = parent;
 		this.#commander = commander;
 	}
@@ -111,5 +116,20 @@ class RedisSetPipelineWrapper {
 
 	public exec() {
 		return this.#commander.exec();
+	}
+}
+
+class NullRedisSetPipelineWrapper implements IRedisSetPipelineWrapper {
+	public set(): this {
+		return this;
+	}
+
+	public setJson(): this {
+		return this;
+	}
+
+	public exec() {
+		// eslint-disable-next-line unicorn/no-null
+		return Promise.resolve( null );
 	}
 }

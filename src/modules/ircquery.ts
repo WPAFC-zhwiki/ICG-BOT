@@ -9,13 +9,13 @@ import { Manager } from '@app/init';
 import { Context } from '@app/lib/handlers/Context';
 import { addCommand, parseUID } from '@app/lib/message';
 
-import { prepareBridgeMsg } from '@app/modules/transport';
+import { prepareBridgeMessage } from '@app/modules/transport';
 
 const ircHandler = Manager.handlers.get( 'IRC' );
 
 function getChans( context: Context ) {
 	const r: string[] = [];
-	prepareBridgeMsg( context );
+	prepareBridgeMessage( context );
 	for ( const c of context.extra.mapTo ) {
 		const client = parseUID( c );
 		if ( client.client === 'IRC' ) {
@@ -33,7 +33,7 @@ async function processWhois( context: Context ) {
 			if ( info.user ) {
 				output = [
 					`${ info.nick } (${ info.user }@${ info.host })`,
-					`Server: ${ info.server } (${ info.serverinfo })`
+					`Server: ${ info.server } (${ info.serverinfo })`,
 				];
 
 				if ( info.realname ) {
@@ -42,7 +42,7 @@ async function processWhois( context: Context ) {
 			}
 
 			const outputStr = output.join( '\n' );
-			winston.debug( `[ircquery] Msg #${ context.msgId } whois: ${ outputStr }` );
+			winston.debug( `[ircquery] Message #${ context.msgId } whois: ${ outputStr }` );
 			context.reply( outputStr );
 		} );
 	} else {
@@ -80,7 +80,7 @@ async function processNames( context: Context ) {
 
 		const outputStr = `Users on ${ chan }: ${ userlist.join( ', ' ) }`;
 		context.reply( outputStr );
-		winston.debug( `[ircquery] Msg #${ context.msgId } names: ${ outputStr }` );
+		winston.debug( `[ircquery] Message #${ context.msgId } names: ${ outputStr }` );
 	}
 }
 
@@ -91,10 +91,10 @@ async function processTopic( context: Context ) {
 
 		if ( topic ) {
 			context.reply( `Topic for channel ${ chan }: ${ topic }` );
-			winston.debug( `[ircquery] Msg #${ context.msgId } topic: ${ topic }` );
+			winston.debug( `[ircquery] Message #${ context.msgId } topic: ${ topic }` );
 		} else {
 			context.reply( `No topic for ${ chan }` );
-			winston.debug( `[ircquery] Msg #${ context.msgId } topic: No topic` );
+			winston.debug( `[ircquery] Message #${ context.msgId } topic: No topic` );
 		}
 	}
 }

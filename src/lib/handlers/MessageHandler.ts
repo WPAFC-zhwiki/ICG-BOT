@@ -3,19 +3,23 @@ import { Client as IRCClient } from 'irc-upd';
 import { Telegraf as TelegrafClient, Context as TContext } from 'telegraf';
 
 import EventEmitter, { Events } from '@app/lib/eventemitter2';
-import { Context, RawMsg } from '@app/lib/handlers/Context';
+import { Context, RawMessage } from '@app/lib/handlers/Context';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Command<rawdata extends RawMsg = any> = ( context: Context<rawdata>, cmd: string, param: string ) => void;
+export type Command<RD extends RawMessage = any> = (
+	context: Context<RD>,
+	cmd: string,
+	parameter: string
+) => void;
 
 export type Telegram = TelegrafClient<TContext>;
 export type Discord = DiscordClient;
 export type IRC = IRCClient;
 
-export interface BaseEvents<rawdata extends RawMsg> extends Events {
-	command( context: Context<rawdata>, comand: string, param: string ): void;
-	[ key: `command#${ string }` ]: ( context: Context<rawdata>, comand: string, param: string ) => void;
-	text( context: Context<rawdata> ): void;
+export interface BaseEvents<RD extends RawMessage> extends Events {
+	command( context: Context<RD>, comand: string, parameter: string ): void;
+	[ key: `command#${ string }` ]: ( context: Context<RD>, comand: string, parameter: string ) => void;
+	text( context: Context<RD> ): void;
 }
 
 /**
@@ -32,9 +36,9 @@ export interface BaseEvents<rawdata extends RawMsg> extends Events {
  *
  * context 須使用統一格式
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class MessageHandler<E extends BaseEvents<any> = BaseEvents<RawMsg>> extends EventEmitter<E> {
-	protected _client: Telegram | Discord | IRC = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, unicorn/prefer-event-target
+export class MessageHandler<E extends BaseEvents<any> = BaseEvents<RawMessage>> extends EventEmitter<E> {
+	declare protected _client: Telegram | Discord | IRC;
 	protected _type: string;
 	protected _id: string;
 	protected _enabled = true;

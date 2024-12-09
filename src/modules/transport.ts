@@ -7,19 +7,19 @@ import winston = require( 'winston' );
 import { Manager } from '@app/init';
 
 import * as bridge from '@app/modules/transport/bridge';
-import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
+import { BridgeMessage } from '@app/modules/transport/BridgeMessage';
 import '@app/modules/transport/file';
 import '@app/modules/transport/paeeye';
 
 import { associateMessageUsefulClients } from './transport/BridgeDatabase';
 
-export * from '@app/modules/transport/BridgeMsg';
+export * from '@app/modules/transport/BridgeMessage';
 export * from '@app/modules/transport/bridge';
 export * from '@app/modules/transport/command';
 
 const options = Manager.config.transport;
 
-BridgeMsg.setHandlers( Manager.handlers );
+BridgeMessage.setHandlers( Manager.handlers );
 
 export const handlers = Manager.handlers;
 
@@ -52,14 +52,14 @@ const map = bridge.map;
 Manager.global.ifEnable( 'transport', function () {
 	const groups = options.groups || [];
 
-	groups.forEach( function ( group ) {
+	for ( const group of groups ) {
 		// 建立聯繫
-		group.forEach( function ( c1 ) {
-			const client1 = BridgeMsg.parseUID( c1 ).uid;
+		for ( const c1 of group ) {
+			const client1 = BridgeMessage.parseUID( c1 ).uid;
 
 			if ( client1 ) {
 				for ( const c2 of group ) {
-					const client2 = BridgeMsg.parseUID( c2 ).uid;
+					const client2 = BridgeMessage.parseUID( c2 ).uid;
 					if ( client1 === client2 ) {
 						continue;
 					}
@@ -68,17 +68,17 @@ Manager.global.ifEnable( 'transport', function () {
 					}
 
 					map[ client1 ][ client2 ] = {
-						disabled: false
+						disabled: false,
 					};
 				}
 			}
-		} );
-	} );
+		}
+	}
 
 	// 移除被禁止的聯繫
 	const disables = options.disables || {};
-	Object.keys( disables ).forEach( function ( c1 ) {
-		const client1 = BridgeMsg.parseUID( c1 ).uid;
+	for ( const c1 of Object.keys( disables ) ) {
+		const client1 = BridgeMessage.parseUID( c1 ).uid;
 
 		if ( client1 && map[ client1 ] ) {
 			let list = disables[ c1 ];
@@ -87,26 +87,26 @@ Manager.global.ifEnable( 'transport', function () {
 			}
 
 			for ( const c2 of list ) {
-				const client2 = BridgeMsg.parseUID( c2 ).uid;
+				const client2 = BridgeMessage.parseUID( c2 ).uid;
 				if ( map[ client1 ][ client2 ] ) {
 					map[ client1 ][ client2 ].disabled = true;
 				}
 			}
 		}
-	} );
+	}
 
 	// 调试日志
 	winston.debug( '' );
 	winston.debug( '[transport] Bridge Map:' );
-	Object.keys( map ).forEach( function ( client1 ) {
-		Object.keys( map[ client1 ] ).forEach( function ( client2 ) {
+	for ( const client1 of Object.keys( map ) ) {
+		for ( const client2 of Object.keys( map[ client1 ] ) ) {
 			if ( map[ client1 ][ client2 ].disabled ) {
 				winston.debug( `\t${ client1 } -X-> ${ client2 }` );
 			} else {
 				winston.debug( `\t${ client1 } ---> ${ client2 }` );
 			}
-		} );
-	} );
+		}
+	}
 
 	/**
 	 * 用戶端別名
@@ -114,8 +114,8 @@ Manager.global.ifEnable( 'transport', function () {
 	const aliases: Record<string, bridge.alias> = {};
 
 	// 處理用戶端別名
-	Object.keys( options.aliases ).forEach( function ( a ) {
-		const cl = BridgeMsg.parseUID( a ).uid;
+	for ( const a of Object.keys( options.aliases ) ) {
+		const cl = BridgeMessage.parseUID( a ).uid;
 		if ( cl ) {
 			const names = options.aliases[ a ];
 			let shortname: string;
@@ -130,10 +130,10 @@ Manager.global.ifEnable( 'transport', function () {
 
 			aliases[ cl ] = {
 				shortname,
-				fullname
+				fullname,
 			};
 		}
-	} );
+	}
 
 	bridge.setAliases( aliases );
 
@@ -155,7 +155,7 @@ Manager.global.ifEnable( 'transport', function () {
 		if ( associateMessageUsefulClients.includes( type ) ) {
 			clientAssociateMessageUsefulCount++;
 		}
-		// eslint-disable-next-line @typescript-eslint/no-var-requires, security/detect-non-literal-require
+		// eslint-disable-next-line security/detect-non-literal-require, @typescript-eslint/no-require-imports
 		const processor: bridge.processor = require( `./transport/processors/${ type }` ).default;
 		winston.debug( `[transport] load processor ${ type }` );
 		bridge.addProcessor( type, processor );

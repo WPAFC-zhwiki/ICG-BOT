@@ -23,16 +23,17 @@ const config: ConfigTS = {
 			floodProtectionDelay: 300,
 			sasl: false, // 如果開啟 SASL，那麼需要正確設定前面的 userName 和下面的 sasl_password
 			sasl_password: '',
-			encoding: 'UTF-8'
+			// eslint-disable-next-line unicorn/text-encoding-identifier-case
+			encoding: 'utf-8',
 		},
 		options: {
 			maxLines: 4, // 一次性容許最多四行訊息（包括因為太長而被迫分割的）
 
 			ignore: [
-				'LilyWhiteBot' // 無視 NickName 為 LilyWhiteBot 的成員
+				'LilyWhiteBot', // 無視 NickName 為 LilyWhiteBot 的成員
 				// 同時 LilyWhiteBot0 LilyWhiteBot1 LilyWhiteBot2... 等的消息也會被無視
-			]
-		}
+			],
+		},
 	},
 
 	Telegram: {
@@ -44,7 +45,7 @@ const config: ConfigTS = {
 			// 代理伺服器。僅支援 HTTPS 代理
 			proxy: {
 				host: '',
-				port: 0
+				port: 0,
 			},
 
 			// 使用 Webhook 模式，參見 https://core.telegram.org/bots/webhooks
@@ -55,21 +56,21 @@ const config: ConfigTS = {
 				ssl: {
 					certPath: '', // SSL 憑證，為空時使用 HTTP 協定
 					keyPath: '', // SSL 金鑰
-					caPath: '' // 如使用自簽章憑證，CA 憑證路徑
-				}
+					caPath: '', // 如使用自簽章憑證，CA 憑證路徑
+				},
 			},
-			apiRoot: 'https://api.telegram.org' // Bot API 的根位址，必要的時候可以改成 IP。
+			apiRoot: 'https://api.telegram.org', // Bot API 的根位址，必要的時候可以改成 IP。
 		},
 		options: {
-			nickStyle: 'username' // 在其他群組中如何辨識使用者名稱：可取「username」（優先採用使用者名稱）、
+			nickStyle: 'username', // 在其他群組中如何辨識使用者名稱：可取「username」（優先採用使用者名稱）、
 			// 「fullname」（優先採用全名）、「firstname」（優先採用 First Name）
-		}
+		},
 	},
 
 	Discord: {
 		disabled: false, // 設為 true 之後會禁止 Discord 機器人
 		bot: {
-			token: '' // Bot 的 Token
+			token: '', // Bot 的 Token
 		},
 		options: {
 			nickStyle: 'username', // 可取「username」（使用者名稱）、「id」（ID）
@@ -86,12 +87,12 @@ const config: ConfigTS = {
 			 * 無視某些成員的訊息
 			 */
 			ignore: [
-				'123456780' // 無視 ID 為 123456780 的成員
+				'123456780', // 無視 ID 為 123456780 的成員
 
 				// 請注意以下這種寫法會編譯失敗：
 				// 123456780, // TS2322: Type 'number' is not assignable to type 'string'.
-			]
-		}
+			],
+		},
 	},
 
 	logging: {
@@ -103,7 +104,7 @@ const config: ConfigTS = {
 		/**
 		 * 紀錄檔檔名，如留空則只向螢幕輸出
 		 */
-		logfile: ''
+		logfile: '',
 	},
 
 	modules: [
@@ -112,7 +113,7 @@ const config: ConfigTS = {
 		'ircquery', // 允許查詢 IRC 的一些訊息
 		'irccommand', // 允許向 IRC 發送一些命令（注意，不是 IRC 命令而是給頻道內機器人使用的命令）
 		'pia',
-		'wikilinky' // 提供連結
+		'wikilinky', // 提供連結
 		// 'afc' // afc主模組
 		// 'exit' // 變更配置時自動重載
 	],
@@ -127,9 +128,9 @@ const config: ConfigTS = {
 			[
 				'irc/#test',
 				'telegram/-12345678', // Telegram 群組號碼：可以先把 bot 拉到群組中，然後透過 /thisgroupid 來取得 id
-				'discord/12345678'
+				'discord/12345678',
 				// 'discord/87654321' // 如果有這種需求，亦可以連接
-			]
+			],
 			/*
 			 如果需要，可以繼續加
 			 [
@@ -166,7 +167,7 @@ const config: ConfigTS = {
 					// 「none」（不提醒）
 					leave: 'onlyactive', // 有人離開頻道的話是否在其他群組提醒，也可取 all/onlyactive/none
 					timeBeforeLeave: 600, // 如果 leave 為 onlyactive 的話：最後一次說話後多長時間內離開才會提醒
-					topic: true // 頻道更換 Topic 時是否提醒
+					topic: true, // 頻道更換 Topic 時是否提醒
 				},
 				colorize: {
 					/*
@@ -190,17 +191,17 @@ const config: ConfigTS = {
 					linesplit: 'silver', // 行分隔符的顏色
 
 					// 如果 nick 為 colorful，則從這些顏色中挑選。為了使顏色分布均勻，建議使顏色數量為素數
-					nickcolors: [ 'green', 'blue', 'purple', 'olive', 'pink', 'teal', 'red' ]
+					nickcolors: [ 'green', 'blue', 'purple', 'olive', 'pink', 'teal', 'red' ],
 				},
 				receiveCommands: true, // 是否允許 Telegram 使用 irccommand
-				allowQuery: true // 是否允許其他群組查詢 IRC 頻道資訊
+				allowQuery: true, // 是否允許其他群組查詢 IRC 頻道資訊
 			},
 
 			Telegram: {
 				notify: {
 					join: true, // 有人加入群組的話是否提醒其他群組
 					leave: true, // 有人離開群組的話是否提醒其他群組
-					pin: true // 管理員在頻道內 pin message（公告）的時候是否提醒其他群組
+					pin: true, // 管理員在頻道內 pin message（公告）的時候是否提醒其他群組
 				},
 
 				forwardChannels: false, // 是否轉傳頻道內容
@@ -208,19 +209,19 @@ const config: ConfigTS = {
 				forwardCommands: true, // 如果有人使用 Telegram 命令亦轉發到其他群組（但由於 Telegram 設定的原因，Bot 無法看到命令結果）
 
 				forwardBots: { // 指出在 Telegram 運行的傳話機器人，以便取得訊息中的真實暱稱
-					LilyWhiteBot: '[]' // 目前僅支援 [] 和 <>（包圍暱稱的括弧）
-				}
+					LilyWhiteBot: '[]', // 目前僅支援 [] 和 <>（包圍暱稱的括弧）
+				},
 			},
 
 			Discord: {
 				forwardBots: { // 指出在 Discord 運行的傳話機器人，以便取得訊息中的真實暱稱
-					LilyWhiteBot: [ '1234', '[]' ] // 格式為 "機器人名稱": 機器人discriminator編號。
-				}
+					LilyWhiteBot: [ '1234', '[]' ], // 格式為 "機器人名稱": 機器人discriminator編號。
+				},
 			},
 
 			paeeye: {
 				prepend: '//', // 在訊息前面使用「//」會阻止此條訊息向其他群組轉發。留空或省略則禁用本功能
-				inline: '--no-fwd' // 在訊息中間使用「--no-fwd」會阻止此條訊息向其他群組轉發。留空或省略則禁用本功能
+				inline: '--no-fwd', // 在訊息中間使用「--no-fwd」會阻止此條訊息向其他群組轉發。留空或省略則禁用本功能
 			},
 
 			// 自訂訊息樣式（使用 https://www.npmjs.com/package/string-format 庫實現）
@@ -241,7 +242,7 @@ const config: ConfigTS = {
 					reply: '[{nick}] Re {reply_nick} 「{reply_text}」: {text}',
 					forward: '[{nick}] Fwd {forward_nick}: {text}',
 					action: '* {nick} {text}',
-					notice: '< {text} >'
+					notice: '< {text} >',
 				},
 
 				// 多群互聯樣式
@@ -251,9 +252,9 @@ const config: ConfigTS = {
 					reply: '[{client_short} - {nick}] Re {reply_nick} 「{reply_text}」: {text}',
 					forward: '[{client_short} - {nick}] Fwd {forward_nick}: {text}',
 					action: '* {client_short} - {nick} {text}',
-					notice: '< {client_full}: {text} >'
-				}
-			}
+					notice: '< {client_full}: {text} >',
+				},
+			},
 		},
 
 		/**
@@ -284,30 +285,30 @@ const config: ConfigTS = {
 			uguuApiUrl: '', // type 為 uguu 時有效：以 /api.php?d=upload-tool 結尾
 			imgur: { // type 為 imgur 時有效
 				apiUrl: 'https://api.imgur.com/3/', // 以斜線結尾
-				clientId: '' // 從 imgur 申請到的 client_id
+				clientId: '', // 從 imgur 申請到的 client_id
 			},
 			sizeLimit: 4096, // 檔案最大大小，單位 KiB。0 表示不限制。限制僅對 Telegram 有效
 			timeout: 3000, // 上傳逾時時間，單位毫秒，type 為 vim-cn、imgur 等外部圖床時有效
-			userAgent: '' // 存取外部圖床時的 User-Agent，如留空則使用預設的 AFC-ICG-BOT/版本號
-		}
+			userAgent: '', // 存取外部圖床時的 User-Agent，如留空則使用預設的 AFC-ICG-BOT/版本號
+		},
 	},
 
 	ircquery: {
 		disables: [ // 不要在這些群組使用
-			'telegram/-12345678' // 軟體名（irc/telegram）要寫全而且小寫……
+			'telegram/-12345678', // 軟體名（irc/telegram）要寫全而且小寫……
 		],
 
-		prefix: 'irc' // 如果使用，命令會變成 /irctopic、/ircnames 等
+		prefix: 'irc', // 如果使用，命令會變成 /irctopic、/ircnames 等
 	},
 
 	irccommand: {
 		echo: true, // 是否在目前的使用者端顯示命令已傳送
 
 		disables: [ // 不要在這些群組使用
-			'telegram/-12345678' // 軟體名（irc/telegram）要寫全而且小寫……
+			'telegram/-12345678', // 軟體名（irc/telegram）要寫全而且小寫……
 		],
 
-		prefix: 'irc' // 如果使用，命令會變成 /irctopic、/ircnames 等
+		prefix: 'irc', // 如果使用，命令會變成 /irctopic、/ircnames 等
 	},
 
 	wikilinky: {
@@ -318,8 +319,8 @@ const config: ConfigTS = {
 
 			// 在 Telegram 群組 -12345678 https://zh.wikipedia.org/wiki/$1 解析連結（$1為頁面名稱）
 			'telegram/-12345678': 'https://en.wikipedia.org/wiki/$1',
-			'discord/87654321': false // 不在 Discord 頻道 8765432 啟用
-		}
+			'discord/87654321': false, // 不在 Discord 頻道 8765432 啟用
+		},
 	},
 
 	/*
@@ -385,7 +386,7 @@ const config: ConfigTS = {
 	*/
 
 	// 啟用heartbeat，參見heartbeatConfig.example.sh
-	heartbeat: false
+	heartbeat: false,
 };
 
 export default config;

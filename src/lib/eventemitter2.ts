@@ -1,4 +1,4 @@
-/* eslint-disable max-len, @typescript-eslint/no-explicit-any, @typescript-eslint/no-this-alias */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-this-alias */
 /*!
  * EventEmitter2 6.4.4
  * https://github.com/EventEmitter2/EventEmitter2 commit 7dff2d6a160a636046921256fa4eef9025ae4bf8
@@ -53,7 +53,7 @@ export type Event = ( ...args: any[] ) => void;
 
 export type Events = Record<EventName, Event>;
 
-export interface ListenerFn extends Event {
+export interface ListenerFunction extends Event {
 	listener?: Event;
 	_origin?: Event;
 	_async?: boolean;
@@ -105,11 +105,26 @@ export interface OnOptions {
 
 type OnOptions_Objectify = Partial<OnOptions> & {
 	objectify: true;
-}
+};
 
-function resolveOptions<T>( options: Partial<T>, schema: T, reducers: Partial<Record<keyof T, Func>>, allowUnknown?: boolean ): T;
-function resolveOptions<T>( options: never, schema: T, reducers?: Partial<Record<keyof T, Func>>, allowUnknown?: boolean ): T;
-function resolveOptions<T>( options: Partial<T> | never, schema: T, reducers?: Partial<Record<keyof T, Func>>, allowUnknown?: boolean ): T {
+function resolveOptions<T>(
+	options: Partial<T>,
+	schema: T,
+	reducers: Partial<Record<keyof T, Func>>,
+	allowUnknown?: boolean
+): T;
+function resolveOptions<T>(
+	options: undefined,
+	schema: T,
+	reducers?: Partial<Record<keyof T, Func>>,
+	allowUnknown?: boolean
+): T;
+function resolveOptions<T>(
+	options: Partial<T> | undefined,
+	schema: T,
+	reducers?: Partial<Record<keyof T, Func>>,
+	allowUnknown?: boolean
+): T {
 	const computedOptions: T = Object.assign( {}, schema );
 
 	if ( !options ) {
@@ -123,14 +138,14 @@ function resolveOptions<T>( options: Partial<T> | never, schema: T, reducers?: P
 	const keys: string[] = Object.keys( options );
 	const length: number = keys.length;
 	let option: PropertyKey, value: any;
-	let reducer: ( arg0: any, arg1: ( reason: any ) => void ) => any;
+	let reducer: ( argument0: any, argument1: ( reason: any ) => void ) => any;
 
 	function reject( reason: string ): void {
 		throw new Error( 'Invalid "' + String( option ) + '" option value' + ( reason ? '. Reason: ' + reason : '' ) );
 	}
 
-	for ( let i = 0; i < length; i++ ) {
-		option = keys[ i ];
+	for ( let index = 0; index < length; index++ ) {
+		option = keys[ index ];
 		if ( !allowUnknown && !hasOwnProperty.call( schema, option ) ) {
 			throw new Error( 'Unknown "' + option + '" option' );
 		}
@@ -152,11 +167,11 @@ function functionReducer( func: Func, reject: Func ): void {
 class Listener<E extends Events = Events, K extends keyof E = EventName> {
 	public emitter: EventEmitter;
 	public event: EventName;
-	public listener: ListenerFn;
+	public listener: ListenerFunction;
 
 	public constructor( emitter: EventEmitter<E>, event: K, listener: E[ K ] );
-	public constructor( emitter: EventEmitter, event: EventName, listener: ListenerFn );
-	public constructor( emitter: EventEmitter, event: EventName, listener: ListenerFn ) {
+	public constructor( emitter: EventEmitter, event: EventName, listener: ListenerFunction );
+	public constructor( emitter: EventEmitter, event: EventName, listener: ListenerFunction ) {
 		this.emitter = emitter;
 		this.event = event;
 		this.listener = listener;
@@ -175,20 +190,20 @@ export default class EventEmitter<E extends Events = Events> implements Required
 	#removeListener: boolean;
 	#verboseMemoryLeak: boolean;
 
-	#events: Record<string|symbol, ListenerFn[] & {
+	#events: Record<string | symbol, ListenerFunction[] & {
 		warned?: boolean;
 	}> & {
 		maxListeners?: number;
 	};
-	#all: ListenerFn[];
+	#all: ListenerFunction[];
 	#maxListeners: number = defaultMaxListeners;
 
-	public constructor( conf?: EventEmitterConfig ) {
+	public constructor( config?: EventEmitterConfig ) {
 		this.#events = {};
 		this.#newListener = false;
 		this.#removeListener = false;
 		this.#verboseMemoryLeak = false;
-		this.#configure( conf );
+		this.#configure( config );
 	}
 
 	#init(): void {
@@ -198,32 +213,32 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		}
 	}
 
-	#configure( conf?: EventEmitterConfig ): void {
-		if ( conf ) {
-			this.#conf = conf;
+	#configure( config?: EventEmitterConfig ): void {
+		if ( config ) {
+			this.#conf = config;
 
-			if ( conf.delimiter ) {
-				this.delimiter = conf.delimiter;
+			if ( config.delimiter ) {
+				this.delimiter = config.delimiter;
 			}
 
-			if ( conf.maxListeners ) {
-				this.maxListeners = conf.maxListeners;
+			if ( config.maxListeners ) {
+				this.maxListeners = config.maxListeners;
 			}
 
-			if ( conf.newListener ) {
-				this.#newListener = conf.newListener;
+			if ( config.newListener ) {
+				this.#newListener = config.newListener;
 			}
 
-			if ( conf.removeListener ) {
-				this.#removeListener = conf.removeListener;
+			if ( config.removeListener ) {
+				this.#removeListener = config.removeListener;
 			}
 
-			if ( conf.verboseMemoryLeak ) {
-				this.#verboseMemoryLeak = conf.verboseMemoryLeak;
+			if ( config.verboseMemoryLeak ) {
+				this.#verboseMemoryLeak = config.verboseMemoryLeak;
 			}
 
-			if ( conf.verboseMemoryLeak ) {
-				this.#ignoreErrors = conf.ignoreErrors;
+			if ( config.verboseMemoryLeak ) {
+				this.#ignoreErrors = config.ignoreErrors;
 			}
 		}
 	}
@@ -263,59 +278,122 @@ export default class EventEmitter<E extends Events = Events> implements Required
 
 	public event: EventName = '';
 
-	public once<K extends keyof E>( event: K, fn: E[ K ], options: OnOptions_Objectify ): Listener<E, K>;
-	public once<K extends keyof E>( event: K, fn: E[ K ], options?: boolean | Partial<OnOptions> ): this;
-	public once( event: EventName, fn: Event, options: OnOptions_Objectify ): Listener;
-	public once( event: EventName, fn: Event, options?: boolean | Partial<OnOptions> ): this;
-	public once( event: EventName, fn: Event, options?: boolean | Partial<OnOptions> ): this | Listener {
-		return this.#once( event, fn, false, options );
+	public once<K extends keyof E>( event: K, func: E[ K ], options: OnOptions_Objectify ): Listener<E, K>;
+	public once<K extends keyof E>( event: K, func: E[ K ], options?: boolean | Partial<OnOptions> ): this;
+	public once( event: EventName, func: Event, options: OnOptions_Objectify ): Listener;
+	public once( event: EventName, func: Event, options?: boolean | Partial<OnOptions> ): this;
+	public once( event: EventName, func: Event, options?: boolean | Partial<OnOptions> ): this | Listener {
+		return this.#once( event, func, false, options );
 	}
 
-	public prependOnceListener<K extends keyof E>( event: K, fn: E[ K ], options: OnOptions_Objectify ): Listener<E, K>;
-	public prependOnceListener<K extends keyof E>( event: K, fn: E[ K ], options?: boolean | Partial<OnOptions> ): this;
-	public prependOnceListener( event: EventName, fn: Event, options: OnOptions_Objectify ): Listener;
-	public prependOnceListener( event: EventName, fn: Event, options?: boolean | Partial<OnOptions> ): this;
-	public prependOnceListener( event: EventName, fn: Event, options?: boolean | Partial<OnOptions> ): this | Listener {
-		return this.#once( event, fn, true, options );
+	public prependOnceListener<K extends keyof E>(
+		event: K,
+		func: E[ K ],
+		options: OnOptions_Objectify
+	): Listener<E, K>;
+	public prependOnceListener<K extends keyof E>(
+		event: K,
+		func: E[ K ],
+		options?: boolean | Partial<OnOptions>
+	): this;
+	public prependOnceListener(
+		event: EventName,
+		func: Event, options: OnOptions_Objectify
+	): Listener;
+	public prependOnceListener(
+		event: EventName,
+		func: Event, options?: boolean | Partial<OnOptions>
+	): this;
+	public prependOnceListener(
+		event: EventName,
+		func: Event, options?: boolean | Partial<OnOptions>
+	): this | Listener {
+		return this.#once( event, func, true, options );
 	}
 
-	#once( event: EventName, fn: Event, prepend: boolean, options?: boolean | Partial<OnOptions> ): this | Listener {
-		return this.#many( event, 1, fn, prepend, options );
+	#once(
+		event: EventName,
+		func: Event,
+		prepend: boolean,
+		options?: boolean | Partial<OnOptions>
+	): this | Listener {
+		return this.#many( event, 1, func, prepend, options );
 	}
 
-	public many<K extends keyof E>( event: K, timesToListen: number, fn: E[ K ], options: OnOptions_Objectify ): Listener<E, K>;
-	public many<K extends keyof E>( event: K, timesToListen: number, fn: E[ K ], options?: boolean | Partial<OnOptions> ): this;
-	public many( event: EventName, timesToListen: number, fn: Event, options: OnOptions_Objectify ): Listener;
-	public many( event: EventName, timesToListen: number, fn: Event, options?: boolean | Partial<OnOptions> ): this;
-	public many<K extends keyof E>( event: K, timesToListen: number, fn: E[ K ], options?: boolean | Partial<OnOptions> ): this;
-	public many( event: EventName, timesToListen: number, fn: Event, options?: boolean | Partial<OnOptions> ): this;
-	public many( event: EventName, ttl: number, fn: Event, options?: boolean | Partial<OnOptions> ): this | Listener {
-		return this.#many( event, ttl, fn, false, options );
+	public many<K extends keyof E>(
+		event: K, timesToListen: number,
+		func: E[ K ],
+		options: OnOptions_Objectify
+	): Listener<E, K>;
+	public many<K extends keyof E>(
+		event: K, timesToListen: number,
+		func: E[ K ],
+		options?: boolean | Partial<OnOptions>
+	): this;
+	public many( event: EventName, timesToListen: number, func: Event, options: OnOptions_Objectify ): Listener;
+	public many( event: EventName, timesToListen: number, func: Event, options?: boolean | Partial<OnOptions> ): this;
+	public many<K extends keyof E>(
+		event: K,
+		timesToListen: number,
+		func: E[ K ],
+		options?: boolean | Partial<OnOptions>
+	): this;
+	public many( event: EventName, timesToListen: number, func: Event, options?: boolean | Partial<OnOptions> ): this;
+	public many( event: EventName, ttl: number, func: Event, options?: boolean | Partial<OnOptions> ): this | Listener {
+		return this.#many( event, ttl, func, false, options );
 	}
 
-	public prependMany<K extends keyof E>( event: K, timesToListen: number, fn: E[ K ], options: OnOptions_Objectify ): Listener<E, K>;
-	public prependMany<K extends keyof E>( event: K, timesToListen: number, fn: E[ K ], options?: boolean | Partial<OnOptions> ): this;
-	public prependMany( event: EventName, timesToListen: number, fn: Event, options: OnOptions_Objectify ): Listener;
-	public prependMany( event: EventName, timesToListen: number, fn: Event, options?: boolean | Partial<OnOptions> ): this;
-	public prependMany( event: EventName, ttl: number, fn: Event, options?: boolean | Partial<OnOptions> ): this | Listener {
-		return this.#many( event, ttl, fn, true, options );
+	public prependMany<K extends keyof E>(
+		event: K, timesToListen: number,
+		func: E[ K ],
+		options: OnOptions_Objectify
+	): Listener<E, K>;
+	public prependMany<K extends keyof E>(
+		event: K,
+		timesToListen: number,
+		func: E[ K ],
+		options?: boolean | Partial<OnOptions>
+	): this;
+	public prependMany(
+		event: EventName,
+		timesToListen: number,
+		func: Event,
+		options: OnOptions_Objectify
+	): Listener;
+	public prependMany(
+		event: EventName,
+		timesToListen: number,
+		func: Event,
+		options?: boolean | Partial<OnOptions>
+	): this;
+	public prependMany(
+		event: EventName,
+		ttl: number,
+		func: Event,
+		options?: boolean | Partial<OnOptions>
+	): this | Listener {
+		return this.#many( event, ttl, func, true, options );
 	}
 
-	#many( event: EventName, ttl: number, fn: Event, prepend: boolean, options?: boolean | Partial<OnOptions> ): this | Listener {
-		const self: this = this;
-
-		if ( typeof fn !== 'function' ) {
-			throw new Error( 'many only accepts instances of Function' );
+	#many(
+		event: EventName,
+		ttl: number,
+		func: Event,
+		prepend: boolean,
+		options?: boolean | Partial<OnOptions>
+	): this | Listener {
+		if ( typeof func !== 'function' ) {
+			throw new TypeError( 'many only accepts instances of Function' );
 		}
 
-		function listener( ...args: any ): void {
+		const listener = ( ...args: any ): void => {
 			if ( --ttl === 0 ) {
-				self.off( event, listener );
+				this.off( event, listener );
 			}
-			return fn( ...args );
-		}
+			return func( ...args );
+		};
 
-		listener._origin = fn;
+		listener._origin = func;
 
 		return this.#on( event, listener, prepend, options );
 	}
@@ -334,21 +412,19 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		const type: EventName = args[ 0 ];
 		let clearArgs: any[];
 
-		if ( type === 'newListener' && !this.#newListener ) {
-			if ( !this.#events.newListener ) {
-				return false;
-			}
+		if ( type === 'newListener' && !this.#newListener && !this.#events.newListener ) {
+			return false;
 		}
 
 		const al: number = arguments.length;
-		let handler: ListenerFn[];
+		let handler: ListenerFunction[];
 
-		if ( this.#all && this.#all.length ) {
-			handler = this.#all.slice();
+		if ( this.#all && this.#all.length > 0 ) {
+			handler = [ ...this.#all ];
 
-			for ( let i = 0, l = handler.length; i < l; i++ ) {
+			for ( let index = 0, l = handler.length; index < l; index++ ) {
 				this.event = type;
-				handler[ i ]( ...args );
+				handler[ index ]( ...args );
 			}
 		}
 
@@ -356,27 +432,25 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		if ( handler ) {
 			// need to make copy of handlers because list can change in the middle
 			// of emit call
-			handler = handler.slice();
+			handler = [ ...handler ];
 		}
 
-		if ( handler && handler.length ) {
-			clearArgs = new Array( al - 1 );
-			for ( let j = 1; j < al; j++ ) {
-				clearArgs[ j - 1 ] = args[ j ];
+		if ( handler && handler.length > 0 ) {
+			clearArgs = Array.from( { length: al - 1 } );
+			for ( let index = 1; index < al; index++ ) {
+				clearArgs[ index - 1 ] = args[ index ];
 			}
-			for ( let i = 0, l = handler.length; i < l; i++ ) {
+			for ( let index = 0, l = handler.length; index < l; index++ ) {
 				this.event = type;
-				handler[ i ]( ...clearArgs );
+				handler[ index ]( ...clearArgs );
 			}
 			return true;
 		} else if ( !this.#ignoreErrors && !this.#all && type === 'error' ) {
-			if ( args[ 1 ] instanceof Error ) {
-				throw args[ 1 ]; // Unhandled 'error' event
-			} else {
-				throw Object.assign( new Error( "Uncaught, unspecified 'error' event." ), {
-					rawError: args[ 1 ]
+			throw args[ 1 ] instanceof Error ?
+				args[ 1 ] :
+				Object.assign( new Error( "Uncaught, unspecified 'error' event." ), {
+					rawError: args[ 1 ],
 				} );
-			}
 		}
 
 		return !!this.#all;
@@ -384,7 +458,7 @@ export default class EventEmitter<E extends Events = Events> implements Required
 
 	public emitAsync<K extends keyof E>( type: K, ...args: Parameters<E[ K ]> ): Promise<void[]>;
 	public emitAsync( type: EventName, ...args: any[] ): Promise<void[]>;
-	public async emitAsync( ...args: any[] ): Promise<( boolean|void )[]> {
+	public async emitAsync( ...args: any[] ): Promise<( boolean | void )[]> {
 		if ( !this.#events && !this.#all ) {
 			return [ false ];
 		}
@@ -396,42 +470,38 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		const type: EventName = args[ 0 ];
 		let clearArgs: any[];
 
-		if ( type === 'newListener' && !this.#newListener ) {
-			if ( !this.#events.newListener ) {
-				return [ false ];
-			}
+		if ( type === 'newListener' && !this.#newListener && !this.#events.newListener ) {
+			return [ false ];
 		}
 
 		const promises: ( Promise<void> | void )[] = [];
 
 		const al = arguments.length;
-		let handler: ListenerFn[];
+		let handler: ListenerFunction[];
 
 		if ( this.#all ) {
-			for ( let i = 0, l = this.#all.length; i < l; i++ ) {
+			for ( let index = 0, l = this.#all.length; index < l; index++ ) {
 				this.event = type;
-				promises.push( this.#all[ i ]( ...args ) );
+				promises.push( this.#all[ index ]( ...args ) );
 			}
 		}
 
 		handler = this.#events[ type ];
 
-		if ( handler && handler.length ) {
-			handler = handler.slice();
-			clearArgs = new Array( al - 1 );
-			for ( let j = 1; j < al; j++ ) {
-				clearArgs[ j - 1 ] = args[ j ];
+		if ( handler && handler.length > 0 ) {
+			handler = [ ...handler ];
+			clearArgs = Array.from( { length: al - 1 } );
+			for ( let index = 1; index < al; index++ ) {
+				clearArgs[ index - 1 ] = args[ index ];
 			}
-			for ( let i = 0, l = handler.length; i < l; i++ ) {
+			for ( let index = 0, l = handler.length; index < l; index++ ) {
 				this.event = type;
-				promises.push( handler[ i ]( ...clearArgs ) );
+				promises.push( handler[ index ]( ...clearArgs ) );
 			}
 		} else if ( !this.#ignoreErrors && !this.#all && type === 'error' ) {
-			if ( args[ 1 ] instanceof Error ) {
-				throw args[ 1 ]; // Unhandled 'error' event
-			} else {
-				throw new Error( 'Uncaught, unspecified \'error\' event.' );
-			}
+			throw args[ 1 ] instanceof Error ?
+				args[ 1 ] :
+				new TypeError( 'Uncaught, unspecified \'error\' event.' );
 		}
 
 		return Promise.all( promises );
@@ -439,17 +509,21 @@ export default class EventEmitter<E extends Events = Events> implements Required
 
 	public emitSync = this.emitAsync;
 
-	public on<K extends keyof E>( event: K, fn: E[ K ], options: OnOptions_Objectify ): Listener<E, K>;
-	public on<K extends keyof E>( event: K, fn: E[ K ], options?: boolean | Partial<OnOptions> ): this;
-	public on( event: EventName, fn: Event, options: OnOptions_Objectify ): Listener;
-	public on( event: EventName, fn: Event, options?: boolean | Partial<OnOptions> ): this;
+	public on<K extends keyof E>( event: K, func: E[ K ], options: OnOptions_Objectify ): Listener<E, K>;
+	public on<K extends keyof E>( event: K, func: E[ K ], options?: boolean | Partial<OnOptions> ): this;
+	public on( event: EventName, func: Event, options: OnOptions_Objectify ): Listener;
+	public on( event: EventName, func: Event, options?: boolean | Partial<OnOptions> ): this;
 	public on( listener: Event, prepend?: boolean ): this;
-	public on( type: EventName | Event, listener?: Event | boolean, options?: boolean | Partial<OnOptions> ): this | Listener {
+	public on(
+		type: EventName | Event,
+		listener?: Event | boolean,
+		options?: boolean | Partial<OnOptions>
+	): this | Listener {
 		if ( typeof type === 'function' ) {
 			this.#onAny( type, !!listener );
 			return this;
 		} else if ( typeof listener !== 'function' ) {
-			throw new Error( 'onAny only accepts instances of Function' );
+			throw new TypeError( 'onAny only accepts instances of Function' );
 		}
 		return this.#on( type, listener, false, options );
 	}
@@ -457,27 +531,31 @@ export default class EventEmitter<E extends Events = Events> implements Required
 	public addListener = this.on;
 	public addEventListener = this.on;
 
-	public prependListener<K extends keyof E>( event: K, fn: E[ K ], options: OnOptions_Objectify ): Listener<E, K>;
-	public prependListener<K extends keyof E>( event: K, fn: E[ K ], options?: boolean | Partial<OnOptions> ): this;
-	public prependListener( event: EventName, fn: Event, options: OnOptions_Objectify ): this;
-	public prependListener( event: EventName, fn: Event, options?: boolean | Partial<OnOptions> ): this;
-	public prependListener( type: EventName, listener: Event, options?: boolean | Partial<OnOptions> ): this | Listener {
+	public prependListener<K extends keyof E>( event: K, func: E[ K ], options: OnOptions_Objectify ): Listener<E, K>;
+	public prependListener<K extends keyof E>( event: K, func: E[ K ], options?: boolean | Partial<OnOptions> ): this;
+	public prependListener( event: EventName, func: Event, options: OnOptions_Objectify ): this;
+	public prependListener( event: EventName, func: Event, options?: boolean | Partial<OnOptions> ): this;
+	public prependListener(
+		type: EventName,
+		listener: Event,
+		options?: boolean | Partial<OnOptions>
+	): this | Listener {
 		return this.#on( type, listener, true, options );
 	}
 
 	public onAny( listener: EventAndListener ): this;
-	public onAny( fn: EventAndListener ): this {
-		return this.#onAny( fn, false );
+	public onAny( func: EventAndListener ): this {
+		return this.#onAny( func, false );
 	}
 
-	public prependAny( fn: Event ): this;
-	public prependAny( fn: Event ): this {
-		return this.#onAny( fn, true );
+	public prependAny( func: Event ): this;
+	public prependAny( func: Event ): this {
+		return this.#onAny( func, true );
 	}
 
-	#onAny( fn: EventAndListener, prepend?: boolean ): this {
-		if ( typeof fn !== 'function' ) {
-			throw new Error( 'onAny only accepts instances of Function' );
+	#onAny( func: EventAndListener, prepend?: boolean ): this {
+		if ( typeof func !== 'function' ) {
+			throw new TypeError( 'onAny only accepts instances of Function' );
 		}
 
 		if ( !this.#all ) {
@@ -486,20 +564,23 @@ export default class EventEmitter<E extends Events = Events> implements Required
 
 		// Add the function to the event listener collection.
 		if ( prepend ) {
-			this.#all.unshift( fn );
+			this.#all.unshift( func );
 		} else {
-			this.#all.push( fn );
+			this.#all.push( func );
 		}
 
 		return this;
 	}
 
-	#setupListener( event: EventName, listener: ListenerFn, options: boolean | OnOptions ): [ ListenerFn, Listener | this ] {
+	#setupListener(
+		event: EventName,
+		listener: ListenerFunction,
+		options: boolean | OnOptions
+	): [ ListenerFunction, Listener | this ] {
 		let promisify: boolean;
 		let async: boolean;
 		let nextTick: boolean;
 		let objectify: boolean;
-		const context: EventEmitter<Events> = this;
 
 		if ( options === true ) {
 			promisify = true;
@@ -516,7 +597,7 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		}
 
 		if ( async || nextTick || promisify ) {
-			const _listener: ListenerFn = listener;
+			const _listener: ListenerFunction = listener;
 			const _origin: Event = listener._origin || listener;
 
 			if ( nextTick && !true ) {
@@ -527,18 +608,17 @@ export default class EventEmitter<E extends Events = Events> implements Required
 				promisify = listener.constructor.name === 'AsyncFunction';
 			}
 
-			listener = function ( ...args ): void | Promise<void> {
-				// eslint-disable-next-line no-shadow
-				const event = context.event;
+			listener = ( ...args ): void | Promise<void> => {
+				const event = this.event;
 
 				return promisify ? ( nextTick ? Promise.resolve() : new Promise( function ( resolve ): void {
 					setImmediate( resolve );
-				} ).then( function (): void {
-					context.event = event;
-					return _listener.apply( context, args );
-				} ) ) : ( nextTick ? process.nextTick : setImmediate )( function (): void {
-					context.event = event;
-					_listener.apply( context, args );
+				} ).then( (): void => {
+					this.event = event;
+					return _listener.apply( this, args );
+				} ) ) : ( nextTick ? process.nextTick : setImmediate )( (): void => {
+					this.event = event;
+					_listener.apply( this, args );
 				} );
 			};
 
@@ -550,25 +630,25 @@ export default class EventEmitter<E extends Events = Events> implements Required
 	}
 
 	#logPossibleMemoryLeak( count: number, eventName: EventName ): void {
-		let errorMsg = '(node) warning: possible EventEmitter memory ' +
+		let errorMessage = '(node) warning: possible EventEmitter memory ' +
 		'leak detected. ' + count + ' listeners added. ' +
 		'Use emitter.setMaxListeners() to increase limit.';
 
 		if ( this.#verboseMemoryLeak ) {
-			errorMsg += ' Event name: ' + String( eventName ) + '.';
+			errorMessage += ' Event name: ' + String( eventName ) + '.';
 		}
 
 		if ( typeof process !== 'undefined' && process.emitWarning ) {
-			const e: Error & {
-				emitter?: EventEmitter;
-				count?: number;
-			} = new Error( errorMsg );
-			e.name = 'MaxListenersExceededWarning';
-			e.emitter = this;
-			e.count = count;
-			process.emitWarning( e );
+			process.emitWarning( Object.assign(
+				new Error( errorMessage ),
+				{
+					name: 'MaxListenersExceededWarning',
+					emitter: this,
+					count,
+				}
+			) );
 		} else {
-			console.error( errorMsg );
+			console.error( errorMessage );
 
 			if ( console.trace ) {
 				console.trace();
@@ -576,22 +656,28 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		}
 	}
 
-	#on( type: EventName, listener: Event, prepend?: boolean, options?: boolean | Partial<OnOptions> ): this | Listener {
+	#on(
+		type: EventName,
+		listener: Event,
+		prepend?: boolean,
+		options?: boolean | Partial<OnOptions>
+	): this | Listener {
 		if ( typeof listener !== 'function' ) {
-			throw new Error( 'on only accepts instances of Function' );
+			throw new TypeError( 'on only accepts instances of Function' );
 		}
 
 		if ( !this.#events ) {
 			this.#init();
 		}
 
+		// eslint-disable-next-line unicorn/no-this-assignment
 		let returnValue: this | Listener = this;
-		let temp: [ ListenerFn, this | Listener ];
+		let temporary: [ ListenerFunction, this | Listener ];
 
 		if ( options !== undefined ) {
-			temp = this.#setupListener( type, listener, options );
-			listener = temp[ 0 ];
-			returnValue = temp[ 1 ];
+			temporary = this.#setupListener( type, listener, options );
+			listener = temporary[ 0 ];
+			returnValue = temporary[ 1 ];
 		}
 
 		// To avoid recursion in the case that type == "newListeners"! Before
@@ -600,10 +686,7 @@ export default class EventEmitter<E extends Events = Events> implements Required
 			this.emit( 'newListener', type, listener );
 		}
 
-		if ( !this.#events[ type ] ) {
-			// Optimize the case of one listener. Don't need the extra array object.
-			this.#events[ type ] = [ listener ];
-		} else {
+		if ( this.#events[ type ] ) {
 			// If we've already got an array, just add
 			if ( prepend ) {
 				this.#events[ type ].unshift( listener );
@@ -620,20 +703,23 @@ export default class EventEmitter<E extends Events = Events> implements Required
 				this.#events[ type ].warned = true;
 				this.#logPossibleMemoryLeak( this.#events[ type ].length, type );
 			}
+		} else {
+			// Optimize the case of one listener. Don't need the extra array object.
+			this.#events[ type ] = [ listener ];
 		}
 
 		return returnValue;
 	}
 
-	public off<K extends keyof E>( event: K, fn: E[ K ], options?: boolean | Partial<OnOptions> ): this;
-	public off( event: EventName, fn: Event, options?: boolean | Partial<OnOptions> ): this;
+	public off<K extends keyof E>( event: K, func: E[ K ], options?: boolean | Partial<OnOptions> ): this;
+	public off( event: EventName, func: Event, options?: boolean | Partial<OnOptions> ): this;
 	public off( type: EventName, listener: Event ): this {
 		if ( typeof listener !== 'function' ) {
-			throw new Error( 'removeListener only takes instances of Function' );
+			throw new TypeError( 'removeListener only takes instances of Function' );
 		}
 
-		let handlers: ListenerFn[];
-		const leafs: { _listeners: ListenerFn[] }[] = [];
+		let handlers: ListenerFunction[];
+		const leafs: { _listeners: ListenerFunction[] }[] = [];
 
 		// does not use listeners(), so no side effect of creating _events[type]
 		if ( !this.#events[ type ] ) {
@@ -642,16 +728,15 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		handlers = this.#events[ type ];
 		leafs.push( { _listeners: handlers } );
 
-		for ( let iLeaf = 0; iLeaf < leafs.length; iLeaf++ ) {
-			const leaf = leafs[ iLeaf ];
+		for ( const leaf of leafs ) {
 			handlers = leaf._listeners;
 			let position = -1;
 
-			for ( let i = 0, length = handlers.length; i < length; i++ ) {
-				if ( handlers[ i ] === listener ||
-					( handlers[ i ].listener && handlers[ i ].listener === listener ) ||
-					( handlers[ i ]._origin && handlers[ i ]._origin === listener ) ) {
-					position = i;
+			for ( let index = 0, length = handlers.length; index < length; index++ ) {
+				if ( handlers[ index ] === listener ||
+					( handlers[ index ].listener && handlers[ index ].listener === listener ) ||
+					( handlers[ index ]._origin && handlers[ index ]._origin === listener ) ) {
+					position = index;
 					break;
 				}
 			}
@@ -675,15 +760,15 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		return this;
 	}
 
-	public offAny( fn: ListenerFn ): this {
-		let i = 0, l = 0, fns: any[];
-		if ( fn && this.#all && this.#all.length > 0 ) {
+	public offAny( func: ListenerFunction ): this {
+		let index = 0, l = 0, fns: any[];
+		if ( func && this.#all && this.#all.length > 0 ) {
 			fns = this.#all;
-			for ( i = 0, l = fns.length; i < l; i++ ) {
-				if ( fn === fns[ i ] ) {
-					fns.splice( i, 1 );
+			for ( index = 0, l = fns.length; index < l; index++ ) {
+				if ( func === fns[ index ] ) {
+					fns.splice( index, 1 );
 					if ( this.#removeListener ) {
-						this.emit( 'removeListenerAny', fn );
+						this.emit( 'removeListenerAny', func );
 					}
 					return this;
 				}
@@ -691,8 +776,8 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		} else {
 			fns = this.#all;
 			if ( this.#removeListener ) {
-				for ( i = 0, l = fns.length; i < l; i++ ) {
-					this.emit( 'removeListenerAny', fns[ i ] );
+				for ( index = 0, l = fns.length; index < l; index++ ) {
+					this.emit( 'removeListenerAny', fns[ index ] );
 				}
 			}
 			this.#all = [];
@@ -713,18 +798,18 @@ export default class EventEmitter<E extends Events = Events> implements Required
 			return this;
 		}
 
-		this.#events[ type ] = null;
+		this.#events[ type ] = undefined;
 		return this;
 	}
 
 	public listeners<K extends keyof E>( type: K ): E[K][];
-	public listeners( type: EventName ): ListenerFn[];
-	public listeners( type: EventName ): ListenerFn[] {
+	public listeners( type: EventName ): ListenerFunction[];
+	public listeners( type: EventName ): ListenerFunction[] {
 		const _events = this.#events;
 		let keys: EventName[];
-		let listeners: ListenerFn[];
-		let allListeners: ListenerFn[];
-		let i: number;
+		let listeners: ListenerFunction[];
+		let allListeners: ListenerFunction[];
+		let index: number;
 
 		if ( type === undefined ) {
 			if ( !_events ) {
@@ -732,10 +817,10 @@ export default class EventEmitter<E extends Events = Events> implements Required
 			}
 
 			keys = Reflect.ownKeys( _events );
-			i = keys.length;
+			index = keys.length;
 			allListeners = [];
-			while ( i-- > 0 ) {
-				listeners = _events[ keys[ i ] ];
+			while ( index-- > 0 ) {
+				listeners = _events[ keys[ index ] ];
 				allListeners.push( ...listeners );
 			}
 			return allListeners;
@@ -755,10 +840,10 @@ export default class EventEmitter<E extends Events = Events> implements Required
 	}
 
 	public rawListeners<K extends keyof E>( type: K ): E[K][];
-	public rawListeners( type: EventName ): ListenerFn[];
-	public rawListeners( type: EventName ): ListenerFn[] {
-		return this.listeners( type ).map( function ( fn: ListenerFn ) {
-			return fn._origin || fn.listener || fn;
+	public rawListeners( type: EventName ): ListenerFunction[];
+	public rawListeners( type: EventName ): ListenerFunction[] {
+		return this.listeners( type ).map( function ( func: ListenerFunction ) {
+			return func._origin || func.listener || func;
 		} );
 	}
 
@@ -777,62 +862,61 @@ export default class EventEmitter<E extends Events = Events> implements Required
 		const _events = this.#events;
 		const _all = this.#all;
 
-		return !!( _all && _all.length || _events && ( type === undefined ? Reflect.ownKeys( _events ).length : _events[ type ] ) );
+		return !!(
+			_all && _all.length > 0 ||
+			_events && ( type === undefined ? Reflect.ownKeys( _events ).length : _events[ type ] )
+		);
 	}
 
-	public listenersAny(): ListenerFn[] {
-		if ( this.#all ) {
-			return this.#all;
-		} else {
-			return [];
-		}
+	public listenersAny(): ListenerFunction[] {
+		return this.#all ?? [];
 	}
 
-	public waitFor<K extends keyof E>( event: K, options?: Partial<WaitForOptions<E[K]>> | WaitForFilter<E[K]> ): Promise<Parameters<E[ K ]>>;
+	public waitFor<K extends keyof E>(
+		event: K,
+		options?: Partial<WaitForOptions<E[K]>> | WaitForFilter<E[K]>
+	): Promise<Parameters<E[ K ]>>;
 	public waitFor( event: EventName, options: Partial<WaitForOptions> | WaitForFilter ): Promise<any>;
 	public waitFor( event: EventName, opt: Partial<WaitForOptions> | WaitForFilter ): Promise<any> {
-		const self = this;
-
 		let options: Partial<WaitForOptions>;
-		if ( typeof opt === 'function' ) {
-			options = {
-				filter: opt
-			};
-		} else {
-			options = opt;
-		}
+		options = typeof opt === 'function' ? {
+			filter: opt,
+		} : opt;
 
 		options = resolveOptions<WaitForOptions>( options, {
 			filter: undefined,
-			handleError: false
+			handleError: false,
 		}, {
-			filter: functionReducer
+			filter: functionReducer,
 		} );
 
-		return new Promise( function ( resolve, reject ) {
-			function listener( ...args: any[] ) {
+		return new Promise( ( resolve, reject ) => {
+			const listener = ( ...args: any[] ) => {
 				const filter = options.filter;
 				if ( filter && !filter( ...args ) ) {
 					return;
 				}
-				self.off( event, listener );
+				this.off( event, listener );
 				if ( options.handleError ) {
-					const err = args[ 0 ];
-					if ( err ) {
-						reject( err );
+					const error = args[ 0 ];
+					if ( error ) {
+						reject( error );
 					} else {
 						resolve( args.slice( 1 ) );
 					}
 				} else {
 					resolve( args );
 				}
-			}
+			};
 
-			self.#on( event, listener, false );
+			this.#on( event, listener, false );
 		} );
 	}
 
-	public static once<T extends Events, K extends keyof T>( emitter: EventEmitter<T>, name: K ): Promise<Parameters<T[ K ]>>;
+	public static once<T extends Events, K extends keyof T>(
+		emitter: EventEmitter<T>,
+		name: K
+	): Promise<Parameters<T[ K ]>>;
 	public static once( emitter: GeneralEventEmitter, name: string ): Promise<any[]>;
 	public static once( emitter: GeneralEventEmitter, name: string ): Promise<any[]> {
 		return new Promise( function ( resolve, reject ) {
@@ -863,18 +947,18 @@ export default class EventEmitter<E extends Events = Events> implements Required
 				resolve( args );
 			}
 
-			let errorListener: ( err: any ) => void;
+			let errorListener: ( error: any ) => void;
 
 			if ( name !== 'error' ) {
 				let ettl = 1;
 
-				errorListener = function ( err: any ) {
+				errorListener = function ( error: any ) {
 					if ( --ettl === 0 ) {
 						off( name, errorListener );
 					}
 
 					off( name, eventListener );
-					reject( err );
+					reject( error );
 				};
 
 				on( 'error', errorListener );

@@ -2,13 +2,13 @@ import { CronJob } from 'cron';
 import { MwnTitle } from 'mwn';
 import winston = require( 'winston' );
 
+import { fetch, Response } from '@app/lib/fetch';
 import { inspect } from '@app/lib/util';
 
 import { handleMwnRequestError, mwbot } from '@app/modules/afc/util/index';
+import { send } from '@app/modules/afc/util/message';
 import { recentChange, RecentChangeEvent } from '@app/modules/afc/util/recentchange';
-
-import { send } from './msg';
-import { escapeHTML } from './telegram-html';
+import { escapeHTML } from '@app/modules/afc/util/telegram-html';
 
 export let exOfficioReviewersCache: string[] = [];
 export let blockedExOfficioReviewersCaches: string[] = [];
@@ -30,7 +30,7 @@ function normalizeUserName( user: string ) {
 	let title: MwnTitle;
 	try {
 		title = new mwbot.Title( user, 2 );
-	} catch ( error ) {
+	} catch {
 		return false;
 	}
 	if ( title.namespace !== 2 ) {
@@ -43,27 +43,29 @@ export async function rebuildExOfficioReviewersCache(): Promise<void> {
 	try {
 		exOfficioReviewersCache = [];
 		await fetch( 'https://zhwp-afc-bot.toolforge.org/api/list-sysop-patroller?apiversion=2024v01' )
-			.then( async function ( res ): Promise<[ Response, string ]> {
-				return [ res, await res.text() ];
+			.then( async function ( response ): Promise<[ Response, string ]> {
+				return [ response, await response.text() ];
 			} )
-			.then( function ( [ res, resJsonTxt ] ) {
-				let resJson: ListSysopPatrollerApiError | ListSysopPatrollerApiResultV1;
+			.then( function ( [ response, responseJsonTxt ] ) {
+				let responseJson: ListSysopPatrollerApiError | ListSysopPatrollerApiResultV1;
 				try {
-					resJson = JSON.parse( resJsonTxt ) as ListSysopPatrollerApiError | ListSysopPatrollerApiResultV1;
+					responseJson = JSON.parse( responseJsonTxt ) as
+						| ListSysopPatrollerApiError
+						| ListSysopPatrollerApiResultV1;
 				} catch {
-					throw new Error( `Request fail, status: ${ res.status }, response: ${ resJsonTxt }` );
+					throw new Error( `Request fail, status: ${ response.status }, response: ${ responseJsonTxt }` );
 				}
-				if ( resJson.status !== 200 ) {
-					throw new Error( resJsonTxt );
+				if ( responseJson.status !== 200 ) {
+					throw new Error( responseJsonTxt );
 				}
-				exOfficioReviewersCache = ( resJson as ListSysopPatrollerApiResultV1 ).data;
+				exOfficioReviewersCache = ( responseJson as ListSysopPatrollerApiResultV1 ).data;
 			} );
 
 		winston.info( `[afc/util/reviewer] rebuild ex officio reviewer caches, length: ${ exOfficioReviewersCache.length }` );
 	} catch ( error ) {
 		winston.error( `[afc/util/reviewer] rebuild ex officio reviewer caches fail: ${ inspect( error ) }` );
 		send( {
-			tMsg: `rebuildExOfficioReviewersCache 失敗：${ escapeHTML( String( error ) ) }。`
+			tMessage: `rebuildExOfficioReviewersCache 失敗：${ escapeHTML( String( error ) ) }。`,
 		}, 'debug' );
 	}
 }
@@ -76,7 +78,7 @@ export async function rebuildBlockedExOfficioReviewersCache(): Promise<void> {
 			prop: 'links',
 			titles: 'WikiProject:建立條目/參與者/黑名單',
 			plnamespace: 2,
-			pllimit: 500
+			pllimit: 500,
 		} ).catch( handleMwnRequestError );
 
 		const links: {
@@ -89,18 +91,18 @@ export async function rebuildBlockedExOfficioReviewersCache(): Promise<void> {
 		// 黑名單可能是空的
 		// 這時就沒東西
 		if ( links ) {
-			links.filter( function ( link ) {
+			for ( const link of links.filter( function ( link ) {
 				return link.ns === 2;
-			} ).forEach( function ( link ) {
+			} ) ) {
 				blockedExOfficioReviewersCaches.push( normalizeUserName( link.title ) as string );
-			} );
+			}
 		}
 
 		winston.info( `[afc/util/reviewer] rebuild ex officio reviewer blocked caches, length: ${ blockedExOfficioReviewersCaches.length }` );
 	} catch ( error ) {
 		winston.error( `[afc/util/reviewer] rebuild ex officio reviewer blocked caches fail: ${ inspect( error ) }` );
 		send( {
-			tMsg: `rebuildBlockedExOfficioReviewersCache 失敗：${ escapeHTML( String( error ) ) }。`
+			tMessage: `rebuildBlockedExOfficioReviewersCache 失敗：${ escapeHTML( String( error ) ) }。`,
 		}, 'debug' );
 	}
 }
@@ -113,27 +115,27 @@ export async function rebuildParticipatingReviewersCache(): Promise<void> {
 			prop: 'links',
 			titles: 'WikiProject:建立條目/參與者',
 			plnamespace: 2,
-			pllimit: 500
+			pllimit: 500,
 		} ).catch( handleMwnRequestError );
 
 		const links: {
-		ns: number;
-		title: string;
-	}[] = data.query.pages[ 0 ].links;
+			ns: number;
+			title: string;
+		}[] = data.query.pages[ 0 ].links;
 
 		participatingReviewersCache = [];
 
-		links.filter( function ( link ) {
+		for ( const link of links.filter( function ( link ) {
 			return link.ns === 2;
-		} ).forEach( function ( link ) {
+		} ) ) {
 			participatingReviewersCache.push( normalizeUserName( link.title ) as string );
-		} );
+		}
 
 		winston.info( `[afc/util/reviewer] rebuild participating reviewer caches, length: ${ participatingReviewersCache.length }` );
 	} catch ( error ) {
 		winston.error( `[afc/util/reviewer] rebuild participating reviewer caches fail: ${ inspect( error ) }` );
 		send( {
-			tMsg: `rebuildParticipatingReviewersCache 失敗：${ escapeHTML( String( error ) ) }。`
+			tMessage: `rebuildParticipatingReviewersCache 失敗：${ escapeHTML( String( error ) ) }。`,
 		}, 'debug' );
 	}
 }
@@ -168,7 +170,7 @@ export function isParticipatingReviewer( user: string ): boolean {
 }
 
 export function hasReviewersCache(): boolean {
-	return !!participatingReviewersCache.length && !!exOfficioReviewersCache.length;
+	return participatingReviewersCache.length > 0 && exOfficioReviewersCache.length > 0;
 }
 
 recentChange.addProcessFunction( function ( event: RecentChangeEvent ): boolean {

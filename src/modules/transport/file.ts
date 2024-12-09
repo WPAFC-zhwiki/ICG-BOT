@@ -6,8 +6,9 @@
  *
  */
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-( require( 'axios' ) as {default: object;} ).default = require( 'axios' ) as object;
+// 修正 axios 的 typings 和實際匯出不對應的行為
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+( require( 'axios' ) as { default: object; } ).default = require( 'axios' ) as object;
 
 import crypto = require( 'node:crypto' );
 import fs = require( 'node:fs' );
@@ -26,7 +27,7 @@ import { File, UploadedFile } from '@app/lib/handlers/Context';
 import { getFileNameFromUrl, inspect } from '@app/lib/util';
 
 import * as bridge from '@app/modules/transport/bridge';
-import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
+import { BridgeMessage } from '@app/modules/transport/BridgeMessage';
 import * as command from '@app/modules/transport/command';
 
 const servemedia: ConfigTS[ 'transport' ][ 'servemedia' ] = Manager.config.transport.servemedia;
@@ -41,19 +42,19 @@ const USERAGENT = `AFC-ICG-BOT/${ version } (${ repository.replace( /^git\+/, ''
  * @return {string} 新文件名
  */
 function generateFileName( url: string, name: string ): string {
-	let extName: string = path.extname( name || '' );
-	if ( extName === '' ) {
-		extName = path.extname( getFileNameFromUrl( url ) || '' );
+	let extensionName: string = path.extname( name || '' );
+	if ( extensionName === '' ) {
+		extensionName = path.extname( getFileNameFromUrl( url ) || '' );
 	}
-	if ( extName === '.webp' ) {
-		extName = '.png';
+	if ( extensionName === '.webp' ) {
+		extensionName = '.png';
 	}
 
 	// p4: reject .exe (complaint from the site admin)
 	if ( path.extname( name ) === '.exe' ) {
 		throw new Error( 'We wont upload .exe file' );
 	}
-	return crypto.createHash( 'md5' ).update( name || ( Math.random() ).toString() ).digest( 'hex' ) + extName;
+	return crypto.createHash( 'md5' ).update( name || ( Math.random() ).toString() ).digest( 'hex' ) + extensionName;
 }
 
 /**
@@ -64,15 +65,19 @@ function generateFileName( url: string, name: string ): string {
  */
 function convertFileType( type: string ): string {
 	switch ( type ) {
-		case 'sticker':
+		case 'sticker': {
 			return 'photo';
-		case 'voice':
+		}
+		case 'voice': {
 			return 'audio';
+		}
 		case 'video':
-		case 'document':
+		case 'document': {
 			return 'file';
-		default:
+		}
+		default: {
 			return type;
+		}
 	}
 }
 class FetchStream extends stream.Transform {
@@ -83,10 +88,12 @@ class FetchStream extends stream.Transform {
 
 	private async doFetch() {
 		try {
-			const res = await axios.get<stream.Readable>( this.url, Object.assign( {}, this.config, {
-				responseType: 'stream'
+			const response = await axios.get<stream.Readable>( this.url, Object.assign( {}, this.config, {
+				responseType: 'stream',
 			} ) );
-			res.data.pipe( this );
+			// stream.Writable 不知道為什麼沒有完整「實現」NodeJS.WritableStream
+			// @ts-expect-error TS2345
+			response.data.pipe<this>( this );
 		} catch ( error ) {
 			this.emit( 'error', error );
 		}
@@ -123,7 +130,9 @@ function getFileStream( file: File ): stream.Readable {
 		//     // 缩小表情包尺寸，因容易刷屏
 		//     fileStream = fileStream.pipe(sharp().resize(servemedia.stickerMaxWidth || 256).png());
 		// } else {
-		fileStream = fileStream.pipe( sharp().png() );
+		// stream.Writable / stream.Readable 不知道為什麼沒有完整「實現」NodeJS.WritableStream
+		// @ts-expect-error TS2345
+		fileStream = fileStream.pipe<sharp.Sharp>( sharp().png() );
 		// }
 	}
 
@@ -139,11 +148,13 @@ function pipeFileStream( file: File, pipe: stream.Writable ): Promise<void> {
 	return new Promise<void>( function ( resolve, reject ) {
 		const fileStream = getFileStream( file );
 		fileStream
-			.on( 'error', function ( e: unknown ) {
-				reject( e );
+			.on( 'error', function ( error: unknown ) {
+				reject( error );
 			} )
 			.on( 'end', resolve )
-			.pipe( pipe );
+			// stream.Writable 不知道為什麼沒有完整「實現」NodeJS.WritableStream
+			// @ts-expect-error TS2345
+			.pipe<stream.Writable>( pipe );
 	} );
 }
 
@@ -153,19 +164,12 @@ function pipeFileStream( file: File, pipe: stream.Writable ): Promise<void> {
 async function uploadToCache( file: File ): Promise<string> {
 	const targetName = generateFileName( file.url || file.path, file.id );
 	const targetPath = path.join( servemedia.cachePath, targetName );
-	const writeStream = fs.createWriteStream( targetPath ).on( 'error', ( e ) => {
-		throw e;
-	} );
+	const writeStream = fs.createWriteStream( targetPath )
+		.on( 'error', ( error ) => {
+			throw error;
+		} );
 	await pipeFileStream( file, writeStream );
 	return servemedia.serveUrl + targetName;
-}
-
-function createTimeoutAbortSignal( timeOut: number ) {
-	const controller = new AbortController();
-	setTimeout( function () {
-		controller.abort( 'Timeout.' );
-	}, timeOut );
-	return controller.signal;
 }
 
 function createFormData( data: [ name: string, value: string | Blob, fileName?: string ][] ) {
@@ -184,11 +188,11 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
 		try {
 			const requestOptions: Partial<AxiosRequestConfig<FormData>> = {
 				method: 'POST',
-				signal: createTimeoutAbortSignal( servemedia.timeout ?? 30000 ),
+				signal: AbortSignal.timeout( servemedia.timeout ?? 30_000 ),
 				headers: {
-					'Content-Type': 'multipart/form-data'
+					'Content-Type': 'multipart/form-data',
 				},
-				responseType: 'text'
+				responseType: 'text',
 			};
 
 			const name = generateFileName( file.url ?? file.path, file.id );
@@ -204,39 +208,39 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
 					const pendingFile = new Blob( [ Buffer.concat( buf as Uint8Array[] ) ] );
 
 					switch ( host ) {
-						case 'vim-cn':
+						case 'vim-cn': {
 							requestOptions.url = 'https://img.vim-cn.com/';
 							requestOptions.data = createFormData( [
-								[ 'name', pendingFile, name ]
+								[ 'name', pendingFile, name ],
 							] );
 							break;
+						}
 
-						case 'imgur':
-							if ( servemedia.imgur.apiUrl.endsWith( '/' ) ) {
-								requestOptions.url = servemedia.imgur.apiUrl + 'upload';
-							} else {
-								requestOptions.url = servemedia.imgur.apiUrl + '/upload';
-							}
+						case 'imgur': {
+							requestOptions.url = servemedia.imgur.apiUrl.endsWith( '/' ) ? servemedia.imgur.apiUrl + 'upload' : servemedia.imgur.apiUrl + '/upload';
 							requestOptions.headers = Object.assign( requestOptions.headers ?? {}, {
-								Authorization: `Client-ID ${ servemedia.imgur.clientId }`
+								Authorization: `Client-ID ${ servemedia.imgur.clientId }`,
 							} );
 							requestOptions.data = createFormData( [
 								[ 'type', 'file' ],
-								[ 'image', pendingFile, name ]
+								[ 'image', pendingFile, name ],
 							] );
 							break;
+						}
 
-						case 'uguu':
+						case 'uguu': {
 							requestOptions.url = servemedia.uguuApiUrl; // 原配置文件以大写字母开头
 							requestOptions.data = createFormData( [
 								[ 'file', pendingFile, name ],
-								[ 'randomname', 'true' ]
+								[ 'randomname', 'true' ],
 							] );
 							break;
+						}
 
-						default:
+						default: {
 							reject( new Error( 'Unknown host type' ) );
 							return;
+						}
 					}
 
 					axios.postForm<string, AxiosResponse<string>, AxiosRequestConfig<FormData>>(
@@ -246,14 +250,16 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
 						.then( function ( response ) {
 							if ( response.status === 200 ) {
 								switch ( host ) {
-									case 'vim-cn':
+									case 'vim-cn': {
 										resolve( String( response.data ).trim().replace( 'http://', 'https://' ) );
 										break;
-									case 'uguu':
+									}
+									case 'uguu': {
 										resolve( String( response.data ).trim() );
 										break;
-									case 'imgur':
-										// eslint-disable-next-line no-case-declarations
+									}
+									case 'imgur': {
+
 										const json: {
 											success: boolean;
 											data: {
@@ -266,10 +272,11 @@ function uploadToHost( host: ConfigTS[ 'transport' ][ 'servemedia' ][ 'type' ], 
 
 											reject( new Error( `Imgur return: ${ json.data.error ?? JSON.stringify( json ) }` ) );
 										} else {
-											// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
 											resolve( json.data.link! );
 										}
 										break;
+									}
 								}
 							} else {
 								reject( new Error( String( response.data ) ) );
@@ -295,17 +302,17 @@ function uploadToLinx( file: File ) {
 				headers: {
 					'User-Agent': servemedia.userAgent ?? USERAGENT,
 					'Linx-Randomize': 'yes',
-					Accept: 'application/json'
+					Accept: 'application/json',
 				},
-				responseType: 'text'
+				responseType: 'text',
 			} ).then( function ( response ) {
 				if ( response.status === 200 ) {
 					resolve( JSON.parse( response.data as string ).direct_url as string );
 				} else {
 					reject( new Error( String( response.data ) ) );
 				}
-			} ).catch( function ( err ) {
-				reject( err );
+			} ).catch( function ( error ) {
+				reject( error );
 			} );
 		} catch ( error ) {
 			reject( error );
@@ -316,45 +323,45 @@ function uploadToLinx( file: File ) {
 /*
  * 決定檔案去向
  */
-async function uploadFile( file: File ): Promise<UploadedFile | null> {
+async function uploadFile( file: File ): Promise<UploadedFile | undefined> {
 	let url: string;
 	const fileType: string = convertFileType( file.type );
 
 	switch ( servemedia.type ) {
 		case 'vim-cn':
-		case 'uguu':
+		case 'uguu': {
 			url = await uploadToHost( servemedia.type, file );
 			break;
+		}
 
 		case 'sm.ms':
-		case 'imgur':
+		case 'imgur': {
 			// 公共图床只接受图片，不要上传其他类型文件
 			if ( fileType === 'photo' ) {
 				url = await uploadToHost( servemedia.type, file );
 			}
 			break;
+		}
 
-		case 'self':
+		case 'self': {
 			url = await uploadToCache( file );
 			break;
+		}
 
-		case 'linx':
+		case 'linx': {
 			url = await uploadToLinx( file );
 			break;
+		}
 
 		default:
 
 	}
 
-	if ( url ) {
-		return {
-			type: fileType,
-			displayFilename: file.origFilename || path.basename( url ),
-			url: url
-		};
-	} else {
-		return null;
-	}
+	return url ? {
+		type: fileType,
+		displayFilename: file.origFilename || path.basename( url ),
+		url: url,
+	} : undefined;
 }
 
 /*
@@ -362,7 +369,7 @@ async function uploadFile( file: File ): Promise<UploadedFile | null> {
  */
 const fileUploader = {
 	handlers: Manager.handlers,
-	process: async function ( context: BridgeMsg ): Promise<UploadedFile[]> {
+	process: async function ( context: BridgeMessage ): Promise<UploadedFile[]> {
 		// 上传文件
 		// p4: don't bother with files from somewhere without bridges in config
 		if (
@@ -370,31 +377,29 @@ const fileUploader = {
 			context.extra.files &&
 			// 過濾掉只有 Telegram 的傳輸，用 file_id
 			context.extra.mapTo
-				.filter( ( target ) => BridgeMsg.parseUID( target ).client === 'telegram' )
+				.filter( ( target ) => BridgeMessage.parseUID( target ).client === 'telegram' )
 				.length !== context.extra.clients &&
 			servemedia.type &&
 			servemedia.type !== 'none'
 		) {
-			const promises: Promise<UploadedFile | null>[] = [];
+			const promises: Promise<UploadedFile | void>[] = [];
 			const fileCount: number = context.extra.files.length;
 
 			// 将聊天消息附带文件上传到服务器
 			for ( const [ index, file ] of context.extra.files.entries() ) {
 				if ( servemedia.sizeLimit && servemedia.sizeLimit > 0 &&
-					file.size && file.size > servemedia.sizeLimit * 1024 ) {
+					file.size > 0 && file.size > servemedia.sizeLimit * 1024 ) {
 					winston.debug( `[file] <FileUploader> #${ context.msgId } File ${ index + 1 }/${ fileCount }: Size limit exceeded. Ignore.` );
 				} else {
 					promises.push( uploadFile( file ).catch( function ( error ) {
 						winston.error( '[file] Error on processing files:' + inspect( error ) );
-						return null;
 					} ) );
 				}
 			}
 
 			// 整理上传到服务器之后到URL
-			const uploads: UploadedFile[] = ( await Promise.all( promises ) ).filter( ( x ) => {
-				return x;
-			} );
+			// eslint-disable-next-line unicorn/no-await-expression-member
+			const uploads: UploadedFile[] = ( await Promise.all( promises ) ).filter( ( v ): v is UploadedFile => !!v );
 			for ( const [ index, upload ] of uploads.entries() ) {
 				winston.debug( `[file] <FileUploader> #${ context.msgId } File ${ index + 1 }/${ uploads.length } (${ upload.type }): ${ upload.url }` );
 			}
@@ -408,75 +413,75 @@ const fileUploader = {
 					if ( v.url.startsWith( telegramApiRoot ) ) {
 						return {
 							...v,
-							url: telegramApiRoot + '/files/<redacted>/' + v.url.split( '/' ).pop()
+							url: telegramApiRoot + '/files/<redacted>/' + v.url.split( '/' ).pop(),
 						};
 					}
 					return v;
 				} ),
-				mapTo: context.extra.mapTo
+				mapTo: context.extra.mapTo,
 			} ) }` );
 			return [];
 		}
-	}
+	},
 };
 
 Manager.global.ifEnable( 'transport', function () {
-	bridge.addHook( 'bridge.send', async ( msg: BridgeMsg ) => {
-		msg.extra.uploads = await fileUploader.process( msg );
+	bridge.addHook( 'bridge.send', async ( message: BridgeMessage ) => {
+		message.extra.uploads = await fileUploader.process( message );
 	} );
 
 	if ( Manager.config.transport.manageAdmins && Manager.config.transport.servemedia.type === 'self' ) {
-		const admin = Manager.config.transport.manageAdmins
-			.map( BridgeMsg.parseUID )
+		const admin = new Set( Manager.config.transport.manageAdmins
+			.map( ( uid ) => BridgeMessage.parseUID( uid ) )
 			.map( ( v ) => v.uid )
-			.filter( ( v ) => v );
+			.filter( Boolean ) );
 
-		command.addCommand( 'delfile', async ( msg ) => {
-			winston.debug( '[file/del] %s: %s', msg.from_uid, msg.text );
-			if ( !admin.includes( msg.from_uid ) ) {
+		command.addCommand( 'delfile', async ( message ) => {
+			winston.debug( '[file/del] %s: %s', message.from_uid, message.text );
+			if ( !admin.has( message.from_uid ) ) {
 				return;
 			}
 			let processedUrl: string;
 			try {
 				const url = new URL(
-					msg.param.trim().replace( /^https?:\/\//, '//' ),
+					message.param.trim().replace( /^https?:\/\//, '//' ),
 					Manager.config.transport.servemedia.serveUrl
 				);
 				url.search = '';
 				url.hash = '';
 				processedUrl = url.href;
-			} catch ( error ) {
-				msg.reply( `${ msg.param.trim() ? '檔案網址無效。' : '' }\n使用方法：\n/delfile <url>` );
+			} catch {
+				message.reply( `${ message.param.trim() ? '檔案網址無效。' : '' }\n使用方法：\n/delfile <url>` );
 				return;
 			}
 			if ( !processedUrl.startsWith( Manager.config.transport.servemedia.serveUrl ) ) {
-				msg.reply( '這網址我也無法處理呀...' );
+				message.reply( '這網址我也無法處理呀...' );
 				return;
 			}
 			const fileName = processedUrl.slice( Manager.config.transport.servemedia.serveUrl.length );
-			if ( fileName.match( /^\.|\.$/ ) || !fileName.match( /^[\da-z.]+$/ ) ) {
-				msg.reply( '這網址看起來就不會存在...' );
+			if ( /^\.|\.$/.test( fileName ) || !/^[\da-z.]+$/.test( fileName ) ) {
+				message.reply( '這網址看起來就不會存在...' );
 				return;
 			}
-			winston.debug( '[file/del] %s try to delete %s.', msg.from_uid, fileName );
+			winston.debug( '[file/del] %s try to delete %s.', message.from_uid, fileName );
 			const realPath = path.join( Manager.config.transport.servemedia.cachePath, fileName );
 			try {
 				// eslint-disable-next-line no-bitwise
 				await fs.promises.access( realPath, fs.constants.R_OK | fs.constants.W_OK );
 			} catch ( error ) {
-				winston.warn( '[file/del] %s delete %s fail: ', msg.from_uid, realPath, inspect( error ) );
-				msg.reply( `刪除 ${ fileName } 失敗：檔案不存在或不可能被機器人刪除` );
+				winston.warn( '[file/del] %s delete %s fail: ', message.from_uid, realPath, inspect( error ) );
+				message.reply( `刪除 ${ fileName } 失敗：檔案不存在或不可能被機器人刪除` );
 				return;
 			}
 			try {
 				await fs.promises.rm( realPath );
 			} catch ( error ) {
-				msg.reply( `刪除 ${ fileName }失敗：${ error }` );
-				winston.error( '[file/del] %s delete %s fail: %s', msg.from_uid, realPath, inspect( error ) );
+				message.reply( `刪除 ${ fileName }失敗：${ error }` );
+				winston.error( '[file/del] %s delete %s fail: %s', message.from_uid, realPath, inspect( error ) );
 				return;
 			}
-			winston.info( '[file/del] %s delete %s success.', msg.from_uid, realPath );
-			msg.reply( `已刪除 ${ fileName }` );
+			winston.info( '[file/del] %s delete %s success.', message.from_uid, realPath );
+			message.reply( `已刪除 ${ fileName }` );
 		} );
 	}
 } );

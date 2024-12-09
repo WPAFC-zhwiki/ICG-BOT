@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/prefer-event-target */
 // Type definitions for irc-upd v0.10.0
 // Project: https://github.com/Throne3d/node-irc
 // Definitions by: sunny00217wm <https://github.com/sunny00217wm>
@@ -21,16 +22,16 @@ declare module 'irc-upd/internal-types/event' {
 	export type Events = Record<string | symbol, Event>;
 
 	export default class EventEmitter<events extends Events = Events> extends InternalEventEmitter {
-		addListener<V extends keyof events>( event: V, listener: events[ V ] ): this;
-		on<V extends keyof events>( event: V, listener: events[ V ] ): this;
-		once<V extends keyof events>( event: V, listener: events[ V ] ): this;
-		removeListener<V extends keyof events>( event: V, listener: events[ V ] ): this;
-		off<V extends keyof events>( event: V, listener: events[ V ] ): this;
-		removeAllListeners<V extends keyof events>( event?: V ): this;
-		listeners<V extends keyof events>( event: V ): events[ V ][];
-		rawListeners<V extends keyof events>( event: V ): events[ V ][];
-		emit<V extends keyof events>( event: V, ...args: Parameters<events[ V ]> ): boolean;
-		listenerCount<V extends keyof events>( event: V ): number;
+		public addListener<V extends keyof events>( event: V, listener: events[ V ] ): this;
+		public on<V extends keyof events>( event: V, listener: events[ V ] ): this;
+		public once<V extends keyof events>( event: V, listener: events[ V ] ): this;
+		public removeListener<V extends keyof events>( event: V, listener: events[ V ] ): this;
+		public off<V extends keyof events>( event: V, listener: events[ V ] ): this;
+		public removeAllListeners<V extends keyof events>( event?: V ): this;
+		public listeners<V extends keyof events>( event: V ): events[ V ][];
+		public rawListeners<V extends keyof events>( event: V ): events[ V ][];
+		public emit<V extends keyof events>( event: V, ...args: Parameters<events[ V ]> ): boolean;
+		public listenerCount<V extends keyof events>( event: V ): number;
 	}
 }
 
@@ -54,7 +55,7 @@ declare module 'irc-upd' {
 		pingTimeout(): void;
 		wantPing(): void;
 	}> {
-		constructor( client: Client );
+		public constructor( client: Client );
 		public timerNumber: number;
 		public started: boolean;
 		public loopingTimeout: NodeJS.Timeout;
@@ -307,10 +308,10 @@ declare module 'irc-upd' {
 		 * @param nick - nickname
 		 * @param opts
 		 */
-		constructor(
+		public constructor(
 			server: string,
 			nick: string,
-			opts?: IClientOpts
+			options?: IClientOptions
 		);
 
 		/**
@@ -372,7 +373,7 @@ declare module 'irc-upd' {
 		public maxLineLength: number;
 
 		/** Bot options */
-		public readonly opt: IClientOpts & {
+		public readonly opt: IClientOptions & {
 			server: string;
 			nick: string;
 		};
@@ -532,7 +533,7 @@ declare module 'irc-upd' {
 			users: Record<string, string>;
 			mode: string;
 			modeParams: Record<string, string[]>;
-		}
+		};
 		protected _connectionHandler(): void;
 		protected end(): void;
 		protected deactivateFloodProtection(): void;
@@ -541,8 +542,8 @@ declare module 'irc-upd' {
 		protected _splitLongLines( words: string, maxLength: number, destination: string[] ): string[];
 		protected emitChannelEvent( eventName: string, channel: string ): void;
 		protected _speak( kind: string, target: string, text: string ): void;
-		_addWhoisData( nick: string, key: string, value: IWhoisData, onlyIfExists: boolean ): void;
-		_clearWhoisData( nick: string ): IWhoisData;
+		public _addWhoisData( nick: string, key: string, value: IWhoisData, onlyIfExists: boolean ): void;
+		public _clearWhoisData( nick: string ): IWhoisData;
 		protected _handleCTCP( from: string, to: string, text: string, type: string, message: IMessage ): void;
 		protected convertEncoding( str: string ): string;
 		protected canConvertEncoding(): boolean;
@@ -550,7 +551,7 @@ declare module 'irc-upd' {
 	}
 
 	/** Client options object */
-	export interface IClientOpts {
+	export interface IClientOptions {
 		/**
 		 * IRC username
 		 *
@@ -708,7 +709,6 @@ declare module 'irc-upd' {
 	}
 
 	/** Command types */
-	// eslint-disable-next-line no-shadow
 	export enum CommandType {
 		normal, reply, error
 	}

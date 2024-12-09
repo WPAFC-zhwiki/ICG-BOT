@@ -9,17 +9,17 @@ import { Manager } from '@app/init';
 const tg = Manager.handlers.get( 'Telegram' );
 
 tg.addCommand( 'thisgroupid', function ( context ) {
-	const rawdata = context._rawData;
+	const rawData = context._rawData;
 	let output: string;
-	if ( rawdata.from.id === rawdata.chat.id ) {
-		output = `Your ID: <code>${ rawdata.from.id }</code>`;
-		winston.debug( `[ids-tg] Msg #${ context.msgId }: YourId = ${ rawdata.from.id }` );
+	if ( rawData.from.id === rawData.chat.id ) {
+		output = `Your ID: <code>${ rawData.from.id }</code>`;
+		winston.debug( `[ids-tg] Message #${ context.msgId }: YourId = ${ rawData.from.id }` );
 	} else {
-		output = `Group ID: <code>${ rawdata.chat.id }</code>`;
-		winston.debug( `[ids-tg] Msg #${ context.msgId }: GroupId = ${ rawdata.chat.id }` );
+		output = `Group ID: <code>${ rawData.chat.id }</code>`;
+		winston.debug( `[ids-tg] Message #${ context.msgId }: GroupId = ${ rawData.chat.id }` );
 	}
 	context.reply( output, {
-		parse_mode: 'HTML'
+		parse_mode: 'HTML',
 	} );
 } );
 
@@ -30,16 +30,12 @@ function getOutPut( value: [ string | false, number ] ) {
 }
 
 tg.addCommand( 'userid', function ( context ) {
-	const rawdata = context._rawData;
+	const rawData = context._rawData;
 
 	let output: string;
-	if ( 'reply_to_message' in rawdata.message ) {
-		output = 'Reply to ' + getOutPut( tg.getMessageOriginDescription( rawdata.message.reply_to_message ) );
-	} else {
-		output = 'Your ' + getOutPut( tg.getMessageOriginDescription( rawdata.message ) );
-	}
-	winston.debug( `[ids-tg] Msg #${ context.msgId }: ${ output }` );
+	output = 'reply_to_message' in rawData.message ? 'Reply to ' + getOutPut( tg.getMessageOriginDescription( rawData.message.reply_to_message ) ) : 'Your ' + getOutPut( tg.getMessageOriginDescription( rawData.message ) );
+	winston.debug( `[ids-tg] Message #${ context.msgId }: ${ output }` );
 	context.reply( output.replace( /"(-?\d+)"/, '<code>$1</code>' ), {
-		parse_mode: 'HTML'
+		parse_mode: 'HTML',
 	} );
 } );

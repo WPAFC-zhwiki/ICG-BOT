@@ -14,18 +14,17 @@ const heartbeatConfig = 'heartbeatConfig.sh';
 if ( config.heartbeat ) {
 	const heartbeatData = dotenv.parse<Record<'STATUS_FILE' | 'MAX_NO_UPDATE_TIME', string>>( fs.readFileSync( path.join( configRoot, heartbeatConfig ) ) );
 	const statusFilePath = heartbeatData.STATUS_FILE
-		.replace( /\$PROGRAM_ROOT/g, programRoot )
-		.replace( /\$CONFIG_ROOT/g, configRoot )
-		.replace( /\$HOME/g, os.homedir() );
+		.replaceAll( '$PROGRAM_ROOT', programRoot )
+		.replaceAll( '$CONFIG_ROOT', configRoot )
+		.replaceAll( '$HOME', os.homedir() );
 
 	const maxNoUpdateTime = Number.parseInt( heartbeatData.MAX_NO_UPDATE_TIME, 10 );
 
-	// eslint-disable-next-line no-inner-declarations
 	function heartbeat() {
-		fs.writeFile( statusFilePath, new Date().toISOString(), ( err ) => {
-			if ( err ) {
-				winston.error( '[heartbeat] Failed to update status file:', inspect( err ) );
-				throw err;
+		fs.writeFile( statusFilePath, new Date().toISOString(), ( error ) => {
+			if ( error ) {
+				winston.error( '[heartbeat] Failed to update status file:', inspect( error ) );
+				throw error;
 			} else {
 				winston.debug( '[heartbeat] Status file updated' );
 			}

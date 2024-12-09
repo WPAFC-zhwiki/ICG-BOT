@@ -10,31 +10,32 @@
  * 於是，中文維基百科其他幾個花式 ping 也成為了機器人的指令。
  */
 
+import { scheduler } from 'node:timers/promises';
+
 import { Context as TContext } from 'telegraf';
 
 import { Manager } from '@app/init';
 
-import delay from '@app/lib/delay';
-import { Context, RawMsg } from '@app/lib/handlers/Context';
+import { Context, RawMessage } from '@app/lib/handlers/Context';
 import { addCommand } from '@app/lib/message';
 
-import { transportMessage, BridgeMsg } from '@app/modules/transport';
+import { transportMessage, BridgeMessage } from '@app/modules/transport';
 
 const tg = Manager.handlers.get( 'Telegram' );
 
 addCommand( 'anyone', async function ( context: Context ) {
-	const rawdata: RawMsg = context._rawData;
+	const rawData: RawMessage = context._rawData;
 
-	if ( rawdata instanceof TContext ) {
-		if ( 'reply_to_message' in rawdata.message ) {
-			tg.rawClient.telegram.sendMessage( rawdata.chat.id, '沒有人，你悲劇了。', {
+	if ( rawData instanceof TContext ) {
+		if ( 'reply_to_message' in rawData.message ) {
+			tg.rawClient.telegram.sendMessage( rawData.chat.id, '沒有人，你悲劇了。', {
 				reply_parameters: {
-					message_id: rawdata.message.reply_to_message.message_id
-				}
+					message_id: rawData.message.reply_to_message.message_id,
+				},
 			} );
 			try {
-				await tg.rawClient.telegram.deleteMessage( rawdata.chat.id, rawdata.message.message_id );
-			} catch ( ex ) {}
+				await tg.rawClient.telegram.deleteMessage( rawData.chat.id, rawData.message.message_id );
+			} catch {}
 		} else {
 			context.reply( '沒有人，你悲劇了。' );
 		}
@@ -43,11 +44,11 @@ addCommand( 'anyone', async function ( context: Context ) {
 	}
 
 	if ( Manager.global.isEnable( 'transport' ) ) {
-		await delay( 1000 );
+		await scheduler.wait( 1000 );
 
-		transportMessage( new BridgeMsg( context, {
+		transportMessage( new BridgeMessage( context, {
 			text: '沒有人，你悲劇了。',
-			isNotice: true
+			isNotice: true,
 		} ), true );
 	}
 } );

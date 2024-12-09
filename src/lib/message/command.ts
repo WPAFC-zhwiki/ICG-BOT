@@ -10,7 +10,7 @@ type commandTS = {
 		disables: string[],
 		enables?: string[]
 	},
-	callback: ( msg: Context ) => void;
+	callback: ( message: Context ) => void;
 };
 
 const commands: Map<string, commandTS> = new Map();
@@ -23,8 +23,8 @@ for ( const [ type, handler ] of Manager.handlers ) {
 
 export function addCommand(
 	command: string | string[],
-	callback: ( msg: Context ) => void,
-	opts: {
+	callback: ( message: Context ) => void,
+	options_: {
 		allowedClients?: string[];
 		disallowedClients?: string[];
 		enables?: string[];
@@ -32,13 +32,13 @@ export function addCommand(
 	} = {}
 ): void {
 	const clients: string[] = [];
-	if ( opts.allowedClients ) {
-		for ( const client of opts.allowedClients ) {
+	if ( options_.allowedClients ) {
+		for ( const client of options_.allowedClients ) {
 			clients.push( client.toString().toLowerCase() );
 		}
 	} else {
 		const disallowedClients = [];
-		for ( const client of ( opts.disallowedClients || [] ) ) {
+		for ( const client of ( options_.disallowedClients || [] ) ) {
 			disallowedClients.push( client.toString().toLowerCase() );
 		}
 
@@ -56,7 +56,7 @@ export function addCommand(
 		if ( !commands.has( c ) ) {
 			for ( const client of clients ) {
 				if ( clientFullNames[ client ] && Manager.handlers.has( clientFullNames[ client ] ) ) {
-					Manager.handlers.get<'IRC'|'Telegram'|'Discord'>( clientFullNames[ client ] ).addCommand( c, emitCommand );
+					Manager.handlers.get<'IRC' | 'Telegram' | 'Discord'>( clientFullNames[ client ] ).addCommand( c, emitCommand );
 				} else {
 					winston.info( `[command] Can't bind "${ command }" to client ${ clientFullNames[ client ] }: You didn't enable it.` );
 				}
@@ -68,19 +68,19 @@ export function addCommand(
 		enables?: string[];
 		disables: string[];
 	} = {
-		disables: []
+		disables: [],
 	};
 
-	if ( opts.enables ) {
+	if ( options_.enables ) {
 		options.enables = [];
-		for ( const group of opts.enables ) {
+		for ( const group of options_.enables ) {
 			const client = parseUID( group );
 			if ( client.uid ) {
 				options.enables.push( client.uid );
 			}
 		}
-	} else if ( opts.disables ) {
-		for ( const group of opts.disables ) {
+	} else if ( options_.disables ) {
+		for ( const group of options_.disables ) {
 			const client = parseUID( group );
 			if ( client.uid ) {
 				options.disables.push( client.uid );
@@ -90,7 +90,7 @@ export function addCommand(
 
 	const cmd: commandTS = {
 		options: options,
-		callback
+		callback,
 	};
 
 	for ( const c of command ) {
@@ -111,23 +111,23 @@ export function deleteCommand( command: string ): void {
 function emitCommand( context: Context, cmd: string ) {
 	const fCmd = commands.get( cmd );
 	const { disables, enables } = fCmd.options;
-	let func: ( msg: Context ) => void = null;
+	let func: ( ( message: Context ) => void ) | undefined;
 
-	const to_uid = getUIDFromContext( context, context.to );
+	const toUid = getUIDFromContext( context, context.to );
 
 	// 判斷當前群組是否在處理範圍內
-	if ( disables.includes( to_uid ) ) {
-		winston.debug( `[command] Msg #${ context.msgId } command ignored (in disables).` );
+	if ( disables.includes( toUid as string ) ) {
+		winston.debug( `[command] Message #${ context.msgId } command ignored (in disables).` );
 	}
 
-	if ( !enables || ( enables && enables.includes( to_uid ) ) ) {
+	if ( !enables || ( enables && enables.includes( toUid as string ) ) ) {
 		func = fCmd.callback;
 	} else {
-		winston.debug( `[command] Msg #${ context.msgId } command ignored (not in enables).` );
+		winston.debug( `[command] Message #${ context.msgId } command ignored (not in enables).` );
 	}
 
 	if ( func && ( typeof func === 'function' ) ) {
-		winston.debug( `[command] Msg #${ context.msgId } command: ${ cmd }` );
+		winston.debug( `[command] Message #${ context.msgId } command: ${ cmd }` );
 		func( context );
 	}
 }

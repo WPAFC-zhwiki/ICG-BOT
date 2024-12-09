@@ -11,37 +11,37 @@ import { inspect } from '@app/lib/util';
 const exits: string[] = [];
 
 if ( config.exits ) {
-	config.exits.paths.forEach( function ( obj ) {
-		const isFolder = obj.type === 'folder';
+	for ( const object of config.exits.paths ) {
+		const isFolder = object.type === 'folder';
 		try {
-			const stats = fs.statSync( obj.path );
+			const stats = fs.statSync( object.path );
 			if ( stats.isDirectory() ) {
 				if ( !isFolder ) {
-					winston.error( `[exit] Can't watch file "${ path.normalize( obj.path ) }": It is a directory.` );
-					return;
+					winston.error( `[exit] Can't watch file "${ path.normalize( object.path ) }": It is a directory.` );
+					continue;
 				}
-				exits.push( path.normalize( obj.path ) + path.sep + '**' );
+				exits.push( path.normalize( object.path ) + path.sep + '**' );
 			} else {
 				if ( isFolder ) {
-					winston.error( `[exit] Can't watch folder "${ path.normalize( obj.path ) }": It is a file.` );
-					return;
+					winston.error( `[exit] Can't watch folder "${ path.normalize( object.path ) }": It is a file.` );
+					continue;
 				}
-				exits.push( path.normalize( obj.path ) );
+				exits.push( path.normalize( object.path ) );
 			}
 		} catch ( error ) {
 			if ( String( error ).match( 'no such file or directory' ) ) {
-				winston.warn( `[exit] Can't watch ${ isFolder ? 'folder' : 'file' } "${ path.normalize( obj.path ) }": It isn't exist.` );
+				winston.warn( `[exit] Can't watch ${ isFolder ? 'folder' : 'file' } "${ path.normalize( object.path ) }": It isn't exist.` );
 			} else {
-				winston.error( `[exit] Can't watch ${ isFolder ? 'folder' : 'file' } "${ path.normalize( obj.path ) }": `, inspect( error ) );
+				winston.error( `[exit] Can't watch ${ isFolder ? 'folder' : 'file' } "${ path.normalize( object.path ) }": `, inspect( error ) );
 			}
 		}
-	} );
+	}
 }
 
 const watcher = chokidar.watch( exits, {
 	persistent: true,
 	ignoreInitial: false,
-	usePolling: config.exits.usePolling
+	usePolling: config.exits.usePolling,
 } );
 
 watcher
@@ -53,7 +53,7 @@ watcher
 	} )
 	.on( 'change', function ( exit ) {
 		winston.warn( `[exit] watching path "${ exit }" change, exit.` );
-		// eslint-disable-next-line no-process-exit
+		// eslint-disable-next-line n/no-process-exit, unicorn/no-process-exit
 		process.exit( 1 );
 	} );
 

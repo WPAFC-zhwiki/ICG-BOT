@@ -5,9 +5,9 @@ import { Context as TContext } from 'telegraf';
 
 import { MessageHandler } from '@app/lib/handlers/MessageHandler';
 
-let msgId = 0;
+let messageId = 0;
 
-export type RawMsg = TContext | IMessage | DMessage;
+export type RawMessage = TContext | IMessage | DMessage;
 
 export type File = {
 	/**
@@ -58,7 +58,7 @@ export type ContextExtra = {
 		message: string;
 		isText?: boolean;
 		discriminator?: string;
-		_rawData?: RawMsg;
+		_rawData?: RawMessage;
 	};
 
 	forward?: {
@@ -80,7 +80,7 @@ export type ContextExtra = {
 	/**
 	 * Telegram：file_id 上傳法
 	 */
-	fileIdUploads?: ( ( chatId: string | number, messageId: number ) => Promise<TT.Message | null> )[];
+	fileIdUploads?: ( ( chatId: string | number, messageId: number ) => Promise<TT.Message | void> )[];
 
 	isImage?: boolean;
 
@@ -94,7 +94,7 @@ export type ContextExtra = {
 	discriminator?: string;
 };
 
-export type ContextOptions<RawData extends RawMsg> = {
+export type ContextOptions<RD extends RawMessage> = {
 	from?: string | number;
 	to?: string | number;
 	messageId?: string | number;
@@ -103,14 +103,14 @@ export type ContextOptions<RawData extends RawMsg> = {
 	isPrivate?: boolean;
 	extra?: ContextExtra;
 	handler?: MessageHandler;
-	_rawData?: RawData;
+	_rawData?: RD;
 	command?: string;
 	param?: string;
-}
+};
 
-function getMsgId(): number {
-	msgId++;
-	return msgId;
+function getMessageId(): number {
+	messageId++;
+	return messageId;
 }
 
 /**
@@ -165,24 +165,24 @@ function getMsgId(): number {
  * }
  * ```
  */
-export class Context<R extends RawMsg = RawMsg> implements ContextOptions<R> {
-	protected _from: string = null;
-	get from(): string {
+export class Context<R extends RawMessage = RawMessage> implements ContextOptions<R> {
+	protected _from: string = undefined;
+	public get from(): string {
 		return this._from;
 	}
-	set from( f: string | number ) {
+	public set from( f: string | number ) {
 		this._from = String( f );
 	}
 
-	protected _to: string = null;
-	get to(): string {
+	protected _to: string = undefined;
+	public get to(): string {
 		return this._to;
 	}
-	set to( t: string | number ) {
+	public set to( t: string | number ) {
 		this._to = String( t );
 	}
 
-	public nick: string = null;
+	public nick: string = undefined;
 
 	public text = '';
 
@@ -191,23 +191,23 @@ export class Context<R extends RawMsg = RawMsg> implements ContextOptions<R> {
 	public readonly isBot: boolean = false;
 
 	public extra: ContextExtra = {};
-	public readonly handler: MessageHandler = null;
-	public _rawData: R = null;
+	public readonly handler: MessageHandler = undefined;
+	public _rawData: R = undefined;
 	public command = '';
 	public param = '';
 
-	private readonly _msgId: number = getMsgId();
+	private readonly _msgId: number = getMessageId();
 
-	public messageId: number | string | null = null;
+	public messageId: number | string | null = undefined;
 	private readonly _programMessageId = `Message#${ String( this._msgId ) }@${ String( Date.now() ) }`;
-	get programMessageId(): string | number {
+	public get programMessageId(): string | number {
 		return this.messageId || this._programMessageId;
 	}
 
 	protected static getArgument<T>( ...args: T[] ): T | undefined {
-		for ( let i = 0; i < args.length; i++ ) {
-			if ( args[ i ] !== undefined ) {
-				return args[ i ];
+		for ( const argument of args ) {
+			if ( argument !== undefined ) {
+				return argument;
 			}
 		}
 		return undefined;
@@ -215,12 +215,12 @@ export class Context<R extends RawMsg = RawMsg> implements ContextOptions<R> {
 
 	public constructor( options: Context<R> | ContextOptions<R> = {}, overrides: ContextOptions<R> = {} ) {
 		// TODO 雖然這樣很醜陋，不過暫時先這樣了
-		this._from = String( Context.getArgument( overrides.from, options.from, null ) );
-		this._to = String( Context.getArgument( overrides.to, options.to, null ) );
+		this._from = String( Context.getArgument( overrides.from, options.from ) );
+		this._to = String( Context.getArgument( overrides.to, options.to ) );
 
 		for ( const k of [
 			'nick', 'text', 'isPrivate', 'isBot', 'extra',
-			'handler', '_rawData', 'command', 'param', 'messageId'
+			'handler', '_rawData', 'command', 'param', 'messageId',
 		] ) {
 			this[ k ] = Context.getArgument( overrides[ k ], options[ k ], this[ k ] );
 		}

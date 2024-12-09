@@ -4,32 +4,32 @@ import { ConfigTS } from '@app/config';
 import { Manager } from '@app/init';
 
 import * as bridge from '@app/modules/transport/bridge';
-import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
+import { BridgeMessage } from '@app/modules/transport/BridgeMessage';
 
 Manager.global.ifEnable( 'transport', function () {
-	bridge.addHook( 'bridge.send', function ( msg: BridgeMsg ) {
+	bridge.addHook( 'bridge.send', function ( message: BridgeMessage ) {
 		return new Promise<void>( function ( resolve, reject ) {
 			const paeeye: ConfigTS[ 'transport' ][ 'options' ][ 'paeeye' ] = Manager.config.transport.options.paeeye;
 
 			if (
 				(
-					paeeye.prepend && msg.text.startsWith( paeeye.prepend ) ||
-					paeeye.inline && msg.text.includes( paeeye.inline ) ||
-					paeeye.regexp && msg.text.match( paeeye.regexp )
+					paeeye.prepend && message.text.startsWith( paeeye.prepend ) ||
+					paeeye.inline && message.text.includes( paeeye.inline ) ||
+					paeeye.regexp && paeeye.regexp.test( message.text )
 				)
 			) {
-				winston.debug( `[transport/paeeye] #${ msg.msgId }: Ignored.` );
+				winston.debug( `[transport/paeeye] #${ message.msgId }: Ignored.` );
 				reject( false );
 				return;
 			} else if (
-				msg.extra.reply &&
+				message.extra.reply &&
 				(
-					paeeye.prepend && msg.extra.reply.message.startsWith( paeeye.prepend ) ||
-					paeeye.inline && msg.extra.reply.message.includes( paeeye.inline ) ||
-					paeeye.regexp && msg.extra.reply.message.match( paeeye.regexp )
+					paeeye.prepend && message.extra.reply.message.startsWith( paeeye.prepend ) ||
+					paeeye.inline && message.extra.reply.message.includes( paeeye.inline ) ||
+					paeeye.regexp && paeeye.regexp.test( message.extra.reply.message )
 				)
 			) {
-				winston.debug( `[transport/paeeye] #${ msg.msgId }: Ignored.` );
+				winston.debug( `[transport/paeeye] #${ message.msgId }: Ignored.` );
 				reject( false );
 				return;
 			}

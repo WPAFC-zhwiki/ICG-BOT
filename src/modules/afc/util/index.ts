@@ -24,7 +24,7 @@ export function turndown( html: string | TurndownService.Node ) {
  */
 export function encodeURI( uri: string ): string {
 	return encodeURIComponent( uri )
-		.replace(
+		.replaceAll(
 			// $&+/:<=>@[]^`{|}
 			/%(2[46BF]|3[AC-E]|40|5[BDE]|60|7[BCD])/g,
 			decodeURIComponent
@@ -39,8 +39,8 @@ export function encodeURI( uri: string ): string {
  * @return {string} decode url
  */
 export function decodeURI( encodedURI: string ): string {
-	return global.decodeURI( encodedURI )
-		.replace( /\s/g, '_' );
+	return globalThis.decodeURI( encodedURI )
+		.replaceAll( /\s/g, '_' );
 }
 
 export const $ = cheerio.load( '' );
@@ -52,41 +52,43 @@ export const mwbot = ( function (): Mwn {
 		mwnconfig.userAgent = `AFC-ICG-BOT/${ version } (${ repository.replace( /^git\+/, '' ) })`;
 	}
 
-	// eslint-disable-next-line no-shadow
 	const mwbot: Mwn = new Mwn( {
 		...mwnconfig,
-		silent: true
+		silent: true,
 	} );
 
 	switch ( mwnconfig.type ) {
-		case 'botpassword':
+		case 'botpassword': {
 			mwbot.login()
 				.catch( handleMwnRequestError )
 				.then( function () {
 					winston.debug( `[afc/util/index] mwn login successful: ${ mwnconfig.username }@${ mwnconfig.apiUrl.split( '/api.php' ).join( '' ) }/index.php` );
 				} )
-				.catch( function ( err ) {
-					winston.debug( `[afc/util/index] mwn login error: ${ err }` );
+				.catch( function ( error ) {
+					winston.debug( `[afc/util/index] mwn login error: ${ error }` );
 				} );
 			break;
-		case 'oauth':
+		}
+		case 'oauth': {
 			mwbot.initOAuth();
 			mwbot.getTokensAndSiteInfo()
 				.catch( handleMwnRequestError )
 				.then( function () {
 					winston.debug( '[afc/util/index] mwn: success get tokens and site info.' );
 				} )
-				.catch( function ( err ) {
-					winston.debug( `[afc/util/index] mwn error: ${ err }` );
+				.catch( function ( error ) {
+					winston.debug( `[afc/util/index] mwn error: ${ error }` );
 				} );
 			break;
-		default:
+		}
+		default: {
 			mwbot.getSiteInfo()
 				.catch( handleMwnRequestError )
 				.then( function () {
 					winston.debug( '[afc/util/index] mwn: success get site info.' );
 				} );
 			break;
+		}
 	}
 
 	return mwbot;
@@ -94,11 +96,11 @@ export const mwbot = ( function (): Mwn {
 
 export function parseWikiLink( context: string ): string {
 	return context
-		.replace( /\[\[([^[\]]+)\]\]/g, function ( _all: string, text: string ) {
+		.replaceAll( /\[\[([^[\]]+)\]\]/g, function ( _all: string, text: string ) {
 			return `<a href="https://zh.wikipedia.org/wiki/${ text.split( '|' )[ 0 ] }">${ text.split( '|' )[ 1 ] || text.split( '|' )[ 0 ] }</a>`;
 		} )
-		.replace( /&#91;/g, '[' )
-		.replace( /&#93;/g, ']' );
+		.replaceAll( '&#91;', '[' )
+		.replaceAll( '&#93;', ']' );
 }
 
 /**
@@ -144,11 +146,11 @@ function redactedAndThrowMwnError( error: unknown ): false | never {
 	delete error.request?.headers;
 	delete error.request?.httpAgent;
 	delete error.request?.httpsAgent;
-	const requestParams = error.request?.params;
-	if ( requestParams && typeof requestParams === 'object' ) {
-		for ( const key of Reflect.ownKeys( requestParams ) ) {
+	const requestParameters = error.request?.params;
+	if ( requestParameters && typeof requestParameters === 'object' ) {
+		for ( const key of Reflect.ownKeys( requestParameters ) ) {
 			if ( typeof key === 'symbol' || key.toLowerCase().includes( 'token' ) ) {
-				delete requestParams[ key ];
+				delete requestParameters[ key ];
 			}
 		}
 	}

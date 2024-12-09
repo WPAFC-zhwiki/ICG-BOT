@@ -3,7 +3,7 @@ import winston = require( 'winston' );
 import { Manager } from '@app/init';
 
 import * as bridge from '@app/modules/transport/bridge';
-import { BridgeMsg } from '@app/modules/transport/BridgeMsg';
+import { BridgeMessage } from '@app/modules/transport/BridgeMessage';
 
 type commandTS = {
 	options: {
@@ -22,28 +22,24 @@ for ( const [ type, handler ] of Manager.handlers ) {
 }
 
 export function addCommand( command: string, callbacks:
-Record<string, bridge.hook> | ( ( msg: BridgeMsg ) => Promise<void> ), opts: {
+Record<string, bridge.hook> | ( ( message: BridgeMessage ) => Promise<void> ), options_: {
 	allowedClients?: string[];
 	disallowedClients?: string[];
 	enables?: string[];
 	disables?: string[];
 } = {} ): void {
-	let cb: Record<string, bridge.hook>;
+	let callback: Record<string, bridge.hook>;
 
-	if ( typeof callbacks === 'object' ) {
-		cb = callbacks;
-	} else {
-		cb = { sent: callbacks };
-	}
+	callback = typeof callbacks === 'object' ? callbacks : { sent: callbacks };
 
 	const clients = [];
-	if ( opts.allowedClients ) {
-		for ( const client of opts.allowedClients ) {
+	if ( options_.allowedClients ) {
+		for ( const client of options_.allowedClients ) {
 			clients.push( client.toString().toLowerCase() );
 		}
 	} else {
 		const disallowedClients = [];
-		for ( const client of ( opts.disallowedClients || [] ) ) {
+		for ( const client of ( options_.disallowedClients || [] ) ) {
 			disallowedClients.push( client.toString().toLowerCase() );
 		}
 
@@ -66,20 +62,20 @@ Record<string, bridge.hook> | ( ( msg: BridgeMsg ) => Promise<void> ), opts: {
 		enables?: string[];
 		disables: string[];
 	} = {
-		disables: []
+		disables: [],
 	};
 
-	if ( opts.enables ) {
+	if ( options_.enables ) {
 		options.enables = [];
-		for ( const group of opts.enables ) {
-			const client = BridgeMsg.parseUID( group );
+		for ( const group of options_.enables ) {
+			const client = BridgeMessage.parseUID( group );
 			if ( client.uid ) {
 				options.enables.push( client.uid );
 			}
 		}
-	} else if ( opts.disables ) {
-		for ( const group of opts.disables ) {
-			const client = BridgeMsg.parseUID( group );
+	} else if ( options_.disables ) {
+		for ( const group of options_.disables ) {
+			const client = BridgeMessage.parseUID( group );
 			if ( client.uid ) {
 				options.disables.push( client.uid );
 			}
@@ -88,7 +84,7 @@ Record<string, bridge.hook> | ( ( msg: BridgeMsg ) => Promise<void> ), opts: {
 
 	const cmd: commandTS = {
 		options: options,
-		callbacks: cb
+		callbacks: callback,
 	};
 
 	commands.set( command, cmd );
@@ -108,37 +104,37 @@ export function getCommand( command: string ): commandTS {
 	return commands.get( command );
 }
 
-function getCmd( msg: BridgeMsg ) {
-	return commands.get( msg.command );
+function getCommandFromMessage( message: BridgeMessage ) {
+	return commands.get( message.command );
 }
 
-function sethook( event: string ) {
-	return function ( msg: BridgeMsg ) {
-		if ( msg.command ) {
-			const cmd = getCmd( msg );
+function setHook( event: string ) {
+	return function ( message: BridgeMessage ) {
+		if ( message.command ) {
+			const cmd = getCommandFromMessage( message );
 
 			if ( !cmd ) {
 				return Promise.resolve();
 			}
 
 			const { disables, enables } = cmd.options;
-			let func: bridge.hook = null;
+			let func: bridge.hook;
 
 			// 判斷當前群組是否在處理範圍內
-			if ( disables.includes( msg.to_uid ) ) {
-				winston.debug( `[transport/command] Msg #${ msg.msgId } command ignored (in disables).` );
+			if ( disables.includes( message.to_uid ) ) {
+				winston.debug( `[transport/command] Message #${ message.msgId } command ignored (in disables).` );
 				return Promise.resolve();
 			}
 
-			if ( !enables || ( enables && !enables.includes( msg.to_uid ) ) ) {
+			if ( !enables || ( enables && !enables.includes( message.to_uid ) ) ) {
 				func = cmd.callbacks[ event ];
 			} else {
-				winston.debug( `[transport/command] Msg #${ msg.msgId } command ignored (not in enables).` );
+				winston.debug( `[transport/command] Message #${ message.msgId } command ignored (not in enables).` );
 			}
 
 			if ( func && ( typeof func === 'function' ) ) {
-				winston.debug( `[transport/command] Msg #${ msg.msgId } command: ${ msg.command }` );
-				return func( msg );
+				winston.debug( `[transport/command] Message #${ message.msgId } command: ${ message.command }` );
+				return func( message );
 			} else {
 				return Promise.resolve();
 			}
@@ -147,7 +143,7 @@ function sethook( event: string ) {
 }
 
 Manager.global.ifEnable( 'transport', function () {
-	bridge.addHook( 'bridge.send', sethook( 'send' ) );
-	bridge.addHook( 'bridge.receive', sethook( 'receive' ) );
-	bridge.addHook( 'bridge.sent', sethook( 'sent' ) );
+	bridge.addHook( 'bridge.send', setHook( 'send' ) );
+	bridge.addHook( 'bridge.receive', setHook( 'receive' ) );
+	bridge.addHook( 'bridge.sent', setHook( 'sent' ) );
 } );
