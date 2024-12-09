@@ -18,12 +18,10 @@ jobs:
 
     - uses: actions/setup-node@v4
       with:
-        node-version: 22
-
-    - uses: pnpm/action-setup@v2
-      with:
-        run_install: |
-          - args: [--frozen-lockfile]
+        cache: 'pnpm'
+        
+    - name: Install dependencies
+      run: pnpm install
 
     - name: Create temp config
       run: cp config/config.example.ts config/config.ts
