@@ -2,6 +2,7 @@ import crypto = require( 'crypto' );
 
 import cheerio = require( 'cheerio' );
 import Discord = require( 'discord.js' );
+import type { Element } from 'domhandler';
 import { MwnPage } from 'mwn';
 import winston = require( 'winston' );
 
@@ -13,7 +14,7 @@ import {
 	handleMwnRequestError
 } from '@app/modules/afc/util';
 
-function getReason( $e: cheerio.Cheerio<cheerio.Element>, title: string ) {
+function getReason( $e: cheerio.Cheerio<Element>, title: string ) {
 	$e.find( 'a' ).each( function ( _i, a ) {
 		const $a = $( a );
 		const url = new URL( $a.attr( 'href' ), `https://zh.wikipedia.org/wiki/${ title }` );
@@ -39,7 +40,7 @@ const RejectReasonSheetTypeMapString = {
 	PossibleReject: '可能影響條目審核通過',
 	FixNeeded: '建議修正'
 };
-function getReasonFromRejectReasonSheet( $e: cheerio.Cheerio<cheerio.Element> ) {
+function getReasonFromRejectReasonSheet( $e: cheerio.Cheerio<Element> ) {
 	const outputs: string[] = [];
 	for ( const item of $e.children( '.afc-submission-rejectreasonsheet-item' ) ) {
 		const $item = $( item );
@@ -60,7 +61,7 @@ function getReasonFromRejectReasonSheet( $e: cheerio.Cheerio<cheerio.Element> ) 
 	}
 	return outputs;
 }
-function getReasonFromSingleItem( $e: cheerio.Cheerio<cheerio.Element> ) {
+function getReasonFromSingleItem( $e: cheerio.Cheerio<Element> ) {
 	$e.find( '.hide-when-compact, .date-container, .mbox-image a, hr' ).remove();
 
 	const $ambox = $e.find( 'table.ambox' ).remove();
