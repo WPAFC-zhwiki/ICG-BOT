@@ -29,7 +29,7 @@
 	"packageManager": "pnpm@9.15.0",
 	"dependencies": {
 		"@sunafterrainwm/winston-format-remove-telegram-apitoken": "file:lib/winston-format-remove-telegram-apitoken",
-		"axios": "^0.25.0",
+		"axios": "^1.7.9",
 		"cheerio": "1.0.0",
 		"chokidar": "^3.5.3",
 		"cron": "^2.0.0",
