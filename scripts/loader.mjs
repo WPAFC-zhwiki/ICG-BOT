@@ -108,7 +108,8 @@ export async function resolve( specifier, context, nextResolve ) {
 		};
 	}
 
-	if ( context.parentURL && context.parentURL.startsWith( 'file:' ) ) {
+	// 不處理任何疑似包含相對路徑的模組
+	if ( !specifier.startsWith( '.' ) && context.parentURL && context.parentURL.startsWith( 'file:' ) ) {
 		const resolveResult = ts.resolveModuleName(
 			specifier,
 			path.join( projectRoot, 'noop.mjs' ),
