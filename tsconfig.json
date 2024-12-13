@@ -1,4 +1,5 @@
 {
+	"$schema": "https://json.schemastore.org/tsconfig",
 	"compilerOptions": {
 		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
@@ -8,16 +9,16 @@
 		"noImplicitAny": false,
 		"incremental": true,
 		"noEmit": false,
-		"module": "CommonJS",
-		"moduleResolution": "node",
-		"outDir": "./build",
+		"module": "NodeNext",
+		"moduleResolution": "Node16",
+		"allowArbitraryExtensions": true,
 		"removeComments": true,
 		"resolveJsonModule": true,
 		"sourceMap": true,
 		"strict": true,
 		"strictNullChecks": false,
 		"strictBindCallApply": true,
-		"target": "es2023",
+		"target": "ES2022",
 		"paths": {
 			"@app/*": [
 				"./*"
@@ -33,9 +34,9 @@
 	},
 	"include": [
 		"types/*.d.ts",
-		"config/*.ts",
-		"src/*",
-		"src/**/*",
+		"config/*.mts",
+		"src/*.mts",
+		"src/**/*.mts",
 		"src/**/*.json"
 	]
 }
