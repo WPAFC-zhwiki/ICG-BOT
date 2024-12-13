@@ -155,7 +155,7 @@ if ( Manager.global.isEnable( 'transport' ) ) {
 			clientAssociateMessageUsefulCount++;
 		}
 		// eslint-disable-next-line unicorn/no-await-expression-member
-		const processor: bridge.processor = ( await import( `@app/transport/processors/${ type }` ) ).default;
+		const processor: bridge.processor = ( await import( `@app/transport/processors/${ type }.mjs` ) ).default;
 		winston.debug( `[transport] load processor ${ type }` );
 		bridge.addProcessor( type, processor );
 	}

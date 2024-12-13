@@ -19,8 +19,8 @@ export const configRoot = path.join( programRoot, 'config' );
 export function tryResolve( pathname: string ) {
 	// 內建的 import.meta.resolve 不會對僅僅不存在檔案就拋出錯誤
 	const resolved = import.meta.resolve( path.resolve( configRoot, pathname ) );
-	console.log( resolved );
-	if ( !resolved ) {
+	// eslint-disable-next-line security/detect-non-literal-fs-filename
+	if ( !fs.existsSync( resolved ) ) {
 		throw new Error( `[ERR_MODULE_NOT_FOUND] ${ pathname } isn't exists.` );
 	}
 	return resolved;

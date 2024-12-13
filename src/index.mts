@@ -32,7 +32,7 @@ for ( const module of Manager.config.modules ) {
 
 	try {
 		winston.info( `Loading module: ${ module }` );
-		await import( `@app/modules/${ module }` );
+		await import( `@app/modules/${ module }.mjs` );
 	} catch ( error ) {
 		winston.error( `Error while loading plugin ${ module }: ` + inspect( error ) );
 	}
