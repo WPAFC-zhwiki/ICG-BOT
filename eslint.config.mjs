@@ -17,13 +17,15 @@ import pluginSecurity from 'eslint-plugin-security';
 import pluginUnicorn from 'eslint-plugin-unicorn';
 import pluginJsdoc from 'eslint-plugin-jsdoc';
 
+import packageJson from './package.json' with { type: 'json' };
+
 const __dirname = import.meta.dirname ?? path.dirname( fileURLToPath( import.meta.url ) );
 const tsconfigPath = path.join( __dirname, 'tsconfig.json' );
 
 export default tsEslint.config(
 	includeIgnoreFile( path.join( __dirname, '.gitignore' ) ),
 	{
-		ignores: [ '!.*.*', '.*/*', 'node_modules/*', 'config/*.js' ],
+		ignores: [ '!.*.*', '.*/*', 'node_modules/*', 'config/*js' ],
 	},
 	eslint.configs.recommended,
 	// @ts-expect-error TS2345
@@ -77,10 +79,7 @@ export default tsEslint.config(
 			'no-extend-native': 'error',
 			'no-extra-bind': 'error',
 			'no-extra-label': 'error',
-			'no-implicit-coercion': [
-				'error',
-				{ string: true, boolean: false, number: false },
-			],
+			'no-implicit-coercion': [ 'error', { string: true, boolean: false, number: false } ],
 			'no-implicit-globals': 'error',
 			'no-label-var': 'error',
 			'no-loop-func': 'error',
@@ -129,15 +128,18 @@ export default tsEslint.config(
 			'@stylistic/array-bracket-spacing': [ 'error', 'always' ],
 			'@stylistic/block-spacing': 'error',
 			'@stylistic/brace-style': [ 'error', '1tbs' ],
-			'@stylistic/comma-dangle': [ 'error', {
-				arrays: 'always-multiline',
-				objects: 'always-multiline',
-				imports: 'never',
-				exports: 'always-multiline',
-				functions: 'never',
-				importAttributes: 'never',
-				dynamicImports: 'never',
-			} ],
+			'@stylistic/comma-dangle': [
+				'error',
+				{
+					arrays: 'always-multiline',
+					objects: 'always-multiline',
+					imports: 'never',
+					exports: 'always-multiline',
+					functions: 'never',
+					importAttributes: 'never',
+					dynamicImports: 'never',
+				},
+			],
 			'@stylistic/comma-spacing': [ 'error', { before: false, after: true } ],
 			'@stylistic/comma-style': [ 'error', 'last' ],
 			'@stylistic/computed-property-spacing': [ 'error', 'always' ],
@@ -145,10 +147,7 @@ export default tsEslint.config(
 			'@stylistic/eol-last': 'error',
 			'@stylistic/func-call-spacing': 'error',
 			'@stylistic/indent': [ 'error', 'tab', { SwitchCase: 1 } ],
-			'@stylistic/key-spacing': [
-				'error',
-				{ beforeColon: false, afterColon: true },
-			],
+			'@stylistic/key-spacing': [ 'error', { beforeColon: false, afterColon: true } ],
 			'@stylistic/keyword-spacing': 'error',
 			'@stylistic/linebreak-style': [ 'error', 'unix' ],
 			'@stylistic/max-len': [
@@ -168,10 +167,7 @@ export default tsEslint.config(
 			'@stylistic/new-parens': 'error',
 			'@stylistic/no-floating-decimal': 'error',
 			'@stylistic/no-multi-spaces': 'error',
-			'@stylistic/no-multiple-empty-lines': [
-				'error',
-				{ max: 1, maxBOF: 0, maxEOF: 0 },
-			],
+			'@stylistic/no-multiple-empty-lines': [ 'error', { max: 1, maxBOF: 0, maxEOF: 0 } ],
 			'@stylistic/no-tabs': [ 'error', { allowIndentationTabs: true } ],
 			'@stylistic/no-trailing-spaces': 'error',
 			'@stylistic/no-whitespace-before-property': 'error',
@@ -183,44 +179,24 @@ export default tsEslint.config(
 			'@stylistic/semi-spacing': [ 'error', { before: false, after: true } ],
 			'@stylistic/semi-style': [ 'error', 'last' ],
 			'@stylistic/space-before-blocks': [ 'error', 'always' ],
-			'@stylistic/space-before-function-paren': [
-				'error',
-				{ anonymous: 'always', named: 'never' },
-			],
-			'@stylistic/space-in-parens': [
-				'error',
-				'always',
-				{ exceptions: [ 'empty' ] },
-			],
+			'@stylistic/space-before-function-paren': [ 'error', { anonymous: 'always', named: 'never' } ],
+			'@stylistic/space-in-parens': [ 'error', 'always', { exceptions: [ 'empty' ] } ],
 			'@stylistic/space-infix-ops': 'error',
-			'@stylistic/space-unary-ops': [
-				'error',
-				{ words: true, nonwords: false },
-			],
-			'@stylistic/spaced-comment': [
-				'error',
-				'always',
-				{ exceptions: [ '*', '!' ], block: { balanced: true } },
-			],
-			'@stylistic/switch-colon-spacing': [
-				'error',
-				{ after: true, before: false },
-			],
+			'@stylistic/space-unary-ops': [ 'error', { words: true, nonwords: false } ],
+			'@stylistic/spaced-comment': [ 'error', 'always', { exceptions: [ '*', '!' ], block: { balanced: true } } ],
+			'@stylistic/switch-colon-spacing': [ 'error', { after: true, before: false } ],
 			'@stylistic/template-curly-spacing': [ 'error', 'always' ],
 			'@stylistic/wrap-iife': 'error',
-			'@typescript-eslint/explicit-member-accessibility': [ 'error', {
-				accessibility: 'explicit',
-			} ],
+			'@typescript-eslint/explicit-member-accessibility': [
+				'error',
+				{
+					accessibility: 'explicit',
+				},
+			],
 			'es-x/no-hashbang': 'off',
 			'import/no-unresolved': 'off',
-			'jsdoc/check-param-names': [
-				'warn',
-				{ allowExtraTrailingParamDocs: true },
-			],
-			'jsdoc/check-tag-names': [
-				'warn',
-				{ definedTags: [ 'ignore', 'internal', 'stable' ] },
-			],
+			'jsdoc/check-param-names': [ 'warn', { allowExtraTrailingParamDocs: true } ],
+			'jsdoc/check-tag-names': [ 'warn', { definedTags: [ 'ignore', 'internal', 'stable' ] } ],
 			'jsdoc/check-values': 'off',
 			'jsdoc/empty-tags': 'off',
 			'jsdoc/no-blank-block-descriptions': 'warn',
@@ -235,18 +211,18 @@ export default tsEslint.config(
 			'jsdoc/require-property-name': 'off',
 			'jsdoc/require-returns-description': 'off',
 			'jsdoc/tag-lines': [ 'warn', 'any', { startLines: 1 } ],
-			'n/no-unsupported-features/node-builtins': [ 'error', {
-				version: '>=20.0.0',
-				allowExperimental: true,
-			} ],
+			'n/no-unsupported-features/node-builtins': [
+				'error',
+				{
+					version: packageJson.engines.node,
+					allowExperimental: true,
+				},
+			],
 			'security/detect-object-injection': 'off',
 			'unicorn/catch-error-name': [
 				'error',
 				{
-					ignore: [
-						String.raw`^error\d*$`,
-						/^ignore/i,
-					],
+					ignore: [ String.raw`^error\d*$`, /^ignore/i ],
 				},
 			],
 			'unicorn/filename-case': 'off',
@@ -263,6 +239,7 @@ export default tsEslint.config(
 			],
 			'unicorn/prefer-date-now': 'error',
 			'unicorn/prefer-string-slice': 'error',
+			'unicorn/switch-case-braces': [ 'error', 'avoid' ],
 			'unicorn/throw-new-error': 'error',
 		},
 		settings: {
@@ -302,7 +279,7 @@ export default tsEslint.config(
 		...pluginJsonEs.configs.recommended,
 	},
 	{
-		files: [ '*.ts', '**/*.ts' ],
+		files: [ '*.ts', '**/*.ts', '*.mts', '**/*.mts' ],
 		languageOptions: {
 			parser: tsEslint.parser,
 			parserOptions: {
@@ -326,21 +303,24 @@ export default tsEslint.config(
 			'import/order': [
 				'error',
 				{
-					groups: [
-						'builtin',
-						'external',
-						'internal',
-						[ 'parent', 'sibling' ],
-						'index',
-						'unknown',
-					],
+					groups: [ 'builtin', 'external', 'internal', [ 'parent', 'sibling' ], 'index', 'unknown' ],
 					'newlines-between': 'always',
 					alphabetize: {
 						order: 'asc',
 						caseInsensitive: true,
 					},
 					warnOnUnassignedImports: true,
+					pathGroupsExcludedImportTypes: [ 'builtin', 'object' ],
 					pathGroups: [
+						{
+							pattern: 'bun',
+							group: 'builtin',
+						},
+						{
+							pattern: '__isTSMode__',
+							group: 'internal',
+							position: 'before',
+						},
 						{
 							pattern: '@app/lib/**',
 							group: 'internal',
@@ -369,8 +349,14 @@ export default tsEslint.config(
 			},
 			n: {
 				tsconfigPath,
-				tryExtensions: [ '.js', '.ts' ],
+				tryExtensions: [ '.js', '.ts', '.mjs', '.mts' ],
 			},
+		},
+	},
+	{
+		files: [ '*.mts', '**/*.mts' ],
+		rules: {
+			'unicorn/prefer-module': 'error',
 		},
 	},
 	{

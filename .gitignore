@@ -131,14 +131,23 @@ dist
 
 # config
 config/*
-!config/config.example.ts 
-!config/config.type.d.ts
+!config/config.example.mts 
+!config/config.type.d.mts
 !config/heartbeatConfig.example.sh
 
 # build
-build/
+src/*.mjs
+src/*.mjs.map
+src/**/*.mjs
+src/**/*.mjs.map
 bin/
+build/
+scripts/*.bun.mjs
+scripts/*.bun.mjs.map
 *-nogit-*
 
 # gitkeep
 !*/.gitkeep
+
+# misc
+reloadFlag.txt

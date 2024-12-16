@@ -1,5 +1,5 @@
 #!/bin/bash
 while true;
 do
-	ts-node -r tsconfig-paths/register ./src/index.ts;
+	node --import loader-register.mjs src/index.mjs;
 done

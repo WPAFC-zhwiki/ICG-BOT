@@ -8,45 +8,44 @@
 		"url": "https://github.com/WPAFC-zhwiki/ICG-Bot/blob/master/AUTHORS.txt"
 	},
 	"scripts": {
-		"start": "grunt clean && node -r ts-node/register -r tsconfig-paths/register ./src/index.ts",
+		"start": "node scripts/buildHelper.mjs --cleanBuildFile && node --import ./scripts/loader-register-ts.mjs src/index.mts",
+		"start-bun": "bun run src/index.mts",
 		"test": "pnpm run lint && pnpm run build && pnpm run build-start",
-		"build": "grunt",
-		"build:no-reload": "grunt build:noReloadFlag",
-		"build-start": "grunt built && node bin/index",
-		"lint": "eslint src config types eslint.config.mjs --fix",
+		"build": "tsc && node scripts/buildHelper.mjs --execReloadFlags",
+		"build:no-reload": "tsc",
+		"build-start": "node scripts/buildHelper.mjs --hasTranspiledFile && node --import ./scripts/loader-register.mjs src/index.mjs",
+		"lint": "eslint src config types eslint.config.mjs",
 		"forever": "forever start -c bash -o logs/forever.log main.sh",
-		"forever-win": "forever start -c cmd -o logs/forever.log main.bat"
+		"forever-win": "forever start -c cmd -o logs/forever.log main.bat",
+		"prepare": "husky"
 	},
-	"main": "bin/index.js",
+	"main": "src/index.mjs",
 	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/WPAFC-zhwiki/ICG-Bot/issues"
 	},
 	"private": true,
+	"type": "module",
 	"packageManager": "pnpm@9.15.0",
 	"dependencies": {
 		"@sunafterrainwm/winston-format-remove-telegram-apitoken": "file:lib/winston-format-remove-telegram-apitoken",
-		"axios": "^1.4.0",
+		"axios": "^1.7.9",
 		"cheerio": "1.0.0",
 		"chokidar": "^3.5.3",
 		"cron": "^2.0.0",
 		"discord.js": "14.11.0",
 		"dotenv": "^16.0.3",
-		"form-data": "^4.0.0",
-		"fs-extra": "^11.0.0",
-		"grunt": "^1.5.3",
 		"https-proxy-agent": "^7.0.0",
 		"ioredis": "^5.4.1",
 		"irc-colors": "~1.5.0",
 		"irc-upd": "~0.11.0",
 		"json-diff-ts": "https://github.com/sunafterrainwm/json-diff-ts/releases/download/v2.2.1-cjs-build/json-diff-ts-2.2.1.tgz",
-		"lodash": "^4.17.21",
+		"lodash-es": "^4.17.21",
 		"lru-cache": "^11.0.0",
 		"mime-db": "^1.52.0",
-		"module-alias": "^2.2.2",
-		"mwn": "^2.0.0",
+		"mwn": "^2.0.4",
 		"remove-excessive-newline": "^1.0.0",
-		"safe-regex": "^2.1.1",
+		"serialize-error": "^11.0.3",
 		"sharp": "0.32.6",
 		"string-format": "^2.0.0",
 		"telegraf": "^4.16.3",
@@ -60,12 +59,11 @@
 		"@eslint/js": "^9.16.0",
 		"@stylistic/eslint-plugin": "^2.12.0",
 		"@telegraf/types": "^7.1.0",
-		"@types/fs-extra": "^11.0.0",
+		"@types/bun": "^1.1.14",
 		"@types/irc": "^0.5.1",
-		"@types/lodash": "^4.14.182",
+		"@types/lodash-es": "^4.17.12",
 		"@types/mime-db": "^1.43.1",
-		"@types/module-alias": "^2.0.1",
-		"@types/node": "^18.0.0",
+		"@types/node": "^22.10.2",
 		"@types/request": "^2.48.8",
 		"@types/string-format": "^2.0.0",
 		"@types/turndown": "^5.0.1",
@@ -80,19 +78,26 @@
 		"eslint-plugin-n": "^17.14.0",
 		"eslint-plugin-security": "^3.0.1",
 		"eslint-plugin-unicorn": "^56.0.1",
+		"glob": "^11.0.0",
+		"husky": "^9.1.7",
 		"jiti": "^2.4.1",
+		"lint-staged": "^15.2.11",
 		"ts-node": "^10.9.2",
-		"tsconfig-paths": "^4.2.0",
 		"tslib": "^2.8.1",
 		"types-mediawiki": "^1.2.0",
 		"typescript": "^5.7.2",
 		"typescript-eslint": "^8.17.0"
 	},
 	"engines": {
-		"node": ">=20.0.0"
+		"node": ">=20.11.0 <21 || >=21.2.0"
 	},
 	"_moduleDirectories": [
 		"node_modules",
 		"src"
-	]
+	],
+	"lint-staged": {
+		"*.{js,cjs,mjs,ts,cts,mts}": [
+			"eslint --fix"
+		]
+	}
 }
