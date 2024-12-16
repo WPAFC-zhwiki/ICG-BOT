@@ -46,7 +46,7 @@
 		"mwn": "^2.0.4",
 		"remove-excessive-newline": "^1.0.0",
 		"serialize-error": "^11.0.3",
-		"sharp": "0.32.6",
+		"sharp": "0.33.5",
 		"string-format": "^2.0.0",
 		"telegraf": "^4.16.3",
 		"turndown": "^7.1.1",
