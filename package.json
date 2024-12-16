@@ -41,7 +41,7 @@
 		"irc-upd": "~0.11.0",
 		"json-diff-ts": "https://github.com/sunafterrainwm/json-diff-ts/releases/download/v2.2.1-cjs-build/json-diff-ts-2.2.1.tgz",
 		"lodash-es": "^4.17.21",
-		"lru-cache": "^10.0.0",
+		"lru-cache": "^11.0.0",
 		"mime-db": "^1.52.0",
 		"mwn": "^2.0.4",
 		"remove-excessive-newline": "^1.0.0",
