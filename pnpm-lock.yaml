@@ -42,8 +42,8 @@ importers:
         specifier: ~0.11.0
         version: 0.11.0
       json-diff-ts:
-        specifier: https://github.com/sunafterrainwm/json-diff-ts/releases/download/v2.2.1-cjs-build/json-diff-ts-2.2.1.tgz
-        version: https://github.com/sunafterrainwm/json-diff-ts/releases/download/v2.2.1-cjs-build/json-diff-ts-2.2.1.tgz
+        specifier: ^4.1.0
+        version: 4.1.0
       lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
@@ -1695,9 +1695,8 @@ packages:
   json-buffer@3.0.1:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
 
-  json-diff-ts@https://github.com/sunafterrainwm/json-diff-ts/releases/download/v2.2.1-cjs-build/json-diff-ts-2.2.1.tgz:
-    resolution: {tarball: https://github.com/sunafterrainwm/json-diff-ts/releases/download/v2.2.1-cjs-build/json-diff-ts-2.2.1.tgz}
-    version: 2.2.1
+  json-diff-ts@4.1.0:
+    resolution: {integrity: sha512-WriM1FhU8xnvlvDsmoB5YgwkL2uOy/p4rKPmJz0Bo221nHHEQbh6WspTowEl2qxy9yP5gGYv0pUQ7kNnjrn/TQ==}
 
   json-parse-even-better-errors@2.3.1:
     resolution: {integrity: sha512-xyFwyhro/JEof6Ghe2iz2NcXoj2sloNsWr/XsERDK/oiPCfaNhl5ONfp+jQdAZRQQ0IJWNzH9zIZF7li91kh2w==}
@@ -4289,7 +4288,7 @@ snapshots:
 
   json-buffer@3.0.1: {}
 
-  json-diff-ts@https://github.com/sunafterrainwm/json-diff-ts/releases/download/v2.2.1-cjs-build/json-diff-ts-2.2.1.tgz:
+  json-diff-ts@4.1.0:
     dependencies:
       lodash: 4.17.21
 
