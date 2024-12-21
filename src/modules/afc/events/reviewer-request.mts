@@ -46,7 +46,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		winston.debug( `[afc/events/reviewer-request] comment: ${ event.comment }, diff: ${ event.old_revid } -> ${ event.revid }, user: ${ requestUser }, by: ${ event.user }` );
 
 		let output = `${ htmllink( `User:${ requestUser }`, requestUser ) }申請成為審核員，請各位前往關注。`;
-		if ( requestUser === event.user ) {
+		if ( requestUser !== event.user ) {
 			output = `${ htmllink( `User:${ event.user }`, event.user ) }替${ output }`;
 		}
 
@@ -66,7 +66,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			}
 
 			output += '\n本地群組：' + ( localGroups ?
-				( localGroups.length > 0 ? '無' : localGroups.map( g => userGroup.localGroups[ g ] ?? g ).join( '、' ) ) :
+				( localGroups.length > 0 ? localGroups.map( g => userGroup.localGroups[ g ] ?? g ).join( '、' ) : '無' ) :
 				'獲取失敗' );
 
 			let globalGroups: string[] | false = false;
@@ -84,7 +84,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 			}
 
 			output += '\n全域群組：' + ( globalGroups ?
-				( globalGroups.length > 0 ? '無' : globalGroups.map( g => userGroup.globalGroups[ g ] ?? g ).join( '、' ) ) :
+				( globalGroups.length > 0 ? globalGroups.map( g => userGroup.globalGroups[ g ] ?? g ).join( '、' ) : '無' ) :
 				'獲取失敗' );
 		}
 
