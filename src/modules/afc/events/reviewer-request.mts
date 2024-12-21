@@ -60,7 +60,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					userid: number;
 					name: string;
 					groups: string[];
-				} )?.groups ?? false;
+				} ).groups.filter( ( g ) => !userGroup.ignoreLocalGroups.includes( g ) ) ?? false;
 			} catch ( error ) {
 				winston.warn( `Fail to get local user groups for ${ requestUser }: ${ inspect( error ) }.` );
 			}
@@ -78,7 +78,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 					registration: string;
 					name: string;
 					groups: string[];
-				} )?.groups ?? false;
+				} ).groups.filter( ( g ) => !userGroup.ignoreGlobalGroups.includes( g ) ) ?? false;
 			} catch ( error ) {
 				winston.warn( `Fail to get global user groups for ${ requestUser }: ${ inspect( error ) }.` );
 			}

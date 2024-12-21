@@ -3,7 +3,7 @@
 		"abusefilter-helper": "過濾器助理",
 		"accountcreator": "大量帳號建立者",
 		"arbcom": "仲裁委員會委員",
-		"autoconfirmed": "自動確認的使用者",
+		"autoconfirmed": "自動確認使用者",
 		"autoreviewer": "巡查豁免者",
 		"bot": "機器人",
 		"bureaucrat": "行政員",
@@ -54,6 +54,7 @@
 		"wmf-researcher": "WMF 研究人員"
 	},
 	"ignoreLocalGroups": [
+		"*",
 		"user",
 		"steward",
 		"flow-bot"
