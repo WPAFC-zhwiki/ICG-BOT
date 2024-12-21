@@ -37,6 +37,7 @@
 		"config/*.mts",
 		"src/*.mts",
 		"src/**/*.mts",
-		"src/**/*.json"
+		"src/**/*.json",
+		"src/**/*.d.json.ts"
 	]
 }

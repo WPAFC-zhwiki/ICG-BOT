@@ -7,7 +7,7 @@ import winston from 'winston';
 import { RedisWrapper } from '@app/lib/redis.mjs';
 import { inspect } from '@app/lib/util.mjs';
 
-import { handleMwnRequestError, mwbot } from '@app/modules/afc/util/index.mjs';
+import { handleMwnRequestError, mwbot } from '@app/modules/afc/util.mjs';
 
 type OneOrMore<T> = T | T[];
 

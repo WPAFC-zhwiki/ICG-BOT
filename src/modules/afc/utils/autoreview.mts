@@ -3,8 +3,8 @@ import winston from 'winston';
 import { fetch } from '@app/lib/fetch.mjs';
 import { inspect, parseHttpResponseJson } from '@app/lib/util.mjs';
 
-import issuesData from '@app/modules/afc/util/issuesData.json' with { type: 'json' };
-import { AFCPage } from '@app/modules/afc/util.mjs';
+import { AFCPage } from '@app/modules/afc/utils/AFCPage.mjs';
+import issuesData from '@app/modules/afc/utils/issuesData.json' with { type: 'json' };
 
 interface ApiResultV1 {
 	status: number;

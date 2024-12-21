@@ -8,8 +8,8 @@ import winston from 'winston';
 
 import { inspect } from '@app/lib/util.mjs';
 
-import { mwbot, $, handleMwnRequestError } from '@app/modules/afc/util/index.mjs';
-import { isReviewer } from '@app/modules/afc/util/reviewer.mjs';
+import { mwbot, $, handleMwnRequestError } from '@app/modules/afc/util.mjs';
+import { isReviewer } from '@app/modules/afc/utils/reviewer.mjs';
 
 const categoryRegex = /\[\[:?(?:[Cc]at|CAT|[Cc]ategory|CATEGORY|分[类類]):([^[\]]+)\]\]/gi;
 

@@ -1,7 +1,7 @@
 import Discord from 'discord.js';
 import * as irc from 'irc-upd';
 
-import { mwbot, $, handleMwnRequestError } from '@app/modules/afc/util/index.mjs';
+import { mwbot, $, handleMwnRequestError } from '@app/modules/afc/util.mjs';
 
 type ApiPageInfo = {
 	pageid: number;

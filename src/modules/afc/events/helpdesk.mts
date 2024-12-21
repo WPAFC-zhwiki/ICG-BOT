@@ -3,11 +3,10 @@ import { ApiParams } from 'mwn';
 import type AP from 'types-mediawiki/api_params';
 import winston from 'winston';
 
-import {
-	$, encodeURI, handleMwnRequestError, HTMLNoNeedEscape, htmlToIRC, makeHTMLLink,
-	mwbot, recentChange, RecentChangeEvent,
-	registerEvent, send, turndown, wikitextParseAndClean
-} from '@app/modules/afc/util.mjs';
+import { $, encodeURI, handleMwnRequestError, mwbot, turndown } from '@app/modules/afc/util.mjs';
+import { htmlToIRC, send, registerEvent } from '@app/modules/afc/utils/message.mjs';
+import { recentChange, type RecentChangeEvent } from '@app/modules/afc/utils/recentchange.mjs';
+import { wikitextParseAndClean, makeHTMLLink, HTMLNoNeedEscape } from '@app/modules/afc/utils/telegram-html.mjs';
 
 function makeHTMLWikiLink( title: string, text?: string | HTMLNoNeedEscape ) {
 	return String( makeHTMLLink( `https://zh.wikipedia.org/wiki/${ title }`, text || title ) );

@@ -1,8 +1,10 @@
 import Discord from 'discord.js';
 import winston from 'winston';
 
-import { mwbot, autoReview, getIssusData, encodeURI, turndown,
-	htmlToIRC, setCommand, AFCPage, CommandReplyFunc, editMessage } from '@app/modules/afc/util.mjs';
+import { mwbot, encodeURI, turndown } from '@app/modules/afc/util.mjs';
+import { AFCPage } from '@app/modules/afc/utils/AFCPage.mjs';
+import { autoReview, getIssusData } from '@app/modules/afc/utils/autoreview.mjs';
+import { type CommandReplyFunc, editMessage, htmlToIRC, setCommand } from '@app/modules/afc/utils/message.mjs';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;

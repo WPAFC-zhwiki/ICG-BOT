@@ -2,7 +2,8 @@ import winston from 'winston';
 
 import { inspect } from '@app/lib/util.mjs';
 
-import { getBacklogInfo, setCommand } from '@app/modules/afc/util.mjs';
+import { getBacklogInfo } from '@app/modules/afc/utils/backlogInfo.mjs';
+import { setCommand } from '@app/modules/afc/utils/message.mjs';
 
 setCommand( 'backlog', async function ( _args, reply ) {
 	try {

@@ -1,7 +1,12 @@
 import Discord from 'discord.js';
 import winston from 'winston';
 
-import { hasReviewersCache, isReviewer, encodeURI, turndown, htmlToIRC, setCommand, isExOfficioReviewer, isBlockedExOfficioReviewer, isParticipatingReviewer } from '@app/modules/afc/util.mjs';
+import { encodeURI, turndown } from '@app/modules/afc/util.mjs';
+import { htmlToIRC, setCommand } from '@app/modules/afc/utils/message.mjs';
+import {
+	hasReviewersCache,
+	isReviewer, isExOfficioReviewer, isBlockedExOfficioReviewer, isParticipatingReviewer
+} from '@app/modules/afc/utils/reviewer.mjs';
 
 function upperFirst( str: string ) {
 	return str.slice( 0, 1 ).toUpperCase() + str.slice( 1 );

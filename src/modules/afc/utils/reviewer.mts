@@ -5,10 +5,10 @@ import winston from 'winston';
 import { fetch, Response } from '@app/lib/fetch.mjs';
 import { inspect } from '@app/lib/util.mjs';
 
-import { handleMwnRequestError, mwbot } from '@app/modules/afc/util/index.mjs';
-import { send } from '@app/modules/afc/util/message.mjs';
-import { recentChange, RecentChangeEvent } from '@app/modules/afc/util/recentchange.mjs';
-import { escapeHTML } from '@app/modules/afc/util/telegram-html.mjs';
+import { handleMwnRequestError, mwbot } from '@app/modules/afc/util.mjs';
+import { send } from '@app/modules/afc/utils/message.mjs';
+import { recentChange, RecentChangeEvent } from '@app/modules/afc/utils/recentchange.mjs';
+import { escapeHTML } from '@app/modules/afc/utils/telegram-html.mjs';
 
 export let exOfficioReviewersCache: string[] = [];
 export let blockedExOfficioReviewersCaches: string[] = [];

@@ -8,11 +8,11 @@ import winston from 'winston';
 
 import { inspect } from '@app/lib/util.mjs';
 
-import {
-	$, AFCPage, autoReview, encodeURI, getIssusData, htmlToIRC, mwbot,
-	recentChange, RecentChangeEvent, registerEvent, turndown, send,
-	handleMwnRequestError
-} from '@app/modules/afc/util.mjs';
+import { $, encodeURI, handleMwnRequestError, mwbot, turndown } from '@app/modules/afc/util.mjs';
+import { AFCPage } from '@app/modules/afc/utils/AFCPage.mjs';
+import { autoReview, getIssusData } from '@app/modules/afc/utils/autoreview.mjs';
+import { htmlToIRC, registerEvent, send } from '@app/modules/afc/utils/message.mjs';
+import { recentChange, type RecentChangeEvent } from '@app/modules/afc/utils/recentchange.mjs';
 
 function getReason( $element: cheerio.Cheerio<Element>, title: string ) {
 	$element.find( 'a' ).each( function ( _index, a ) {

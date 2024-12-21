@@ -31,6 +31,6 @@ for ( const file of eventFiles ) {
 	winston.debug( `[afc] - ${ path.parse( file ).name }` );
 }
 
-import { checkRegister } from '@app/modules/afc/util.mjs';
+import { checkRegister } from '@app/modules/afc/utils/message.mjs';
 
 checkRegister();

@@ -234,6 +234,7 @@ export default tsEslint.config(
 						args: false,
 						func: false,
 						ctx: false,
+						temp: false,
 					},
 				},
 			],

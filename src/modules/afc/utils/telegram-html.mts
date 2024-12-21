@@ -4,7 +4,7 @@ import * as cheerio from 'cheerio';
 import type { AnyNode } from 'domhandler';
 import removeExcessiveNewline from 'remove-excessive-newline';
 
-import { $, handleMwnRequestError, mwbot } from '@app/modules/afc/util/index.mjs';
+import { $, handleMwnRequestError, mwbot } from '@app/modules/afc/util.mjs';
 
 export function escapeHTML( str: string ) {
 	return str

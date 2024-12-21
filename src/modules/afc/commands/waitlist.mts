@@ -1,6 +1,8 @@
 import Discord from 'discord.js';
 
-import { getBacklogInfo, encodeURI, setCommand } from '@app/modules/afc/util.mjs';
+import { encodeURI } from '@app/modules/afc/util.mjs';
+import { getBacklogInfo } from '@app/modules/afc/utils/backlogInfo.mjs';
+import { setCommand } from '@app/modules/afc/utils/message.mjs';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;

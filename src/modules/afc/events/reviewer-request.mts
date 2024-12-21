@@ -1,8 +1,12 @@
+import { inspect } from 'node:util';
+
 import Discord from 'discord.js';
 import winston from 'winston';
 
-import { $, encodeURI, handleMwnRequestError, htmlToIRC, mwbot, pinMessage, recentChange,
-	RecentChangeEvent, registerEvent, send, turndown } from '@app/modules/afc/util.mjs';
+import { $, encodeURI, handleMwnRequestError, mwbot, turndown } from '@app/modules/afc/util.mjs';
+import { pinMessage, registerEvent, send, htmlToIRC } from '@app/modules/afc/utils/message.mjs';
+import { recentChange, type RecentChangeEvent } from '@app/modules/afc/utils/recentchange.mjs';
+import { isNamedUser, userGroup } from '@app/modules/afc/utils/user.mjs';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
@@ -41,7 +45,48 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 		const requestUser = $request.eq( 0 ).attr( 'data-username' );
 		winston.debug( `[afc/events/reviewer-request] comment: ${ event.comment }, diff: ${ event.old_revid } -> ${ event.revid }, user: ${ requestUser }, by: ${ event.user }` );
 
-		const output = `${ requestUser === event.user ? '' : `${ htmllink( `User:${ event.user }`, event.user ) }替` }${ htmllink( `User:${ requestUser }`, requestUser ) }申請成為審核員，請各位前往關注。`;
+		let output = `${ htmllink( `User:${ requestUser }`, requestUser ) }申請成為審核員，請各位前往關注。`;
+		if ( requestUser === event.user ) {
+			output = `${ htmllink( `User:${ event.user }`, event.user ) }替${ output }`;
+		}
+
+		if ( isNamedUser( requestUser ) ) {
+			const user = new mwbot.User( requestUser );
+
+			let localGroups: string[] | false = false;
+
+			try {
+				localGroups = ( await user.info( 'groups' ) as {
+					userid: number;
+					name: string;
+					groups: string[];
+				} )?.groups ?? false;
+			} catch ( error ) {
+				winston.warn( `Fail to get local user groups for ${ requestUser }: ${ inspect( error ) }.` );
+			}
+
+			output += '\n本地群組：' + ( localGroups ?
+				( localGroups.length > 0 ? '無' : localGroups.map( g => userGroup.localGroups[ g ] ?? g ).join( '、' ) ) :
+				'獲取失敗' );
+
+			let globalGroups: string[] | false = false;
+
+			try {
+				globalGroups = ( await user.globalinfo( 'groups' ) as {
+					home: string;
+					id: number;
+					registration: string;
+					name: string;
+					groups: string[];
+				} )?.groups ?? false;
+			} catch ( error ) {
+				winston.warn( `Fail to get global user groups for ${ requestUser }: ${ inspect( error ) }.` );
+			}
+
+			output += '\n全域群組：' + ( globalGroups ?
+				( globalGroups.length > 0 ? '無' : globalGroups.map( g => userGroup.globalGroups[ g ] ?? g ).join( '、' ) ) :
+				'獲取失敗' );
+		}
 
 		const diff = `Special:Diff/${ event.old_revid }/${ event.revid }`;
 		const dMessage = new Discord.EmbedBuilder( {

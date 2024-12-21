@@ -13,8 +13,8 @@ import { DiscordSendMessage } from '@app/lib/handlers/DiscordMessageHandler.mjs'
 import { parseUID, getUIDFromContext, addCommand, getUIDFromHandler } from '@app/lib/message.mjs';
 import { inspect } from '@app/lib/util.mjs';
 
-import { $, decodeURI } from '@app/modules/afc/util/index.mjs';
-import { HTMLNoNeedEscape, tEscapeHTML } from '@app/modules/afc/util/telegram-html.mjs';
+import { $, decodeURI } from '@app/modules/afc/util.mjs';
+import { HTMLNoNeedEscape, tEscapeHTML } from '@app/modules/afc/utils/telegram-html.mjs';
 import * as moduleTransport from '@app/modules/transport.mjs';
 
 export function htmlToIRC( text: string ): string {
