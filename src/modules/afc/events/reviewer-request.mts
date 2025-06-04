@@ -5,14 +5,14 @@ import winston from 'winston';
 
 import { $, encodeURI, handleMwnRequestError, mwbot, turndown } from '@app/modules/afc/util.mjs';
 import { pinMessage, registerEvent, send, htmlToIRC } from '@app/modules/afc/utils/message.mjs';
-import { recentChange, type RecentChangeEvent } from '@app/modules/afc/utils/recentchange.mjs';
+import { EditEvent, recentChange } from '@app/modules/afc/utils/recentchange.mjs';
 import { isNamedUser, userGroup } from '@app/modules/afc/utils/user.mjs';
 
 function htmllink( title: string, text?: string ) {
 	return `<a href="https://zh.wikipedia.org/wiki/${ encodeURI( title ) }">${ text || title }</a>`;
 }
 
-recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
+recentChange.addProcessFunction<EditEvent>( ( event ): event is EditEvent => {
 	if (
 		event.type === 'edit' &&
 		event.title === 'WikiProject:建立條目/參與者/申請' &&
@@ -22,7 +22,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	}
 
 	return false;
-}, async function ( event: RecentChangeEvent.EditEvent ) {
+}, async ( event ) => {
 	const { compare } = await mwbot.request( {
 		action: 'compare',
 		format: 'json',

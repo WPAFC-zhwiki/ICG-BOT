@@ -158,9 +158,15 @@ export declare type RecentChangeEvent =
 	| RecentChangeEvent.EditEvent
 	| RecentChangeEvent.CategorizeEvent
 	| RecentChangeEvent.LogEvent;
+export declare type NewEvent = RecentChangeEvent.NewEvent;
+export declare type EditEvent = RecentChangeEvent.EditEvent;
+export declare type CategorizeEvent = RecentChangeEvent.CategorizeEvent;
+export declare type LogEvent = RecentChangeEvent.LogEvent;
+export declare type AnyEditEvent = NewEvent | EditEvent;
 
 type RCFunction<E, T> = ( event: E ) => T;
 type RCFilterFunction = RCFunction<RecentChangeEvent, boolean>;
+type RCFilterFunctionExpr<T extends RecentChangeEvent> = ( event: RecentChangeEvent ) => event is T;
 type RCProcessFunction<E = RecentChangeEvent> = RCFunction<E, void>;
 
 const recentChangeLastReadKey = 'afc/recentChange/LastRead';
@@ -302,6 +308,14 @@ class RecentChanges {
 		this._timeout = undefined;
 	}
 
+	public addProcessFunction<E extends RecentChangeEvent>(
+		filter: RCFilterFunctionExpr<E>,
+		func: RCProcessFunction<E>
+	): void;
+	public addProcessFunction(
+		filter: RCFilterFunction,
+		func: RCProcessFunction
+	): void;
 	public addProcessFunction<E extends RecentChangeEvent = RecentChangeEvent>(
 		filter: RCFilterFunction,
 		func: RCProcessFunction<E>

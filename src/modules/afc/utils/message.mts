@@ -14,7 +14,7 @@ import { parseUID, getUIDFromContext, addCommand, getUIDFromHandler } from '@app
 import { inspect } from '@app/lib/util.mjs';
 
 import { $, decodeURI } from '@app/modules/afc/util.mjs';
-import { HTMLNoNeedEscape, tEscapeHTML } from '@app/modules/afc/utils/telegram-html.mjs';
+import { escapeHTML } from '@app/modules/afc/utils/telegram-html.mjs';
 import * as moduleTransport from '@app/modules/transport.mjs';
 
 export function htmlToIRC( text: string ): string {
@@ -24,7 +24,7 @@ export function htmlToIRC( text: string ): string {
 		const $a = $( a );
 		const href = decodeURI( $a.attr( 'href' ) ).replaceAll( /^https:\/\/zh\.wikipedia\.org\/(wiki\/)?/g, 'https://zhwp.org/' );
 
-		$a.html( tEscapeHTML` ${ new HTMLNoNeedEscape( $a.html() ) } &lt;${ href }&gt;` );
+		$a.html( ` ${ $a.html() } &lt;${ escapeHTML( href ) }&gt;` );
 	} );
 
 	$ele( 'b' ).each( function ( _index, b ): void {

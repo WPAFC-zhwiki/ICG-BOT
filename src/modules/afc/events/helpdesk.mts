@@ -5,7 +5,7 @@ import winston from 'winston';
 
 import { $, encodeURI, handleMwnRequestError, mwbot, turndown } from '@app/modules/afc/util.mjs';
 import { htmlToIRC, send, registerEvent } from '@app/modules/afc/utils/message.mjs';
-import { recentChange, type RecentChangeEvent } from '@app/modules/afc/utils/recentchange.mjs';
+import { EditEvent, recentChange } from '@app/modules/afc/utils/recentchange.mjs';
 import { wikitextParseAndClean, makeHTMLLink, HTMLNoNeedEscape } from '@app/modules/afc/utils/telegram-html.mjs';
 
 function makeHTMLWikiLink( title: string, text?: string | HTMLNoNeedEscape ) {
@@ -16,7 +16,7 @@ function makeMarkdownWikiLink( title: string, text?: string ) {
 	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
-recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
+recentChange.addProcessFunction<EditEvent>( ( event ): event is EditEvent => {
 	if (
 		event.type === 'edit' &&
 		event.title === 'WikiProject:建立條目/詢問桌' &&
@@ -26,7 +26,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	}
 
 	return false;
-}, async function ( event: RecentChangeEvent.EditEvent ) {
+}, async ( event ) => {
 	const { compare } = await mwbot.request( {
 		action: 'compare',
 		format: 'json',

@@ -12,7 +12,7 @@ import { $, encodeURI, handleMwnRequestError, mwbot, turndown } from '@app/modul
 import { AFCPage } from '@app/modules/afc/utils/AFCPage.mjs';
 import { autoReview, getIssusData } from '@app/modules/afc/utils/autoreview.mjs';
 import { htmlToIRC, registerEvent, send } from '@app/modules/afc/utils/message.mjs';
-import { recentChange, type RecentChangeEvent } from '@app/modules/afc/utils/recentchange.mjs';
+import { CategorizeEvent, recentChange } from '@app/modules/afc/utils/recentchange.mjs';
 
 function getReason( $element: cheerio.Cheerio<Element>, title: string ) {
 	$element.find( 'a' ).each( function ( _index, a ) {
@@ -108,7 +108,7 @@ function mdLink( title: string, text?: string ) {
 	return `[${ text || title }](https://zh.wikipedia.org/wiki/${ encodeURI( title ) })`;
 }
 
-recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
+recentChange.addProcessFunction<CategorizeEvent>( ( event ): event is CategorizeEvent => {
 	if (
 		event.type === 'categorize' &&
 		event.title === 'Category:正在等待審核的草稿'
@@ -117,7 +117,7 @@ recentChange.addProcessFunction( function ( event: RecentChangeEvent ) {
 	}
 
 	return false;
-}, async function ( event: RecentChangeEvent.CategorizeEvent ) {
+}, async ( event ) => {
 	try {
 		let shouldMentionDebug = false;
 

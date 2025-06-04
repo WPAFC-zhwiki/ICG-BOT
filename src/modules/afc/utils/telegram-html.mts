@@ -1,7 +1,7 @@
 import { inspect, InspectOptionsStylized } from 'node:util';
 
 import * as cheerio from 'cheerio';
-import type { AnyNode } from 'domhandler';
+import type { AnyNode, Document, Element, Node, Text } from 'domhandler';
 import removeExcessiveNewline from 'remove-excessive-newline';
 
 import { $, handleMwnRequestError, mwbot } from '@app/modules/afc/util.mjs';
@@ -45,7 +45,12 @@ export function tEscapeHTML(
 }
 
 export function makeHTMLLink( url: string, text: string | HTMLNoNeedEscape = url ) {
-	return new HTMLNoNeedEscape( tEscapeHTML`<a href="${ encodeURI( url ) }">${ text }</a>` );
+	try {
+		url = new URL( url ).href;
+	} catch {
+		// ignore
+	}
+	return new HTMLNoNeedEscape( tEscapeHTML`<a href="${ new URL( url ).href }">${ text }</a>` );
 }
 
 export function filterLongerOutputWikitext( wt: string ) {
@@ -53,6 +58,16 @@ export function filterLongerOutputWikitext( wt: string ) {
 		// escape math & chem
 		.replaceAll( /(<(math|chem)\b)/gi, '<nowiki>$1' )
 		.replaceAll( /(<\/(math|chem)\b([^>]*)>)/gi, '$1</nowiki>' );
+}
+
+function escapeAllText( element: Node ) {
+	if ( element.nodeType === 1 || element.nodeType === 9 ) {
+		for ( const child of ( element as Element | Document ).childNodes ) {
+			escapeAllText( child );
+		}
+	} else if ( element.nodeType === 3 ) {
+		( element as Text ).data = escapeHTML( ( element as Text ).data );
+	}
 }
 
 export function cleanToTelegramHTML( rawHtml: string, baseUrl = 'https://zh.wikipedia.org/wiki/' ) {
@@ -82,12 +97,13 @@ export function cleanToTelegramHTML( rawHtml: string, baseUrl = 'https://zh.wiki
 					return text;
 				}
 				const url = new URL( $a.attr( 'href' ), baseUrl );
-				return tEscapeHTML`<a href="${ url.href }">${ new HTMLNoNeedEscape( $a.text() ) }</a>`;
+				return `<a href="${ escapeHTML( url.href ) }">${ $a.text() }</a>`;
 			},
 		},
 	];
 
 	const $parse = cheerio.load( rawHtml, {}, false );
+	escapeAllText( $parse.root().get( 0 ) ); // 強制跳脫所有子字串以防奇怪的輸入，雖然很蠢但有效（大概啦？）
 
 	$parse( [
 		'script',

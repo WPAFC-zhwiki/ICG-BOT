@@ -22,10 +22,16 @@ import packageJson from './package.json' with { type: 'json' };
 const __dirname = import.meta.dirname ?? path.dirname( fileURLToPath( import.meta.url ) );
 const tsconfigPath = path.join( __dirname, 'tsconfig.json' );
 
+const bannedFromIgnoredFiles = includeIgnoreFile( path.join( __dirname, '.gitignore' ) ).ignores ?? [];
+// 讓 *-nogit-* 也被 eslint 校驗
+bannedFromIgnoredFiles.splice(
+	bannedFromIgnoredFiles.findIndex( value => value.includes( '*-nogit-*' ) ),
+	1
+);
+
 export default tsEslint.config(
-	includeIgnoreFile( path.join( __dirname, '.gitignore' ) ),
 	{
-		ignores: [ '!.*.*', '.*/*', 'node_modules/*', 'config/*js' ],
+		ignores: [ ...bannedFromIgnoredFiles, '!.*.*', '.*/*', 'node_modules/*', 'config/*js' ],
 	},
 	eslint.configs.recommended,
 	// @ts-expect-error TS2345
