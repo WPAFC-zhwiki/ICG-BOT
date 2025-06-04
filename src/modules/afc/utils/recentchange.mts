@@ -1,7 +1,7 @@
 import { scheduler } from 'node:timers/promises';
 
 import { ApiParams, MwnDate } from 'mwn';
-import { ApiQueryRecentChangesParams } from 'types-mediawiki/api_params';
+import { ApiQueryRecentChangesParams } from 'types-mediawiki-api';
 import winston from 'winston';
 
 import { RedisWrapper } from '@app/lib/redis.mjs';

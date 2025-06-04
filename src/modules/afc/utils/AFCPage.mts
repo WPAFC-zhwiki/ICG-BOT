@@ -3,7 +3,7 @@ import type { Element } from 'domhandler';
 import { ApiPage, ApiParams, ApiRevision, MwnPage, MwnTitle } from 'mwn';
 import { MwnError } from 'mwn/build/error.js';
 import removeExcessiveNewline from 'remove-excessive-newline';
-import { ApiEditPageParams, ApiQueryRevisionsParams } from 'types-mediawiki/api_params';
+import { ApiEditPageParams, ApiQueryRevisionsParams } from 'types-mediawiki-api';
 import winston from 'winston';
 
 import { inspect } from '@app/lib/util.mjs';

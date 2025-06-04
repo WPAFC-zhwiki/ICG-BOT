@@ -171,9 +171,9 @@ importers:
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
-      types-mediawiki:
-        specifier: ^1.2.0
-        version: 1.9.1(typescript@5.7.3)
+      types-mediawiki-api:
+        specifier: ^2.0.0
+        version: 2.0.0
       typescript:
         specifier: ^5.7.2
         version: 5.7.3
@@ -2482,6 +2482,9 @@ packages:
   typed-array-length@1.0.7:
     resolution: {integrity: sha512-3KS2b+kL7fsuk/eJZ7EQdnEmQoaho/r6KUef7hxvltNA5DR8NAUM+8wJMbJyZ4G9/7i3v5zPBIMN5aybAh2/Jg==}
     engines: {node: '>= 0.4'}
+
+  types-mediawiki-api@2.0.0:
+    resolution: {integrity: sha512-JeAm+5vD0Fe131UBt8ihJyRtXQlO4Zj180mOE3fcsdBLchqn1+ZfWBvJhBknd+hMalJ2H4DmsTzmbtDRB/sSYQ==}
 
   types-mediawiki@1.9.1:
     resolution: {integrity: sha512-RgYOy0xlWauOwTv3dIJU9FEetjf8+54fHzAL614rseYC3ZrPP086OxIqaG9EfLM7FqqZd6yoPHdEfrFRpLQ4Fg==}
@@ -5211,6 +5214,8 @@ snapshots:
       is-typed-array: 1.1.15
       possible-typed-array-names: 1.1.0
       reflect.getprototypeof: 1.0.10
+
+  types-mediawiki-api@2.0.0: {}
 
   types-mediawiki@1.9.1(typescript@5.7.3):
     dependencies:

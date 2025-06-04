@@ -1,6 +1,6 @@
 import Discord from 'discord.js';
 import { ApiParams } from 'mwn';
-import type AP from 'types-mediawiki/api_params';
+import type AP from 'types-mediawiki-api';
 import winston from 'winston';
 
 import { $, encodeURI, handleMwnRequestError, mwbot, turndown } from '@app/modules/afc/util.mjs';
