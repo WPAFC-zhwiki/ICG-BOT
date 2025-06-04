@@ -1,6 +1,6 @@
 import { inspect } from 'node:util';
 
-import Discord from 'discord.js';
+import * as Discord from 'discord.js';
 import winston from 'winston';
 
 import { $, encodeURI, handleMwnRequestError, mwbot, turndown } from '@app/modules/afc/util.mjs';

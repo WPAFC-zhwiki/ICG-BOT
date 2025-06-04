@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import * as Discord from 'discord.js';
 import { ApiParams } from 'mwn';
 import type AP from 'types-mediawiki-api';
 import winston from 'winston';

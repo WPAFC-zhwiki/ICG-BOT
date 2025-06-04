@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
 import * as cheerio from 'cheerio';
-import Discord from 'discord.js';
+import * as Discord from 'discord.js';
 import type { Element } from 'domhandler';
 import { MwnPage } from 'mwn';
 import winston from 'winston';

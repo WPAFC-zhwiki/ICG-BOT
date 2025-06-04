@@ -24,6 +24,7 @@ const tsc = await ( async () => {
 	return ts.parseJsonConfigFileContent( configFile.config, ts.sys, projectRoot );
 } )();
 
+tsc.options.noDtsResolution = false;
 tsc.options.noEmit = false;
 tsc.options.noEmitOnError = false;
 tsc.options.sourceMap = true;
@@ -110,14 +111,14 @@ export async function resolve( specifier, context, nextResolve ) {
 
 	// 不處理任何疑似包含相對路徑的模組
 	if ( !specifier.startsWith( '.' ) && context.parentURL && context.parentURL.startsWith( 'file:' ) ) {
-		const resolveResult = ts.resolveModuleName(
+		const { resolvedModule } = ts.resolveModuleName(
 			specifier,
 			path.join( projectRoot, 'noop.mjs' ),
 			tsc.options,
 			host,
 			cache
 		);
-		if ( resolveResult.resolvedModule ) {
+		if ( resolvedModule && !resolvedModule.isExternalLibraryImport ) {
 			const resolvedPath = ( ( resolved ) => {
 				if ( /[/\\](node_modules|@types)[/\\]/.test( resolved ) ) {
 					// 不要嘗試處理 node_modules 裡，或是根本就是 typings 的東西
@@ -180,7 +181,7 @@ export async function resolve( specifier, context, nextResolve ) {
 
 					return resolved;
 				}
-			} )( resolveResult.resolvedModule.resolvedFileName );
+			} )( resolvedModule.resolvedFileName );
 
 			if ( resolvedPath ) {
 				return {

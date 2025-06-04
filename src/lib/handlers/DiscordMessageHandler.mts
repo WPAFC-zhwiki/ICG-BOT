@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Discord from 'discord.js';
+import * as Discord from 'discord.js';
 import winston from 'winston';
 
 import { ConfigTS } from '@app/config.mjs';

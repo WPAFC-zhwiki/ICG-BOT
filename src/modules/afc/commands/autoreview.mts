@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import * as Discord from 'discord.js';
 import winston from 'winston';
 
 import { mwbot, encodeURI, turndown } from '@app/modules/afc/util.mjs';

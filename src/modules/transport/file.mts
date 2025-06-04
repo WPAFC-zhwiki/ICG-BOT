@@ -95,8 +95,6 @@ class FetchStream extends stream.Transform {
 	private async doFetch() {
 		try {
 			const response = await fetch( this.info, this.init );
-			// stream.Writable 不知道為什麼沒有完整「實現」NodeJS.WritableStream
-			// @ts-expect-error TS2345
 			stream.Readable.fromWeb( response.body ).pipe<this>( this );
 		} catch ( error ) {
 			this.emit( 'error', error );
@@ -145,7 +143,6 @@ function getFileStream( file: File ): stream.Readable {
 		//     fileStream = fileStream.pipe(sharp().resize(servemedia.stickerMaxWidth || 256).png());
 		// } else {
 		// stream.Writable / stream.Readable 不知道為什麼沒有完整「實現」NodeJS.WritableStream
-		// @ts-expect-error TS2345
 		fileStream = fileStream.pipe<sharp.Sharp>( sharp().png() );
 		// }
 	}
@@ -165,8 +162,6 @@ function pipeFileStream( file: File, pipe: stream.Writable ): Promise<void> {
 				reject( error );
 			} )
 			.on( 'end', resolve )
-		// stream.Writable 不知道為什麼沒有完整「實現」NodeJS.WritableStream
-		// @ts-expect-error TS2345
 			.pipe<stream.Writable>( pipe );
 	} );
 }

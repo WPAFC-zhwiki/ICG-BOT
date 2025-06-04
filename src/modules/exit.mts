@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import chokidar from 'chokidar';
+import { watch } from 'chokidar';
 import winston from 'winston';
 
 import config from '@app/config.mjs';
@@ -39,7 +39,7 @@ if ( config.exits ) {
 	}
 }
 
-const watcher = chokidar.watch( exits, {
+const watcher = watch( exits, {
 	persistent: true,
 	ignoreInitial: false,
 	usePolling: config.exits.usePolling,

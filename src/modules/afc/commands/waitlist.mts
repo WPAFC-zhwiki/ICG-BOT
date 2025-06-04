@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import * as Discord from 'discord.js';
 
 import { encodeURI } from '@app/modules/afc/util.mjs';
 import { getBacklogInfo } from '@app/modules/afc/utils/backlogInfo.mjs';

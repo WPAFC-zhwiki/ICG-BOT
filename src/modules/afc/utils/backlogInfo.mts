@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import * as Discord from 'discord.js';
 import * as irc from 'irc-upd';
 
 import { mwbot, $, handleMwnRequestError } from '@app/modules/afc/util.mjs';

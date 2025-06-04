@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import * as Discord from 'discord.js';
 import { escapeRegExp } from 'lodash-es';
 import { LRUCache } from 'lru-cache';
 import winston from 'winston';
