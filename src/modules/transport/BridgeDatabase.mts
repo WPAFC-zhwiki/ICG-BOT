@@ -11,7 +11,7 @@ const redisWrapper = RedisWrapper.getInstance();
 export class BridgeDatabase {
 	#cache: LRUCache<string, AssociateMessage | false>;
 
-	accessor isEnable = false;
+	public accessor isEnable = false;
 
 	public constructor() {
 		this.#cache = new LRUCache( {

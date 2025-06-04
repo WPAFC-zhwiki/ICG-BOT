@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/prefer-event-target */
 // Type definitions for irc-upd v0.10.0
 // Project: https://github.com/Throne3d/node-irc
-// Definitions by: sunny00217wm <https://github.com/sunny00217wm>
+// Definitions by: sunafterrainwm <https://github.com/sunafterrainwm>
 // Definitions: https://github.com/WPAFC-zhwiki/ICG-BOT/tree/master/src/lib/irc-upd.d.ts
 
 /// <reference types="node" />
@@ -319,7 +319,7 @@ declare module 'irc-upd' {
 		 * instead.
 		 */
 		public conn: net.Socket & {
-			renickInterval?: NodeJS.Timer;
+			renickInterval?: NodeJS.Timeout;
 			cyclingPingTimer?: CyclingPingTimer;
 		};
 
@@ -537,7 +537,7 @@ declare module 'irc-upd' {
 		protected _connectionHandler(): void;
 		protected end(): void;
 		protected deactivateFloodProtection(): void;
-		protected cancelAutoRenick(): NodeJS.Timer;
+		protected cancelAutoRenick(): NodeJS.Timeout;
 		protected _findChannelFromStrings( channelName: string ): number;
 		protected _splitLongLines( words: string, maxLength: number, destination: string[] ): string[];
 		protected emitChannelEvent( eventName: string, channel: string ): void;
