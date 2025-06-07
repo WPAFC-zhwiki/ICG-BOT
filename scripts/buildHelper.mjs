@@ -76,3 +76,4 @@ if ( args.length === 1 ) {
 }
 
 console.log( 'Usage: node scripts/buildHelper.mjs [--hasTranspiledFile|--execReloadFlags|--cleanBuildFile]' );
+process.exit( 1 );
