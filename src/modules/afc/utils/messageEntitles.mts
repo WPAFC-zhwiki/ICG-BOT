@@ -154,3 +154,86 @@ export class EntitiesFactory {
 		this.#parent = undefined;
 	}
 }
+
+function escapeTag( input: string ) {
+	// return input.replace(/[^\p{L}\p{N}_]/gu, "");
+	return input
+		.replaceAll( /["'′]/g, '' ) // It's => Its
+		.split( /[^\p{L}\p{N}_]/gu )
+		.join( '' );
+}
+
+export class TextMessage {
+	#entities: EntitiesFactory;
+	#tags: string[] = [];
+	public linkPreviewOptions?: TT.LinkPreviewOptions;
+
+	public constructor( entities?: EntitiesFactory ) {
+		this.#entities = entities || new EntitiesFactory();
+	}
+
+	public addText(
+		...args: Parameters<EntitiesFactory['addText']>
+	): this {
+		this.#entities.addText( ...args );
+		return this;
+	}
+
+	public addTextEntity( ...args: Parameters<EntitiesFactory['addTextEntity']> ): this {
+		this.#entities.addTextEntity( ...args );
+		return this;
+	}
+
+	public addTextEntities(
+		...args: Parameters<EntitiesFactory['addTextEntities']>
+	): this {
+		this.#entities.addTextEntities( ...args );
+		return this;
+	}
+
+	public addTextEntityList(
+		...args: Parameters<EntitiesFactory['addTextEntityList']>
+	): this {
+		this.#entities.addTextEntityList( ...args );
+		return this;
+	}
+
+	public clone(): TextMessage {
+		return new TextMessage( this.#entities.clone() );
+	}
+
+	public get entities(): EntitiesFactory {
+		return this.#entities;
+	}
+
+	public get tags(): string[] {
+		return [ ...this.#tags ];
+	}
+
+	public addTags( ...tags: string[] ) {
+		this.#tags.push( ...tags );
+		return this;
+	}
+
+	public getOutput(): Pick<ApiParameters<'sendMessage'>, 'text' | 'entities' | 'link_preview_options'> {
+		const entities = this.entities.clone();
+
+		if ( this.tags.length > 0 ) {
+			entities.trimEnd().addText( '\n\n' );
+
+			for ( const tag of this.tags ) {
+				entities
+					.addTextEntity( `#${ escapeTag( tag ) }`, { type: 'hashtag' } )
+					.addText( ' ' );
+			}
+
+		}
+
+		entities.trimEnd();
+
+		return {
+			...entities.getTextOutput(),
+			link_preview_options: this.linkPreviewOptions,
+		};
+	}
+}
