@@ -11,7 +11,7 @@
 		"start": "node --import ./scripts/loader-register-ts.mjs src/index.mts",
 		"start-bun": "bun run src/index.mts",
 		"test": "pnpm run lint && pnpm run build && pnpm run build-start",
-		"clear": "node scripts/buildHelper.mjs --cleanBuildFile",
+		"clean": "node scripts/buildHelper.mjs --cleanBuildFile",
 		"build": "tsc && node scripts/buildHelper.mjs --removeBuildInfo && node scripts/buildHelper.mjs --execReloadFlags",
 		"build:no-reload": "tsc",
 		"build-start": "node scripts/buildHelper.mjs --hasTranspiledFile && node --import ./scripts/loader-register.mjs src/index.mjs",
