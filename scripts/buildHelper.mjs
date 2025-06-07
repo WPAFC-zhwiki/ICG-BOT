@@ -34,26 +34,53 @@ async function execReloadFlags() {
 	}
 }
 
+/**
+ * @param {Glob<import('glob').GlobOptionsWithFileTypesTrue>} glob
+ * @return {Promise<number>}
+ */
+async function removeFiles( glob ) {
+	let count = 0;
+	for await ( const file of glob ) {
+		try {
+			// eslint-disable-next-line security/detect-non-literal-fs-filename
+			await fs.promises.unlink( file.fullpath() );
+		} catch ( error ) {
+			console.warn( error );
+		}
+		count++;
+	}
+	return count;
+}
+
+async function removeBuildInfoInternal() {
+	const glob = new Glob(
+		[ '**/*.tsbuildinfo' ],
+		{
+			withFileTypes: true,
+			cwd: projectRoot,
+			ignore: [ 'node_modules/**', '.*/**' ],
+		}
+	);
+	return removeFiles( glob );
+}
+
+async function removeBuildInfo() {
+	console.log( `${ await removeBuildInfoInternal() } file(s) have been deleted.` );
+}
+
 async function cleanBuildFile() {
 	let count = 0;
-	for await ( const file of new Glob( [ '**/*.{mjs,mjs.map}' ], { absolute: true, cwd: path.join( projectRoot, 'src' ) } ) ) {
-		try {
-			// eslint-disable-next-line security/detect-non-literal-fs-filename
-			await fs.promises.unlink( file );
-		} catch ( error ) {
-			console.warn( error );
-		}
-		count++;
+	for ( const rootToTest of [ 'src', 'config' ] ) {
+		const glob = new Glob(
+			[ '**/*.{mjs,mjs.map}' ],
+			{
+				withFileTypes: true,
+				cwd: path.join( projectRoot, rootToTest ),
+			}
+		);
+		count += await removeFiles( glob );
 	}
-	for await ( const file of new Glob( [ '**/*.{mjs,mjs.map}' ], { absolute: true, cwd: path.join( projectRoot, 'config' ) } ) ) {
-		try {
-			// eslint-disable-next-line security/detect-non-literal-fs-filename
-			await fs.promises.unlink( file );
-		} catch ( error ) {
-			console.warn( error );
-		}
-		count++;
-	}
+	count += await removeBuildInfoInternal();
 	console.log( `${ count } file(s) have been deleted.` );
 }
 
@@ -70,6 +97,10 @@ if ( args.length === 1 ) {
 			break;
 		case '--cleanBuildFile':
 			await cleanBuildFile();
+			process.exit( 0 );
+			break;
+		case '--removeBuildInfo':
+			await removeBuildInfo();
 			process.exit( 0 );
 			break;
 	}

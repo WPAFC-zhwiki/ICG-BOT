@@ -30,7 +30,9 @@
 				"../package.json"
 			]
 		},
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		// eslint-disable-next-line unicorn/no-null
+		"tsBuildInfoFile": null
 	},
 	"include": [
 		"types/*.d.ts",
