@@ -46,6 +46,7 @@ export const handlers = Manager.handlers;
 		...
 	}
 	 */
+// eslint-disable-next-line es-x/no-iterator-prototype-map
 const map = bridge.map;
 
 if ( Manager.global.isEnable( 'transport' ) ) {

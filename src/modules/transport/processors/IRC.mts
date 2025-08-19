@@ -19,6 +19,7 @@ const colorize: ConfigTS[ 'transport' ][ 'options' ][ 'IRC' ][ 'colorize' ] = op
 
 // 自動加頻道
 ircHandler.once( 'registered', function () {
+	// eslint-disable-next-line es-x/no-iterator-prototype-map
 	for ( const g in bridge.map ) {
 		const cl = BridgeMessage.parseUID( g );
 		if ( cl.client === 'IRC' && !ircHandler.rawClient.chans[ cl.id.toLowerCase() ] ) {

@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import type { Element } from 'domhandler';
 import { ApiPage, ApiParams, ApiRevision, MwnPage, MwnTitle } from 'mwn';
-import { MwnError } from 'mwn/build/error.js';
+import { MwnMissingPageError } from 'mwn/build/error.js';
 import removeExcessiveNewline from 'remove-excessive-newline';
 import { ApiEditPageParams, ApiQueryRevisionsParams } from 'types-mediawiki-api';
 import winston from 'winston';
@@ -31,7 +31,7 @@ async function fetchRevisionsByTitle(
 	} as ApiQueryRevisionsParams as ApiParams ).catch( handleMwnRequestError );
 	const page: ApiPage = data.query.pages[ 0 ];
 	if ( page.missing ) {
-		throw new MwnError.MissingPage();
+		throw new MwnMissingPageError();
 	}
 	return {
 		page,
@@ -55,7 +55,7 @@ async function fetchRevisionByRevId(
 	} as ApiQueryRevisionsParams as ApiParams ).catch( handleMwnRequestError );
 	const page: ApiPage = data.query.pages[ 0 ];
 	if ( page.missing ) {
-		throw new MwnError.MissingPage();
+		throw new MwnMissingPageError();
 	}
 	return {
 		page,

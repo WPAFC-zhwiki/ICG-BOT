@@ -199,6 +199,8 @@ export default tsEslint.config(
 					accessibility: 'explicit',
 				},
 			],
+			'es-x/no-import-attributes': 'off',
+			'es-x/no-json-modules': 'off',
 			'es-x/no-hashbang': 'off',
 			'import/no-unresolved': 'off',
 			'jsdoc/check-param-names': [ 'warn', { allowExtraTrailingParamDocs: true } ],
