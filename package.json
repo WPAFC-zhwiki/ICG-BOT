@@ -9,7 +9,6 @@
 	},
 	"scripts": {
 		"start": "node --import ./scripts/loader-register-ts.mjs src/index.mts",
-		"start-bun": "bun run src/index.mts",
 		"test": "pnpm run lint && pnpm run build && pnpm run build-start",
 		"clean": "node scripts/buildHelper.mjs --cleanBuildFile",
 		"build": "tsc && node scripts/buildHelper.mjs --removeBuildInfo && node scripts/buildHelper.mjs --execReloadFlags",
@@ -60,7 +59,6 @@
 		"@eslint/js": "^9.33.0",
 		"@stylistic/eslint-plugin": "^2.13.0",
 		"@telegraf/types": "^7.1.0",
-		"@types/bun": "^1.2.20",
 		"@types/irc": "^0.5.4",
 		"@types/lodash-es": "^4.17.12",
 		"@types/mime-db": "^1.43.6",

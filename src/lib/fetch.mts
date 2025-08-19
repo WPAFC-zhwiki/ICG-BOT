@@ -6,7 +6,8 @@ import {
 	Response,
 	type RequestInfo,
 	type RequestInit,
-	type BodyMixin
+	type BodyMixin,
+	type RequestCache
 } from 'undici';
 import undiciPackageJson from 'undici/package.json' with { type: 'json' };
 
