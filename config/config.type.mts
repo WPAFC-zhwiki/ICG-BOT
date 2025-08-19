@@ -177,6 +177,11 @@ export interface ConfigTS {
 	};
 
 	/**
+	 * 套用在各模組的通用使用者代理
+	 */
+	baseUserAgent?: string;
+
+	/**
 	 * 系統紀錄檔
 	 */
 	logging: {
@@ -421,24 +426,23 @@ export interface ConfigTS {
 		 *
 		 * 支援以下幾種處理方式：
 		 *
-		 * 以下三個是公共圖床，僅支援圖片，其他類型檔案會被忽略：
-		 * vim-cn：將圖片上傳到 img.vim-cn.com。
+		 * 以下兩個是公共圖床，僅支援圖片，其他類型檔案會被忽略：
 		 * imgur：將圖片上傳到 imgur.com。
 		 * sm.ms：將圖片上傳到 sm.ms 圖床中。
 		 *
-		 * 以下三個需自建伺服器：
+		 * 以下需自建伺服器：
 		 * self：將檔案儲存在自己的伺服器中。請確保您的伺服器設定正確，URL 能夠正常存取，否則將無法傳送圖片。
-		 * linx：將檔案上傳到一個 linx（https://github.com/andreimarcu/linx-server）伺服器中，支援所有檔案格式。
-		 * uguu: 將檔案上傳到一個 uguu（https://github.com/nokonoko/Uguu）伺服器中。
 		 *
 		 * 特別提醒：
-		 * 1. vim-cn、sm.ms 為個人圖床，資源有限。如果您的聊天群水量很大，請選擇其他圖床或自建伺服器。
+		 * 1. sm.ms 為個人圖床，資源有限。如果您的聊天群水量很大，請選擇其他圖床或自建伺服器。
 		 * 2. 如使用外部圖床，建議您設定自己專用的 User-Agent。
 		 * 3. 自建伺服器請使用 80 或 443 埠（中國國內伺服器需備案），否則圖片可能無法正常轉發。
 		 */
-		servemedia: TransportServemediaNone |
-		TransportServemediaImgur | TransportServemediaVimCn | TransportServemediaSmMs |
-		TransportServemediaSelf | TransportServemediaLinx | TransportServemediaUguu;
+		servemedia:
+			| TransportServemediaNone
+			| TransportServemediaImgur
+			| TransportServemediaSmMs
+			| TransportServemediaSelf;
 
 		/**
 		 * 有權利刪除檔案的管理員
@@ -530,18 +534,19 @@ export interface ConfigTS {
 	heartbeat?: boolean;
 }
 
+import type { Event as AFCEvent } from '@app/modules/afc/utils/message.mjs';
 interface AFCEventEnableType {
 	groups: string[];
 
 	/**
 	 * 只發送這些訊息
 	 */
-	include?: string[];
+	include?: AFCEvent[];
 
 	/**
 	 * 排除這些訊息
 	 */
-	exclude?: string[];
+	exclude?: AFCEvent[];
 
 	debug?: boolean;
 }
@@ -550,7 +555,7 @@ interface TransportServemediaBase {
 	/**
 	 * 檔案處理方式
 	 */
-	type?: '' | 'none' | 'self' | 'vim-cn' | 'imgur' | 'sm.ms' | 'linx' | 'uguu';
+	type?: '' | 'none' | 'self' | 'imgur' | 'sm.ms';
 
 	/**
 	 * type為self時有效
@@ -565,20 +570,6 @@ interface TransportServemediaBase {
 	 * URL 的字首，通常需要以斜線結尾
 	 */
 	serveUrl?: string;
-
-	/**
-	 * type為linx時有效
-	 *
-	 * linx API 位址（例如 https://www.xxx.com/upload/），通常以斜線結尾
-	 */
-	linxApiUrl?: string;
-
-	/**
-	 * type為uguu時有效
-	 *
-	 * 請以 /api.php?d=upload-tool 結尾
-	 */
-	uguuApiUrl?: string;
 
 	/**
 	 * type為imgur時有效
@@ -601,7 +592,7 @@ interface TransportServemediaBase {
 	sizeLimit: number;
 
 	/**
-	 * 上傳逾時時間，單位毫秒，type 為 vim-cn、imgur 等外部圖床時有效
+	 * 上傳逾時時間，單位毫秒，type 為 imgur 等外部圖床時有效
 	 */
 	timeout: number;
 
@@ -616,13 +607,6 @@ interface TransportServemediaNone extends TransportServemediaBase {
 	 * 檔案處理方式
 	 */
 	type?: '' | 'none';
-}
-
-interface TransportServemediaVimCn extends TransportServemediaBase {
-	/**
-	 * 檔案處理方式
-	 */
-	type: 'vim-cn';
 }
 
 interface TransportServemediaSmMs extends TransportServemediaBase {
@@ -647,30 +631,6 @@ interface TransportServemediaSelf extends TransportServemediaBase {
 	 * URL 的字首，通常需要以斜線結尾
 	 */
 	serveUrl: string;
-}
-
-interface TransportServemediaLinx extends TransportServemediaBase {
-	/**
-	 * 檔案處理方式
-	 */
-	type: 'linx';
-
-	/**
-	 * linx API 位址（例如 https://www.xxx.com/upload/），通常以斜線結尾
-	 */
-	linxApiUrl: string;
-}
-
-interface TransportServemediaUguu extends TransportServemediaBase {
-	/**
-	 * 檔案處理方式
-	 */
-	type: 'uguu';
-
-	/**
-	 * 請以 /api.php?d=upload-tool 結尾
-	 */
-	uguuApiUrl: string;
 }
 
 interface TransportServemediaImgur extends TransportServemediaBase {

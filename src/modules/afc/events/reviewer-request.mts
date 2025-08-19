@@ -112,5 +112,11 @@ ${ output } （${ htmllink( diff, '<b>查看申請</b>' ) }）` );
 	}
 } );
 
+declare module '@app/modules/afc/utils/message.mjs' {
+	interface Events {
+		'reviewer-request': unknown;
+	}
+}
+
 registerEvent( 'reviewer-request' );
 registerEvent( 'pin', true );

@@ -1,7 +1,8 @@
 import removeToken from '@sunafterrainwm/winston-format-remove-telegram-apitoken';
 import winston from 'winston';
 
-import { default as config, version } from '@app/config.mjs';
+import { default as config } from '@app/config.mjs';
+import packageJson from '@package.json' with { type: 'json' };
 
 import { Context } from '@app/lib/handlers/Context.mjs';
 import { MessageHandler } from '@app/lib/handlers/MessageHandler.mjs';
@@ -104,6 +105,9 @@ type handlerClasses = {
 	};
 };
 
+const botVersion: string = packageJson.version;
+const botRepository: string = packageJson.repository.replace( /^git\+/, '' );
+
 // 所有擴充套件包括傳話機器人都只與該物件打交道
 export const Manager: {
 	handlers: ExtendsMap<string, MessageHandler, handlers>,
@@ -123,6 +127,8 @@ export const Manager: {
 		ifEnable: typeof ifEnable;
 		isEnable: typeof isEnable;
 	}
+
+	baseUserAgent: string;
 } = {
 	handlers: new Map(),
 	handlerClasses: new Map(),
@@ -133,11 +139,12 @@ export const Manager: {
 		ifEnable,
 		isEnable,
 	},
+	baseUserAgent: config.baseUserAgent || `zhwp-afc-icg-bot/${ botVersion } (${ botRepository.replace( /^git\+/, '' ) })`,
 };
 
 // 欢迎信息
 winston.info( 'AFC-ICG-BOT: A bot helps AFC groups' );
-winston.info( `Version: ${ version }` );
+winston.info( `Version: ${ botVersion }` );
 winston.info( '' );
 
 // 启动各机器人

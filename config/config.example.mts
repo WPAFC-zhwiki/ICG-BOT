@@ -265,33 +265,28 @@ const config: ConfigTS = {
 		 *
 		 * 支援以下幾種處理方式：
 		 *
-		 * 以下三個是公共圖床，僅支援圖片，其他類型檔案會被忽略：
-		 * vim-cn：將圖片上傳到 img.vim-cn.com。
+		 * 以下兩個是公共圖床，僅支援圖片，其他類型檔案會被忽略：
 		 * imgur：將圖片上傳到 imgur.com。
 		 * sm.ms：將圖片上傳到 sm.ms 圖床中。
 		 *
-		 * 以下三個需自建伺服器：
+		 * 以下需自建伺服器：
 		 * self：將檔案儲存在自己的伺服器中。請確保您的伺服器設定正確，URL 能夠正常存取，否則將無法傳送圖片。
-		 * linx：將檔案上傳到一個 linx（https://github.com/andreimarcu/linx-server）伺服器中，支援所有檔案格式。
-		 * uguu: 將檔案上傳到一個 uguu（https://github.com/nokonoko/Uguu）伺服器中。
 		 *
 		 * 特別提醒：
-		 * 1. vim-cn、sm.ms 為個人圖床，資源有限。如果您的聊天群水量很大，請選擇其他圖床或自建伺服器。
+		 * 1. sm.ms 為個人圖床，資源有限。如果您的聊天群水量很大，請選擇其他圖床或自建伺服器。
 		 * 2. 如使用外部圖床，建議您設定自己專用的 User-Agent。
 		 * 3. 自建伺服器請使用 80 或 443 埠（中國國內伺服器需備案），否則圖片可能無法正常轉發。
 		 */
 		servemedia: {
-			type: '', // 檔案的處置方式：省略/留空/none、self、vim-cn、imgur、sm.ms、linx
+			type: '', // 檔案的處置方式：省略/留空/none、self、imgur、sm.ms、linx
 			cachePath: '', // type 為 self 時有效：快取存放位置
 			serveUrl: '', // type 為 self 時有效：檔案 URL 的字首，一般需要以斜線結尾
-			linxApiUrl: '', // type 為 linx 時有效：linx API 位址，一般以斜線結尾
-			uguuApiUrl: '', // type 為 uguu 時有效：以 /api.php?d=upload-tool 結尾
 			imgur: { // type 為 imgur 時有效
 				apiUrl: 'https://api.imgur.com/3/', // 以斜線結尾
 				clientId: '', // 從 imgur 申請到的 client_id
 			},
 			sizeLimit: 4096, // 檔案最大大小，單位 KiB。0 表示不限制。限制僅對 Telegram 有效
-			timeout: 3000, // 上傳逾時時間，單位毫秒，type 為 vim-cn、imgur 等外部圖床時有效
+			timeout: 3000, // 上傳逾時時間，單位毫秒，type 為 imgur 等外部圖床時有效
 			userAgent: '', // 存取外部圖床時的 User-Agent，如留空則使用預設的 AFC-ICG-BOT/版本號
 		},
 	},
@@ -355,7 +350,7 @@ const config: ConfigTS = {
 			username: 'YourUsername@YourBotName',
 			password: 'YourBotPassword',
 
-			// 設定 Oauth1.0
+			// 設定 Oauth 1.0
 			OAuthCredentials: {
 				consumerToken: '16_DIGIT_ALPHANUMERIC_KEY',
 				consumerSecret: '20_DIGIT_ALPHANUMERIC_KEY',

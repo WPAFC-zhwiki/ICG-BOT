@@ -23,4 +23,10 @@ const backlogCronJob = new CronJob( '0 0 */4 * * *', async function () {
 } );
 backlogCronJob.start();
 
+declare module '@app/modules/afc/utils/message.mjs' {
+	interface Events {
+		backlog: unknown;
+	}
+}
+
 registerEvent( 'backlog' );

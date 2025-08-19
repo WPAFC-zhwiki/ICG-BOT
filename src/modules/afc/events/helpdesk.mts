@@ -80,4 +80,10 @@ ${ ( parsedHTML.length > 2048 ? parsedHTML.slice( 0, 2045 ) + '...' : parsedHTML
 	}, 'helpdesk' );
 } );
 
+declare module '@app/modules/afc/utils/message.mjs' {
+	interface Events {
+		helpdesk: unknown;
+	}
+}
+
 registerEvent( 'helpdesk' );

@@ -132,7 +132,7 @@ dist
 # config
 config/*
 !config/config.example.mts 
-!config/config.type.d.mts
+!config/config.type.mts
 !config/heartbeatConfig.example.sh
 
 # build

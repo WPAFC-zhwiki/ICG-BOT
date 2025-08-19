@@ -409,4 +409,10 @@ recentChange.addProcessFunction<CategorizeEvent>( ( event ): event is Categorize
 	}
 } );
 
+declare module '@app/modules/afc/utils/message.mjs' {
+	interface Events {
+		watchList: unknown;
+	}
+}
+
 registerEvent( 'watchList' );

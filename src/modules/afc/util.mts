@@ -2,10 +2,10 @@ import { isAxiosError } from 'axios';
 import * as cheerio from 'cheerio';
 import { Mwn } from 'mwn';
 import { MwnError } from 'mwn/build/error.js';
+import mwnPackageJson from 'mwn/package.json' with { type: 'json' };
 import TurndownService from 'turndown';
 import winston from 'winston';
 
-import { version, repository } from '@app/config.mjs';
 import { Manager } from '@app/init.mjs';
 
 import { createShadowError } from '@app/lib/util.mjs';
@@ -48,8 +48,8 @@ export const $ = cheerio.load( '' );
 export const mwbot = ( function (): Mwn {
 	const mwnconfig = Manager.config.afc.mwn;
 
-	if ( mwnconfig.userAgent.length === 0 ) {
-		mwnconfig.userAgent = `AFC-ICG-BOT/${ version } (${ repository.replace( /^git\+/, '' ) })`;
+	if ( !mwnconfig.userAgent ) {
+		mwnconfig.userAgent = `${ Manager.baseUserAgent } mwn/${ mwnPackageJson.version }`;
 	}
 
 	const mwbot: Mwn = new Mwn( {

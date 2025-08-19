@@ -10,6 +10,7 @@ import { Manager } from '@app/init.mjs';
 
 import { Context } from '@app/lib/handlers/Context.mjs';
 import { DiscordSendMessage } from '@app/lib/handlers/DiscordMessageHandler.mjs';
+import { MessageHandler } from '@app/lib/handlers/MessageHandler.mjs';
 import { parseUID, getUIDFromContext, addCommand, getUIDFromHandler } from '@app/lib/message.mjs';
 import { inspect } from '@app/lib/util.mjs';
 
@@ -141,12 +142,17 @@ export async function reply( context: Context, message: {
 	return output;
 }
 
-const enableEventsMap: Map<string, string[]> = new Map();
+export interface Events {
+	debug: unknown;
+	pin: unknown;
+}
+export type Event = keyof Events;
 
-const registeredEvents: string[] = [];
+const enableEventsMap = new Map<string, Set<string>>();
+const registeredEvents = new Set<Event>();
 
-export function registerEvent( name: string, disableDuplicateWarn = false ): void {
-	if ( registeredEvents.includes( name ) ) {
+export function registerEvent( name: Event, disableDuplicateWarn = false ): void {
+	if ( registeredEvents.has( name ) ) {
 		if ( !disableDuplicateWarn ) {
 			winston.warn(
 				`[afc/util/msg] fail to register event "${ name }": Event has been registered.`,
@@ -157,18 +163,19 @@ export function registerEvent( name: string, disableDuplicateWarn = false ): voi
 	} else if ( name === 'debug' ) {
 		return; // ignore
 	}
-	registeredEvents.push( name );
+	registeredEvents.add( name );
 }
 
+const debugFlag = '+debug' as const;
 export function send( message: {
 	dMessage?: DiscordSendMessage | DMessageEmbed;
 	tMessage?: string;
 	iMessage?: string;
-}, event: string ): Promise<Response>[] {
+}, event: Event | Exclude<`${ Event }${ typeof debugFlag }`, 'debug+debug'> ): Promise<Response>[] {
 	let isDebug = event === 'debug';
-	if ( event.endsWith( '+debug' ) ) {
+	if ( event.endsWith( debugFlag ) ) {
 		isDebug = true;
-		event = event.slice( 0, -'+debug'.length );
+		event = event.slice( 0, -debugFlag.length ) as Event;
 	}
 	const output: Promise<Response>[] = [];
 
@@ -181,7 +188,7 @@ ${ message.iMessage }
 `.trim();
 	}
 	for ( const [ chatId, enableEvents ] of enableEventsMap ) {
-		if ( !enableEvents.includes( event ) ) {
+		if ( !enableEvents.has( event ) ) {
 			return;
 		}
 		const f = parseUID( chatId );
@@ -189,7 +196,7 @@ ${ message.iMessage }
 			output.push( dc.say( f.id, discordEmbedToOption( message.dMessage ) ) );
 		} else if ( f.client === 'Telegram' && message.tMessage ) {
 			let messageToSend = message.tMessage;
-			if ( isDebug && enableEvents.includes( 'debug' ) && Manager.config.afc.errorDebugTelegramNotifyString ) {
+			if ( isDebug && enableEvents.has( 'debug' ) && Manager.config.afc.errorDebugTelegramNotifyString ) {
 				messageToSend += [ '\n', ' ' ].includes( Manager.config.afc.errorDebugTelegramNotifyString.charAt( 0 ) ) ? Manager.config.afc.errorDebugTelegramNotifyString : `\n\n${ Manager.config.afc.errorDebugTelegramNotifyString }`;
 			}
 			output.push( tg.sayWithHTML( f.id, messageToSend, {
@@ -207,8 +214,16 @@ ${ message.iMessage }
 	return output;
 }
 
+function isEventEnable(
+	event: Event,
+	handler: MessageHandler,
+	id: string | number
+) {
+	return enableEventsMap.get( getUIDFromHandler( handler, id ) )?.has( event );
+}
+
 export async function pinMessage( promises: Promise<Response>[] ): Promise<void> {
-	if ( !registeredEvents.includes( 'pin' ) ) {
+	if ( !registeredEvents.has( 'pin' ) ) {
 		winston.error( '[afc/util/msg] Can\'t pin message: You didn\'t register event "pin".' );
 		return;
 	}
@@ -219,16 +234,20 @@ export async function pinMessage( promises: Promise<Response>[] ): Promise<void>
 		const message = await promise;
 
 		if ( message ) {
-			if ( 'message_id' in message && 'chat' in message ) { // Telegram
-				if (
-					enableEventsMap.get( getUIDFromHandler( tg, message.chat.id ) )?.includes( 'pin' )
-				) {
+			if (
+				'message_id' in message &&
+				'chat' in message
+			) {
+				// Telegram
+				if ( isEventEnable( 'pin', tg, message.chat.id ) ) {
 					tg.rawClient.telegram.pinChatMessage( message.chat.id, message.message_id );
 				}
-			} else if ( 'id' in message && 'channel' in message && // Discord
-
-					enableEventsMap.get( getUIDFromHandler( dc, message.channel.id ) )?.includes( 'pin' )
+			} else if (
+				'id' in message &&
+				'channel' in message &&
+				isEventEnable( 'pin', dc, message.channel.id )
 			) {
+				// Discord
 				message.pin();
 			}
 		}
@@ -279,14 +298,14 @@ export function checkRegister(): void {
 	winston.debug( '[afc/util/msg] Event enable list:' );
 	for ( const v of Manager.config.afc.enableEvents ) {
 		if ( typeof v === 'string' ) {
-			enableEventsMap.set( parseUID( v ).uid, [ registeredEvents || [] ].flat() );
+			enableEventsMap.set( parseUID( v ).uid, new Set( registeredEvents || [] ) );
 
 			winston.debug( `\t${ parseUID( v ).uid }: all` );
 		} else {
-			let events: string[];
+			let events: Event[];
 			if ( v.include ) {
 				events = v.include.filter( function ( event ) {
-					if ( !registeredEvents.includes( event ) ) {
+					if ( !registeredEvents.has( event ) ) {
 						winston.warn(
 							`[afc/util/msg] fail to listen event "${ event }" on "${ v.groups.join( '", "' ) }": Event is invalid.`
 						);
@@ -303,7 +322,7 @@ export function checkRegister(): void {
 				} );
 
 				for ( const event of v.exclude ) {
-					if ( !registeredEvents.includes( event ) ) {
+					if ( !registeredEvents.has( event ) ) {
 						winston.warn(
 							`[afc/util/msg] fail to exclude event "${ event }" on "${ v.groups.join( '", "' ) }": Event is invalid.`
 						);
@@ -319,7 +338,7 @@ export function checkRegister(): void {
 
 			for ( const g of v.groups ) {
 				winston.debug( `\t${ parseUID( g ).uid }: ${ events.join( ', ' ) }` );
-				enableEventsMap.set( parseUID( g ).uid, [ events ].flat() );
+				enableEventsMap.set( parseUID( g ).uid, new Set( events.flat() ) );
 			}
 		}
 	}

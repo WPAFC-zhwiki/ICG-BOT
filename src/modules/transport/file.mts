@@ -5,20 +5,19 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import sharp from 'sharp';
 import winston from 'winston';
 
-import { ConfigTS, version, repository } from '@app/config.mjs';
+import { ConfigTS } from '@app/config.mjs';
 import { Manager } from '@app/init.mjs';
 
 import {
 	fetch,
-	Request,
-	RequestInfo,
-	RequestInit,
-	FormData
+	Response,
+	FormData,
+	defaultFetchUserAgent,
+	safeCancelBody
 } from '@app/lib/fetch.mjs';
 import { File, UploadedFile } from '@app/lib/handlers/Context.mjs';
 import { getFileNameFromUrl, inspect } from '@app/lib/util.mjs';
@@ -27,13 +26,7 @@ import * as bridge from '@app/modules/transport/bridge.mjs';
 import { BridgeMessage } from '@app/modules/transport/BridgeMessage.mjs';
 import * as command from '@app/modules/transport/command.mjs';
 
-const servemedia: ConfigTS['transport']['servemedia'] =
-  Manager.config.transport.servemedia;
-
-const USERAGENT = `AFC-ICG-BOT/${ version } (${ repository.replace(
-	/^git\+/,
-	''
-) })`;
+const servemedia: ConfigTS['transport']['servemedia'] = Manager.config.transport.servemedia;
 
 /**
  * 根据已有文件名生成新文件名
@@ -86,84 +79,50 @@ function convertFileType( type: string ): string {
 
 	}
 }
-class FetchStream extends stream.Transform {
-	public constructor( private info: RequestInfo, private init?: RequestInit ) {
-		super();
-		this.doFetch();
-	}
-
-	private async doFetch() {
-		try {
-			const response = await fetch( this.info, this.init );
-			stream.Readable.fromWeb( response.body ).pipe<this>( this );
-		} catch ( error ) {
-			this.emit( 'error', error );
-		} finally {
-			this.emit( 'close' );
-		}
-	}
-
-	public override _transform(
-		chunk: unknown,
-		encoding: BufferEncoding,
-		callback: stream.TransformCallback
-	) {
-		this.push( chunk, encoding );
-		callback();
-	}
-}
 
 /**
- * 下载/获取文件内容，对文件进行格式转换（如果需要的话），然后管道出去
+ * 下载/获取文件内容，对文件进行格式转换（如果需要的话）
  *
  * @param {File} file
  *
  * @return {fs.ReadStream}
  */
-function getFileStream( file: File ): stream.Readable {
+async function getFileStream( file: File ): Promise<Buffer> {
 	const filePath: string = file.url || file.path;
-	let fileStream: stream.Readable;
+	let fileBuffer: Buffer;
 
 	if ( file.url ) {
-		fileStream = new FetchStream( file.url );
+		let response: Response;
+		try {
+			response = await fetch( file.url, {
+				headers: {
+					'User-Agent': servemedia.userAgent || defaultFetchUserAgent,
+				},
+			} );
+		} finally {
+			safeCancelBody( response );
+		}
+		fileBuffer = Buffer.from( await response.arrayBuffer() );
 	} else if ( file.path ) {
 		// eslint-disable-next-line security/detect-non-literal-fs-filename
-		fileStream = fs.createReadStream( file.path );
+		fileBuffer = await fs.promises.readFile( file.path );
 	} else {
 		throw new TypeError( 'unknown file type' );
 	}
 
 	// Telegram默认使用webp格式，转成png格式以便让其他聊天软件的用户查看
 	if (
-		( file.type === 'sticker' || file.type === 'photo' ) &&
-    path.extname( filePath ) === '.webp'
+		( file.type === 'sticker' || file.type === 'photo' ) && path.extname( filePath ) === '.webp'
 	) {
 		// if (file.type === 'sticker' && servemedia.stickerMaxWidth !== 0) {
 		//     // 缩小表情包尺寸，因容易刷屏
-		//     fileStream = fileStream.pipe(sharp().resize(servemedia.stickerMaxWidth || 256).png());
+		//     fileBuffer = await sharp( fileBuffer ).resize( servemedia.stickerMaxWidth || 256 ).png().toBuffer();
 		// } else {
-		// stream.Writable / stream.Readable 不知道為什麼沒有完整「實現」NodeJS.WritableStream
-		fileStream = fileStream.pipe<sharp.Sharp>( sharp().png() );
+		fileBuffer = await sharp( fileBuffer ).png().toBuffer();
 		// }
 	}
 
-	// if (file.type === 'record') {
-	//   // TODO: 語音使用silk格式，需要wx-voice解碼
-	// }
-
-	return fileStream;
-}
-
-function pipeFileStream( file: File, pipe: stream.Writable ): Promise<void> {
-	return new Promise<void>( function ( resolve, reject ) {
-		const fileStream = getFileStream( file );
-		fileStream
-			.on( 'error', function ( error: unknown ) {
-				reject( error );
-			} )
-			.on( 'end', resolve )
-			.pipe<stream.Writable>( pipe );
-	} );
+	return fileBuffer;
 }
 
 /*
@@ -173,157 +132,82 @@ async function uploadToCache( file: File ): Promise<string> {
 	const targetName = generateFileName( file.url || file.path, file.id );
 	const targetPath = path.join( servemedia.cachePath, targetName );
 	// eslint-disable-next-line security/detect-non-literal-fs-filename
-	const writeStream = fs.createWriteStream( targetPath ).on( 'error', ( error ) => {
-		throw error;
-	} );
-	await pipeFileStream( file, writeStream );
+	await fs.promises.writeFile( targetPath, await getFileStream( file ) );
 	return servemedia.serveUrl + targetName;
 }
 
 /*
  * 上传到各种图床
  */
-function uploadToHost(
+async function uploadToHost(
 	host: ConfigTS['transport']['servemedia']['type'],
 	file: File
 ) {
-	return new Promise<string>( function ( resolve, reject ) {
-		try {
-			let url: string;
-			const form = new FormData();
-			const headers = new Headers();
-			const requestOptions: RequestInit = {
-				method: 'POST',
-				signal: AbortSignal.timeout( servemedia.timeout ?? 30_000 ),
-				headers,
-				body: form,
-			};
+	let url: string;
+	const form = new FormData();
+	const headers = new Headers();
+	headers.set( 'User-Agent', servemedia.userAgent ?? defaultFetchUserAgent );
 
-			const name = generateFileName( file.url ?? file.path, file.id );
+	const name = generateFileName( file.url ?? file.path, file.id );
 
-			const pendingFileStream = getFileStream( file );
+	const fileBlob = new Blob( [ await getFileStream( file ) ] );
 
-			const buf: unknown[] = [];
-			pendingFileStream
-				.on( 'data', function ( d: unknown ) {
-					return buf.push( d );
-				} )
-				.on( 'end', function () {
-					const pendingFile = new Blob( [ Buffer.concat( buf as Uint8Array[] ) ] );
+	switch ( host ) {
+		case 'imgur':
+			url = servemedia.imgur.apiUrl.endsWith( '/' ) ?
+				`${ servemedia.imgur.apiUrl }upload` :
+				`${ servemedia.imgur.apiUrl }/upload`;
+			headers.append(
+				'Authorization',
+				`Client-ID ${ servemedia.imgur.clientId }`
+			);
+			form.set( 'type', 'file' );
+			form.set( 'image', fileBlob, name );
+			break;
 
-					switch ( host ) {
-						case 'vim-cn':
-							url = 'https://img.vim-cn.com/';
-							form.set( 'name', pendingFile, name );
-							break;
+		default:
+			throw new Error( 'Unknown host type' );
 
-						case 'imgur':
-							url = servemedia.imgur.apiUrl.endsWith( '/' ) ?
-								`${ servemedia.imgur.apiUrl }upload` :
-								`${ servemedia.imgur.apiUrl }/upload`;
-							headers.append(
-								'Authorization',
-								`Client-ID ${ servemedia.imgur.clientId }`
-							);
-							form.set( 'type', 'file' );
-							form.set( 'image', pendingFile, name );
-							break;
+	}
 
-						case 'uguu':
-							url = servemedia.uguuApiUrl; // 原配置文件以大写字母开头
-							form.set( 'file', pendingFile, name );
-							form.set( 'randomname', 'true' );
-							break;
+	let response: Response;
+	try {
+		response = await fetch( url, {
+			method: 'POST',
+			signal: AbortSignal.timeout( servemedia.timeout ?? 30_000 ),
+			headers,
+			body: form,
+		} );
+		const responseText = await response.text();
 
-						default:
-							reject( new Error( 'Unknown host type' ) );
-							return;
+		if ( response.status === 200 ) {
+			switch ( host ) {
+				case 'imgur': {
+					const json: {
+						success: boolean;
+						data: {
+							error?: string;
+							link?: string;
+						};
+					} = JSON.parse( responseText );
 
-					}
-
-					fetch( new Request( url, requestOptions ) )
-						.then( async ( response ) => {
-							return [ response, await response.text() ] as const;
-						} )
-						.then( ( [ response, responseText ] ) => {
-							if ( response.status === 200 ) {
-								switch ( host ) {
-									case 'vim-cn':
-										resolve( responseText.trim().replace( 'http://', 'https://' ) );
-										break;
-
-									case 'uguu':
-										resolve( responseText.trim() );
-										break;
-
-									case 'imgur': {
-										const json: {
-											success: boolean;
-											data: {
-												error?: string;
-												link?: string;
-											};
-										} = JSON.parse( responseText );
-
-										if ( json && !json.success ) {
-											reject(
-												new Error(
-													`Imgur return: ${
-														json.data.error ?? JSON.stringify( json )
-													}`
-												)
-											);
-										} else {
-											resolve( json.data.link! );
-										}
-										break;
-									}
-								}
-							} else {
-								reject( new Error( responseText ) );
-							}
-						} )
-						.catch( reject );
-				} );
-		} catch ( error ) {
-			reject( error );
-		}
-	} );
-}
-
-/*
- * 上傳到自行架設的 linx 圖床上面
- */
-function uploadToLinx( file: File ) {
-	return new Promise<string>( function ( resolve, reject ) {
-		try {
-			const name = generateFileName( file.url ?? file.path, file.id );
-
-			const fileStream = getFileStream( file );
-			fetch( `${ servemedia.linxApiUrl }${ name }`, {
-				method: 'PUT',
-				headers: {
-					'User-Agent': servemedia.userAgent ?? USERAGENT,
-					'Linx-Randomize': 'yes',
-					Accept: 'application/json',
-				},
-				body: fileStream,
-			} )
-				.then( async ( response ) => [ response, await response.text() ] as const )
-				.then( ( [ response, responseText ] ) => {
-					if ( response.status === 200 ) {
-						resolve( JSON.parse( responseText ).direct_url as string );
+					if ( json && !json.success ) {
+						throw new Error(
+							`Imgur return: ${
+								json.data.error ?? JSON.stringify( json )
+							}`
+						);
 					} else {
-						reject( new Error( String( responseText ) ) );
+						return json.data.link!;
 					}
-				} )
-				.catch( function ( error ) {
-					reject( error );
-				} );
-		} catch ( error ) {
-			reject( error );
+				}
+			}
+		} else {
+			throw new Error( responseText );
 		}
-	} );
+	} finally {
+		safeCancelBody( response );
+	}
 }
 
 /*
@@ -334,14 +218,9 @@ async function uploadFile( file: File ): Promise<UploadedFile | undefined> {
 	const fileType: string = convertFileType( file.type );
 
 	switch ( servemedia.type ) {
-		case 'vim-cn':
-		case 'uguu':
-			url = await uploadToHost( servemedia.type, file );
-			break;
-
 		case 'sm.ms':
 		case 'imgur':
-			// 公共图床只接受图片，不要上传其他类型文件
+			// 图床只接受图片，不要上传其他类型文件
 			if ( fileType === 'photo' ) {
 				url = await uploadToHost( servemedia.type, file );
 			}
@@ -349,10 +228,6 @@ async function uploadFile( file: File ): Promise<UploadedFile | undefined> {
 
 		case 'self':
 			url = await uploadToCache( file );
-			break;
-
-		case 'linx':
-			url = await uploadToLinx( file );
 			break;
 
 		default:
@@ -377,13 +252,13 @@ const fileUploader = {
 		// p4: don't bother with files from somewhere without bridges in config
 		if (
 			context.extra.clients > 1 &&
-      context.extra.files &&
-      // 過濾掉只有 Telegram 的傳輸，用 file_id
-      context.extra.mapTo.filter(
-      	( target ) => BridgeMessage.parseUID( target ).client === 'telegram'
-      ).length !== context.extra.clients &&
-      servemedia.type &&
-      servemedia.type !== 'none'
+			context.extra.files &&
+			// 過濾掉只有 Telegram 的傳輸，用 file_id
+			context.extra.mapTo.filter(
+				( target ) => BridgeMessage.parseUID( target ).client === 'telegram'
+			).length !== context.extra.clients &&
+			servemedia.type &&
+			servemedia.type !== 'none'
 		) {
 			const promises: Promise<UploadedFile | void>[] = [];
 			const fileCount: number = context.extra.files.length;
@@ -392,9 +267,9 @@ const fileUploader = {
 			for ( const [ index, file ] of context.extra.files.entries() ) {
 				if (
 					servemedia.sizeLimit &&
-          servemedia.sizeLimit > 0 &&
-          file.size > 0 &&
-          file.size > servemedia.sizeLimit * 1024
+					servemedia.sizeLimit > 0 &&
+					file.size > 0 &&
+					file.size > servemedia.sizeLimit * 1024
 				) {
 					winston.debug(
 						`[file] <FileUploader> #${ context.msgId } File ${
@@ -427,8 +302,7 @@ const fileUploader = {
 
 			return uploads;
 		} else {
-			const telegramApiRoot =
-        Manager.config.Telegram.bot.apiRoot || 'https://api.telegram.org';
+			const telegramApiRoot = Manager.config.Telegram.bot.apiRoot || 'https://api.telegram.org';
 			winston.debug(
 				`[file] Upload Skip: context=${ JSON.stringify( {
 					clients: context.extra.clients,
@@ -436,10 +310,7 @@ const fileUploader = {
 						if ( v.url.startsWith( telegramApiRoot ) ) {
 							return {
 								...v,
-								url:
-                  telegramApiRoot +
-                  '/files/<redacted>/' +
-                  v.url.split( '/' ).pop(),
+								url: `${ telegramApiRoot }/files/<redacted>/${ v.url.split( '/' ).pop() }`,
 							};
 						}
 						return v;

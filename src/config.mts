@@ -5,11 +5,8 @@ import path from 'node:path';
 import dotenv from 'dotenv';
 
 import { ConfigTS } from '@config/config.type.mjs';
-import packageJson from '@package.json' with { type: 'json' };
 
 export { ConfigTS } from '@config/config.type.mjs';
-export const version: string = packageJson.version;
-export const repository: string = packageJson.repository.replace( /^git\+/, '' );
 
 const __dirname = import.meta.dirname;
 
