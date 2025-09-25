@@ -4,6 +4,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { defineConfig } from 'eslint/config';
 import eslint from '@eslint/js';
 import { includeIgnoreFile } from '@eslint/compat';
 import tsEslint from 'typescript-eslint';
@@ -29,7 +30,7 @@ bannedFromIgnoredFiles.splice(
 	1
 );
 
-export default tsEslint.config(
+export default defineConfig(
 	{
 		ignores: [ ...bannedFromIgnoredFiles, '!.*.*', '.*/*', 'node_modules/*', 'config/*js' ],
 	},
@@ -224,6 +225,7 @@ export default tsEslint.config(
 				{
 					version: packageJson.engines.node,
 					allowExperimental: true,
+					ignores: [ 'import.meta.dirname', 'import.meta.filename' ],
 				},
 			],
 			'security/detect-object-injection': 'off',
