@@ -30,7 +30,7 @@
 	"dependencies": {
 		"@sunafterrainwm/winston-format-remove-telegram-apitoken": "file:lib/winston-format-remove-telegram-apitoken",
 		"axios": "^1.11.0",
-		"cheerio": "1.0.0",
+		"cheerio": "1.1.2",
 		"chokidar": "^4.0.3",
 		"cron": "^4.3.3",
 		"discord.js": "14.21.0",
